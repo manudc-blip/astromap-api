@@ -1,2 +1,5 @@
 fastapi
 uvicorn
+pytz
+PyYAML
+pyswisseph
