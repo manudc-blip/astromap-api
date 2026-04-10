@@ -3,20 +3,23 @@ from math import fmod
 import math
 import importlib
 import os
-
 os.environ["SWEPH_EPHE_PATH"] = r"C:\chemin\vers\tes\ephemerides"
 
 PLANETS = ["Soleil","Lune","Mercure","Vénus","Mars","Jupiter","Saturne","Uranus","Neptune","Pluton"]
 
 def has_swe():
-    return importlib.util.find_spec("swisseph") is not None
+    try:
+        import swisseph  # noqa: F401
+        return True
+    except Exception:
+        return False
 
 def _demo_positions():
     lons = [0, 12, 40, 88, 132, 210, 250, 300, 330, 15]
     return [{"name": PLANETS[i], "lon": float(lons[i] % 360), "lat": 0.0} for i in range(len(PLANETS))]
 
 def _swe_calc_ut_safe(swe, jd, ipl):
-    """Retourne (lon, lat, dist) robustement pour swisseph."""
+    """Retourne (lon, lat, dist) robustement pour swisseph/pyswisseph."""
     res = swe.calc_ut(jd, ipl)
     # Certains builds renvoient (values, retflag)
     if isinstance(res, (list, tuple)) and len(res) == 2 and isinstance(res[0], (list, tuple)):
@@ -53,7 +56,10 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
             })
         return demo
 
-    import swisseph as swe
+    try:
+        import swisseph as swe
+    except Exception:
+        import pyswisseph as swe  # type: ignore
 
     # Altitude facultative
     try:
@@ -84,15 +90,17 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
     }
 
     # temps sidéral local (deg)
-    lst_hours = swe.sidtime(jd)
+    lst_hours = swe.sidtime(jd)          # en heures sidérales
     lst_deg = (lst_hours * 15.0 + longitude) % 360.0
 
     for name, ipl in mapping.items():
+        # --- 1) Écliptique avec vitesse (pas journalier) ---
         daily_motion = None
         try:
             vals, _ = swe.calc_ut(jd, ipl, swe.FLG_SWIEPH | swe.FLG_SPEED)
             lon = float(vals[0])
             lat = float(vals[1])
+            # vals[3] = vitesse en longitude (°/jour)
             daily_motion = float(vals[3])
         except Exception:
             lon, lat, _dist = _swe_calc_ut_safe(swe, jd, ipl)
@@ -100,6 +108,7 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
         lon = float(fmod(lon, 360.0))
         lat = float(lat)
 
+        # --- 2) Coordonnées équatoriales (RA, déclinaison) ---
         try:
             vals_eq, _ = swe.calc_ut(jd, ipl, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
             ra = float(vals_eq[0]) % 360.0
@@ -108,6 +117,7 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
             ra = None
             decl = None
 
+        # --- 3) Hauteur / azimut à partir de RA/dec ---
         height = None
         azimut = None
         try:
@@ -116,9 +126,11 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
                 ra_rad = math.radians(ra)
                 dec_rad = math.radians(decl)
 
+                # angle horaire H = LST - RA
                 H_deg = (lst_deg - ra) % 360.0
                 H_rad = math.radians(H_deg)
 
+                # altitude
                 sin_alt = (
                     math.sin(phi) * math.sin(dec_rad)
                     + math.cos(phi) * math.cos(dec_rad) * math.cos(H_rad)
@@ -127,6 +139,7 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
                 alt_rad = math.asin(sin_alt)
                 height = math.degrees(alt_rad)
 
+                # azimut (origine nord, sens horaire)
                 y = -math.sin(H_rad) * math.cos(dec_rad)
                 x = (
                     math.sin(dec_rad) - math.sin(phi) * math.sin(alt_rad)
