@@ -11,13 +11,14 @@ def compute_houses_ecliptic(settings: dict):
     Si SwissEph est présent -> Placidus + vrais AS/MC.
     Sinon -> fallback 12 maisons égales, AS fourni par settings (ou 90° à gauche).
     """
-    import importlib, math
+    import math
 
     asc_given = float(settings.get("ascendant", 90.0))
-    if importlib.util.find_spec("swisseph") is None:
-        return _fallback_equal(asc_given)
 
-    import swisseph as swe
+    try:
+        import swisseph as swe
+    except Exception:
+        return _fallback_equal(asc_given)
 
     dt_utc = settings["dt_utc"]
     lat = float(settings["lat"]); lon = float(settings["lon"])
