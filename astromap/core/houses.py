@@ -13,24 +13,19 @@ def compute_houses_ecliptic(settings: dict):
     """
     import importlib, math
 
-    asc_given = float(settings.get("ascendant", 90.0))  # 90° = haut ; on redéfinit plus loin si SWE
-    if not (importlib.util.find_spec("swisseph") or importlib.util.find_spec("pyswisseph")):
+    asc_given = float(settings.get("ascendant", 90.0))
+    if importlib.util.find_spec("swisseph") is None:
         return _fallback_equal(asc_given)
 
-    try:
-        import swisseph as swe
-    except Exception:
-        import pyswisseph as swe  # type: ignore
+    import swisseph as swe
 
-    dt_utc = settings["dt_utc"]           # datetime aware UTC (fourni par Theme)
+    dt_utc = settings["dt_utc"]
     lat = float(settings["lat"]); lon = float(settings["lon"])
 
     jd = swe.julday(dt_utc.year, dt_utc.month, dt_utc.day,
                     dt_utc.hour + dt_utc.minute/60.0 + dt_utc.second/3600.0)
 
-    # Placidus, positions écliptiques vraies
-    cusps, ascmc = swe.houses_ex(jd, lat, lon, b'P')  # b'P' = Placidus
-    # ascmc: [ASC, MC, ARMC, Vertex, Equasc, CoAsc1, CoAsc2, PolAsc, ...] selon build
+    cusps, ascmc = swe.houses_ex(jd, lat, lon, b'P')
     asc = float(ascmc[0]) % 360.0
     mc  = float(ascmc[1]) % 360.0
 
