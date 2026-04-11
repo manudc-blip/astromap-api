@@ -1,14 +1,29 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from astromap.core.theme import Theme
 
 app = FastAPI(title="AstroMap API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://geoastro.org",
+        "https://www.geoastro.org",
+        "http://localhost:3000",
+        "http://127.0.0.1:5500",
+        "null",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class ThemeRequest(BaseModel):
-    name: str = "Unknown"
+    name: str
     datetime_local: str
     latitude: float
     longitude: float
@@ -28,10 +43,6 @@ def health():
 
 @app.get("/theme/test")
 def theme_test():
-    """
-    Endpoint de test minimal pour vérifier que le moteur AstroMap
-    tourne bien sur Railway.
-    """
     try:
         result = Theme.compute(
             name="Albert Einstein",
@@ -56,9 +67,6 @@ def theme_test():
 
 @app.post("/theme/compute")
 def theme_compute(payload: ThemeRequest):
-    """
-    Calcul réel d'un thème à partir des paramètres envoyés par le front.
-    """
     try:
         result = Theme.compute(
             name=payload.name,
