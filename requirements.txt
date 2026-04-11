@@ -1,5 +1,9 @@
 fastapi
-uvicorn
+uvicorn[standard]
+pydantic
 pytz
-PyYAML
+pyyaml
+timezonefinder
+pillow
+reportlab
 pyswisseph
