@@ -7,4 +7,4 @@ timezonefinder
 pillow
 reportlab
 pyswisseph
-psycopg==3.2.1
+psycopg[binary]==3.2.13
