@@ -1,15 +1,12 @@
-import sqlite3
-import unicodedata
+import os
 import re
-from pathlib import Path
+import unicodedata
 
-_DB_CONN = None
+import psycopg
+from psycopg.rows import dict_row
 
 
 def _normalize_name(s: str) -> str:
-    """
-    Cohérent avec build_cities_db_sqlite.py
-    """
     if not s:
         return ""
     s = s.strip().lower()
@@ -20,27 +17,18 @@ def _normalize_name(s: str) -> str:
     return s.strip()
 
 
-def _get_db_path() -> Path:
-    base_dir = Path(__file__).resolve().parent.parent  # .../astromap
-    return base_dir / "data" / "cities.db"
+def _get_database_url() -> str:
+    database_url = os.getenv("DATABASE_URL", "").strip()
+    if not database_url:
+        raise RuntimeError("DATABASE_URL manquante")
+    return database_url
 
 
-def _get_conn() -> sqlite3.Connection:
-    global _DB_CONN
-    if _DB_CONN is not None:
-        return _DB_CONN
-
-    db_path = _get_db_path()
-    if not db_path.exists():
-        raise FileNotFoundError(
-            f"cities.db introuvable : {db_path}. "
-            "Lance build_cities_db_sqlite.py pour le générer."
-        )
-
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    _DB_CONN = conn
-    return _DB_CONN
+def _run_query(sql: str, params: dict):
+    with psycopg.connect(_get_database_url(), row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
 
 
 def search_cities(prefix, max_results=20, lang="en"):
@@ -52,87 +40,141 @@ def search_cities(prefix, max_results=20, lang="en"):
     if not prefix_norm:
         return []
 
-    conn = _get_conn()
-    cur = conn.cursor()
+    display_col = (
+        "COALESCE(c.display_fr, c.name_fr, c.name)"
+        if lang == "fr"
+        else "COALESCE(c.display_en, c.name_en, c.name)"
+    )
+    name_col = (
+        "COALESCE(c.name_fr, c.name)"
+        if lang == "fr"
+        else "COALESCE(c.name_en, c.name)"
+    )
 
-    display_col = "display_fr" if lang == "fr" else "display_en"
-    name_col = "name_fr" if lang == "fr" else "name_en"
-
-    # On récupère plus large puis on déduplique par geoname_id
-    sql = f"""
+    sql_prefix = f"""
+        WITH ranked AS (
+            SELECT
+                c.geonameid AS geoname_id,
+                {display_col} AS display_name,
+                {name_col} AS city_name,
+                c.lat,
+                c.lon,
+                c.tz,
+                COALESCE(c.population, 0) AS population,
+                CASE
+                    WHEN c.search_text = %(q)s THEN 0
+                    WHEN ca.alias_norm = %(q)s THEN 0
+                    ELSE 1
+                END AS rank,
+                ROW_NUMBER() OVER (
+                    PARTITION BY c.geonameid
+                    ORDER BY
+                        CASE
+                            WHEN c.search_text = %(q)s THEN 0
+                            WHEN ca.alias_norm = %(q)s THEN 0
+                            ELSE 1
+                        END,
+                        CASE
+                            WHEN ca.alias_norm IS NOT NULL AND ca.alias_norm LIKE %(prefix)s
+                                THEN LENGTH(ca.alias_norm)
+                            ELSE LENGTH(c.search_text)
+                        END ASC,
+                        COALESCE(c.population, 0) DESC,
+                        {display_col} ASC
+                ) AS rn
+            FROM cities c
+            LEFT JOIN city_aliases ca
+                ON ca.geonameid = c.geonameid
+            WHERE c.search_text LIKE %(prefix)s
+               OR ca.alias_norm LIKE %(prefix)s
+        )
         SELECT
             geoname_id,
-            {display_col} AS display_name,
-            {name_col} AS city_name,
-            lat, lon, tz,
-            key_norm
-        FROM cities
-        WHERE key_norm LIKE ?
-        ORDER BY
-            CASE WHEN key_norm = ? THEN 0 ELSE 1 END,
-            LENGTH(key_norm) ASC,
-            display_name ASC
-        LIMIT ?
+            display_name,
+            city_name,
+            lat,
+            lon,
+            tz
+        FROM ranked
+        WHERE rn = 1
+        ORDER BY rank ASC, population DESC, display_name ASC
+        LIMIT %(limit)s
     """
 
-    rows = cur.execute(sql, (f"{prefix_norm}%", prefix_norm, max_results * 8)).fetchall()
+    rows = _run_query(
+        sql_prefix,
+        {
+            "q": prefix_norm,
+            "prefix": f"{prefix_norm}%",
+            "limit": max_results,
+        },
+    )
 
-    results = []
-    seen_ids = set()
+    if not rows and len(prefix_norm) >= 3:
+        sql_contains = f"""
+            WITH ranked AS (
+                SELECT
+                    c.geonameid AS geoname_id,
+                    {display_col} AS display_name,
+                    {name_col} AS city_name,
+                    c.lat,
+                    c.lon,
+                    c.tz,
+                    COALESCE(c.population, 0) AS population,
+                    CASE
+                        WHEN c.search_text = %(q)s THEN 0
+                        WHEN ca.alias_norm = %(q)s THEN 0
+                        ELSE 1
+                    END AS rank,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY c.geonameid
+                        ORDER BY
+                            CASE
+                                WHEN c.search_text = %(q)s THEN 0
+                                WHEN ca.alias_norm = %(q)s THEN 0
+                                ELSE 1
+                            END,
+                            COALESCE(c.population, 0) DESC,
+                            {display_col} ASC
+                    ) AS rn
+                FROM cities c
+                LEFT JOIN city_aliases ca
+                    ON ca.geonameid = c.geonameid
+                WHERE c.search_text LIKE %(contains)s
+                   OR ca.alias_norm LIKE %(contains)s
+            )
+            SELECT
+                geoname_id,
+                display_name,
+                city_name,
+                lat,
+                lon,
+                tz
+            FROM ranked
+            WHERE rn = 1
+            ORDER BY rank ASC, population DESC, display_name ASC
+            LIMIT %(limit)s
+        """
 
-    for row in rows:
-        gid = row["geoname_id"]
-        if gid in seen_ids:
-            continue
-        seen_ids.add(gid)
+        rows = _run_query(
+            sql_contains,
+            {
+                "q": prefix_norm,
+                "contains": f"%{prefix_norm}%",
+                "limit": max_results,
+            },
+        )
 
-        results.append((
+    return [
+        (
             row["display_name"] or "",
             row["city_name"] or "",
             float(row["lat"]),
             float(row["lon"]),
             row["tz"] or "",
-        ))
-
-        if len(results) >= max_results:
-            break
-
-    # fallback léger si rien trouvé : contient au lieu de préfixe
-    if not results and len(prefix_norm) >= 3:
-        sql2 = f"""
-            SELECT
-                geoname_id,
-                {display_col} AS display_name,
-                {name_col} AS city_name,
-                lat, lon, tz,
-                key_norm
-            FROM cities
-            WHERE key_norm LIKE ?
-            ORDER BY
-                LENGTH(key_norm) ASC,
-                display_name ASC
-            LIMIT ?
-        """
-        rows = cur.execute(sql2, (f"%{prefix_norm}%", max_results * 8)).fetchall()
-
-        for row in rows:
-            gid = row["geoname_id"]
-            if gid in seen_ids:
-                continue
-            seen_ids.add(gid)
-
-            results.append((
-                row["display_name"] or "",
-                row["city_name"] or "",
-                float(row["lat"]),
-                float(row["lon"]),
-                row["tz"] or "",
-            ))
-
-            if len(results) >= max_results:
-                break
-
-    return results
+        )
+        for row in rows
+    ]
 
 
 def find_city(name: str):
@@ -146,21 +188,26 @@ def find_city(name: str):
     if not key:
         return None
 
-    conn = _get_conn()
-    cur = conn.cursor()
-
-    row = cur.execute("""
-        SELECT lat, lon, tz
-        FROM cities
-        WHERE key_norm = ?
-        ORDER BY LENGTH(key_norm) ASC
+    sql = """
+        SELECT
+            c.lat,
+            c.lon,
+            c.tz,
+            COALESCE(c.population, 0) AS population
+        FROM cities c
+        LEFT JOIN city_aliases ca
+            ON ca.geonameid = c.geonameid
+        WHERE c.search_text = %(q)s
+           OR ca.alias_norm = %(q)s
+        ORDER BY population DESC
         LIMIT 1
-    """, (key,)).fetchone()
+    """
 
-    if row:
+    rows = _run_query(sql, {"q": key})
+    if rows:
+        row = rows[0]
         return float(row["lat"]), float(row["lon"]), row["tz"] or ""
 
-    # fallback léger via search
     res = search_cities(key, max_results=1, lang="en")
     if res:
         _, _, lat, lon, tz = res[0]
