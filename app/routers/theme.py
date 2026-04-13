@@ -54,7 +54,7 @@ def compute_theme_svg(payload: ThemeRequest) -> Response:
             show_title=True,
             show_houses=True,
             show_aspects=True,
-            asset_base_url="/glyphes",
+            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
         )
 
         return Response(content=svg, media_type="image/svg+xml")
