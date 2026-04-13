@@ -2,8 +2,6 @@ from datetime import datetime
 from math import fmod
 import math
 import importlib
-import os
-os.environ["SWEPH_EPHE_PATH"] = r"C:\chemin\vers\tes\ephemerides"
 
 PLANETS = ["Soleil","Lune","Mercure","Vénus","Mars","Jupiter","Saturne","Uranus","Neptune","Pluton"]
 
@@ -52,10 +50,7 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
             })
         return demo
 
-    try:
-        import swisseph as swe
-    except Exception:
-        import pyswisseph as swe  # type: ignore
+    import swisseph as swe
 
     # Altitude facultative
     try:
