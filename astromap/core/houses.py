@@ -17,10 +17,7 @@ def compute_houses_ecliptic(settings: dict):
     if not (importlib.util.find_spec("swisseph") or importlib.util.find_spec("pyswisseph")):
         return _fallback_equal(asc_given)
 
-    try:
-        import swisseph as swe
-    except Exception:
-        import pyswisseph as swe  # type: ignore
+    import swisseph as swe
 
     dt_utc = settings["dt_utc"]           # datetime aware UTC (fourni par Theme)
     lat = float(settings["lat"]); lon = float(settings["lon"])
