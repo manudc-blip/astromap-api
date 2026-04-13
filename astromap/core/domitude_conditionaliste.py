@@ -1,10 +1,9 @@
 import math
 import swisseph as swe
 from datetime import datetime
-import math
-import swisseph as swe
-from datetime import datetime
-from .coords import ecliptic_to_equatorial   # ⇐ NOUVEL IMPORT
+
+from .coords import ecliptic_to_equatorial
+
 try:
     from .positions_planetes import sign_from_declination
 except Exception:
