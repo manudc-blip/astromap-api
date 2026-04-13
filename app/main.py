@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 
 from app.routers.health import router as health_router
 from app.routers.cities import router as cities_router
@@ -10,6 +12,9 @@ app = FastAPI(
     version="1.0.0",
     description="API backend pour le moteur AstroMap de GéoAstro.",
 )
+
+STATIC_GLYPHS_DIR = Path(__file__).resolve().parent / "static" / "Glyphes_PNG"
+app.mount("/glyphes", StaticFiles(directory=STATIC_GLYPHS_DIR), name="glyphes")
 
 # À resserrer plus tard sur ton vrai domaine
 app.add_middleware(
