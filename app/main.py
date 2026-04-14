@@ -13,7 +13,7 @@ app = FastAPI(
     description="API backend pour le moteur AstroMap de GéoAstro.",
 )
 
-STATIC_GLYPHS_DIR = Path(__file__).resolve().parent / "static" / "Glyphes_PNG"
+STATIC_GLYPHS_DIR = Path(__file__).resolve().parent / "static" / "Glyphes_SVG"
 app.mount("/glyphes", StaticFiles(directory=STATIC_GLYPHS_DIR), name="glyphes")
 
 # À resserrer plus tard sur ton vrai domaine
