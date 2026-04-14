@@ -15,45 +15,45 @@ ASPECT_RED = "#D62828"
 ASPECT_VIOLET = "#A855F7"
 
 PLANET_FILES = {
-    "Soleil": "Soleil.png",
-    "Lune": "Lune.png",
-    "Mercure": "Mercure.png",
-    "Vénus": "Venus.png",
-    "Mars": "Mars.png",
-    "Jupiter": "Jupiter.png",
-    "Saturne": "Saturne.png",
-    "Uranus": "Uranus.png",
-    "Neptune": "Neptune.png",
-    "Pluton": "Pluton.png",
+    "Soleil": "Soleil.svg",
+    "Lune": "Lune.svg",
+    "Mercure": "Mercure.svg",
+    "Vénus": "Venus.svg",
+    "Mars": "Mars.svg",
+    "Jupiter": "Jupiter.svg",
+    "Saturne": "Saturne.svg",
+    "Uranus": "Uranus.svg",
+    "Neptune": "Neptune.svg",
+    "Pluton": "Pluton.svg",
 }
 
 SIGN_FILES = {
-    "Bélier": "Bélier.png",
-    "Taureau": "Taureau.png",
-    "Gémeaux": "Gémeaux.png",
-    "Cancer": "Cancer.png",
-    "Lion": "Lion.png",
-    "Vierge": "Vierge.png",
-    "Balance": "Balance.png",
-    "Scorpion": "Scorpion.png",
-    "Sagittaire": "Sagittaire.png",
-    "Capricorne": "Capricorne.png",
-    "Verseau": "Verseau.png",
-    "Poissons": "Poissons.png",
+    "Bélier": "Bélier.svg",
+    "Taureau": "Taureau.svg",
+    "Gémeaux": "Gémeaux.svg",
+    "Cancer": "Cancer.svg",
+    "Lion": "Lion.svg",
+    "Vierge": "Vierge.svg",
+    "Balance": "Balance.svg",
+    "Scorpion": "Scorpion.svg",
+    "Sagittaire": "Sagittaire.svg",
+    "Capricorne": "Capricorne.svg",
+    "Verseau": "Verseau.svg",
+    "Poissons": "Poissons.svg",
 }
 
 AXIS_FILES_FR = {
-    "AS": "AS.png",
-    "DS": "DS.png",
-    "MC": "MC.png",
-    "FC": "FC.png",
+    "AS": "AS.svg",
+    "DS": "DS.svg",
+    "MC": "MC.svg",
+    "FC": "FC.svg",
 }
 
 AXIS_FILES_EN = {
-    "AS": "AS.png",
-    "DS": "DS.png",
-    "MC": "MC.png",
-    "FC": "IC.png",  # important : fond du ciel -> IC en anglais
+    "AS": "AS.svg",
+    "DS": "DS.svg",
+    "MC": "MC.svg",
+    "FC": "IC.svg",  # important : fond du ciel -> IC en anglais
 }
 
 
@@ -227,9 +227,9 @@ def render_ecliptic_svg(
       /Axes
 
     Exemple final probable :
-      /glyphes/Glyphes_PNG
+      /glyphes/Glyphes_SVG
     ou
-      /static/Glyphes_PNG
+      /static/Glyphes_SVG
     selon ton site.
     """
     layout = build_ecliptic_layout(
