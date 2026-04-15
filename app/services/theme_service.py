@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from astromap.core.theme import Theme
 from astromap.core.domitude_conditionaliste import build_domitude_payload
 
@@ -21,8 +23,10 @@ def compute_theme_payload(
 
     data = result.to_json()
 
+    dt_obj = datetime.strptime(datetime_local, "%Y-%m-%d %H:%M")
+
     domitude_data = build_domitude_payload(
-        data,
+        date_naissance=dt_obj,
         latitude_deg=latitude,
         longitude_deg=longitude,
     )
