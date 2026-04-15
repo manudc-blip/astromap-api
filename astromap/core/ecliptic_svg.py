@@ -283,28 +283,71 @@ def render_ecliptic_svg(
     parts.append(_svg_circle(cx, cy, r_outer, stroke=STRUCT_GREY, width=3))
     parts.append(_svg_circle(cx, cy, r_inner, stroke=STRUCT_GREY, width=3))
 
-    # Graduations de 5° dans la bande zodiacale
-    grid_band = r_outer - r_inner
-    tick_inner_r = r_inner + grid_band * 0.08
-    tick_outer_r = r_outer - grid_band * 0.08
+    # Quadrillage AstroAriana : identique à la logique Tkinter / domitude
+    GRID_STEP = 5
+    GRID_BAND = min(width, height) * 0.80 * 0.020
+    CIRC_OUT_W = 3
+    CIRC_IN_W = 2
 
-    for d in range(0, 360, 5):
-        ang = math.radians(d)
+    GAP_OUT = CIRC_OUT_W / 2.0
+    GAP_IN = CIRC_IN_W / 2.0
 
-        inner_len = grid_band * (0.10 if d % 30 else 0.18)
-        outer_len = grid_band * (0.10 if d % 30 else 0.18)
+    # bande extérieure (près du grand cercle)
+    r_grid_out = r_outer - GAP_OUT
+    r_grid_in = r_grid_out - GRID_BAND
+    r_link_outer = (r_grid_in + r_grid_out) * 0.5
 
-        x1 = cx + tick_inner_r * math.cos(ang)
-        y1 = cy - tick_inner_r * math.sin(ang)
-        x2 = cx + (tick_inner_r + inner_len) * math.cos(ang)
-        y2 = cy - (tick_inner_r + inner_len) * math.sin(ang)
-        parts.append(_svg_line(x1, y1, x2, y2, stroke="#D7D7D7", width=1, linecap="butt"))
+    # bande intérieure (près du petit cercle)
+    r2_grid_in = r_inner + GAP_IN
+    r2_grid_out = r2_grid_in + GRID_BAND
+    r_link_inner = (r2_grid_in + r2_grid_out) * 0.5
 
-        x3 = cx + tick_outer_r * math.cos(ang)
-        y3 = cy - tick_outer_r * math.sin(ang)
-        x4 = cx + (tick_outer_r - outer_len) * math.cos(ang)
-        y4 = cy - (tick_outer_r - outer_len) * math.sin(ang)
-        parts.append(_svg_line(x3, y3, x4, y4, stroke="#D7D7D7", width=1, linecap="butt"))
+    def _angle_from_point(x: float, y: float) -> float:
+        # même convention écran que le reste du SVG : 0° à droite, sens anti-horaire
+        return (math.degrees(math.atan2(cy - y, x - cx)) + 360.0) % 360.0
+
+    def _forward_extent(a1: float, a2: float) -> float:
+        ext = a2 - a1
+        if ext < 0:
+            ext += 360.0
+        return ext
+
+    def _arc_5deg_svg(R: float, a1: float, a2: float):
+        extent = _forward_extent(a1, a2)
+        pts = _arc_points(cx, cy, R, a1, extent, steps=8)
+        return _svg_polyline(pts, stroke="#cfcfcf", width=1, fill="none")
+
+    # angles des 12 frontières de signes, déjà orientés correctement par le layout
+    boundary_angles = []
+    for z in layout["zodiac_boundaries"]:
+        ox, oy = z["outer"]
+        boundary_angles.append(_angle_from_point(ox, oy))
+
+    # graduations + arcs, signe par signe
+    for i in range(12):
+        a_start = boundary_angles[i]
+        a_end = boundary_angles[(i + 1) % 12]
+        extent30 = _forward_extent(a_start, a_end)
+
+        for k in range(6):
+            a1 = (a_start + extent30 * (k / 6.0)) % 360.0
+            a2 = (a_start + extent30 * ((k + 1) / 6.0)) % 360.0
+
+            # petits traits 5° externes
+            if k != 0:
+                x1, y1 = cx + r_grid_out * math.cos(math.radians(a1)), cy - r_grid_out * math.sin(math.radians(a1))
+                x2, y2 = cx + r_link_outer * math.cos(math.radians(a1)), cy - r_link_outer * math.sin(math.radians(a1))
+                parts.append(_svg_line(x1, y1, x2, y2, stroke="#d0d0d0", width=1, linecap="butt"))
+
+            # petits traits 5° internes
+            if k != 0:
+                x1, y1 = cx + r2_grid_in * math.cos(math.radians(a1)), cy - r2_grid_in * math.sin(math.radians(a1))
+                x2, y2 = cx + r_link_inner * math.cos(math.radians(a1)), cy - r_link_inner * math.sin(math.radians(a1))
+                parts.append(_svg_line(x1, y1, x2, y2, stroke="#d0d0d0", width=1, linecap="butt"))
+
+            # arcs de liaison 5°
+            parts.append(_arc_5deg_svg(r_link_outer, a1, a2))
+            parts.append(_arc_5deg_svg(r_link_inner, a1, a2))
 
     for z in layout["zodiac_boundaries"]:
         (x1, y1) = z["inner"]
