@@ -6,8 +6,24 @@ from .interpret_texts import INTRO_TEXTS, PLANET_TEXTS, RET_FAMILY_TEXTS, SIGN_T
 from .ret_hp import compute_planet_hierarchy
 from .ret_families import compute_ret_ranking
 from .signs_hierarchy import rank_signs
-from .houses import sign_name_from_longitude
-
+def sign_name_from_longitude(lon: float) -> str:
+    signs = [
+        "Bélier",
+        "Taureau",
+        "Gémeaux",
+        "Cancer",
+        "Lion",
+        "Vierge",
+        "Balance",
+        "Scorpion",
+        "Sagittaire",
+        "Capricorne",
+        "Verseau",
+        "Poissons",
+    ]
+    lon = float(lon) % 360.0
+    idx = int(lon // 30.0)
+    return signs[idx]
 
 PLANET_TO_TEXT_KEY = {
     "Soleil": "sun",
