@@ -283,6 +283,29 @@ def render_ecliptic_svg(
     parts.append(_svg_circle(cx, cy, r_outer, stroke=STRUCT_GREY, width=3))
     parts.append(_svg_circle(cx, cy, r_inner, stroke=STRUCT_GREY, width=3))
 
+    # Graduations de 5° dans la bande zodiacale
+    grid_band = r_outer - r_inner
+    tick_inner_r = r_inner + grid_band * 0.08
+    tick_outer_r = r_outer - grid_band * 0.08
+
+    for d in range(0, 360, 5):
+        ang = math.radians(d)
+
+        inner_len = grid_band * (0.10 if d % 30 else 0.18)
+        outer_len = grid_band * (0.10 if d % 30 else 0.18)
+
+        x1 = cx + tick_inner_r * math.cos(ang)
+        y1 = cy - tick_inner_r * math.sin(ang)
+        x2 = cx + (tick_inner_r + inner_len) * math.cos(ang)
+        y2 = cy - (tick_inner_r + inner_len) * math.sin(ang)
+        parts.append(_svg_line(x1, y1, x2, y2, stroke="#D7D7D7", width=1, linecap="butt"))
+
+        x3 = cx + tick_outer_r * math.cos(ang)
+        y3 = cy - tick_outer_r * math.sin(ang)
+        x4 = cx + (tick_outer_r - outer_len) * math.cos(ang)
+        y4 = cy - (tick_outer_r - outer_len) * math.sin(ang)
+        parts.append(_svg_line(x3, y3, x4, y4, stroke="#D7D7D7", width=1, linecap="butt"))
+
     for z in layout["zodiac_boundaries"]:
         (x1, y1) = z["inner"]
         (x2, y2) = z["outer"]
