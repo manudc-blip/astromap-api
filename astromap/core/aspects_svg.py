@@ -175,10 +175,10 @@ def render_aspects_svg(
 
     title = "Aspects planétaires" if language == "fr" else "Planetary aspects"
 
-    top_margin = 78
-    side_margin = 160
-    grid_width = width - side_margin - 40
-    grid_height = height - top_margin - 95
+    top_margin = 90
+    side_margin = 230
+    grid_width = width - side_margin - 30
+    grid_height = height - top_margin - 70
     grid_size = min(grid_width, grid_height)
     cell = grid_size / (n + 1)
     if cell < 25:
@@ -338,9 +338,9 @@ def render_aspects_svg(
         line2 = "Aspects calculés en sphère locale (déclinaison réelle)" if language == "fr" else \
                 "Aspects computed in local sphere (true declination)"
 
-        parts.append(_svg_text(x0, legend_y, title_leg, size=11, weight="700", anchor="start", fill="#333333"))
-        parts.append(_svg_text(x0, legend_y + 16, line1, size=10, anchor="start", fill="#444444"))
-        parts.append(_svg_text(x0, legend_y + 32, line2, size=10, anchor="start", fill="#444444"))
+        parts.append(_svg_text(x0, legend_y, title_leg, size=9, weight="700", anchor="start", fill="#333333"))
+        parts.append(_svg_text(x0, legend_y + 14, line1, size=9, anchor="start", fill="#444444"))
+        parts.append(_svg_text(x0, legend_y + 28, line2, size=9, anchor="start", fill="#444444"))
         
     parts.append("</svg>")
     return "".join(parts)
