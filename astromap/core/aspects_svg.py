@@ -8,11 +8,11 @@ from .aspects import detect_aspects
 TITLE_COLOR = "#1f4fa3"
 
 ASPECT_COLORS = {
-    "CONJ": "#F2CE7B",   # jaune doux
-    "OPP":  "#F4A3A3",   # rouge doux
-    "SQR":  "#F4A3A3",
-    "TRI":  "#A9C7F5",   # bleu doux
-    "SEX":  "#A9C7F5",
+    "CONJ": "#FFD27F",
+    "OPP":  "#FF9999",
+    "SQR":  "#FF9999",
+    "TRI":  "#A6C8FF",
+    "SEX":  "#A6C8FF",
 }
 
 ASPECT_SYMBOLS = {
@@ -215,8 +215,8 @@ def render_aspects_svg(
         parts.append(_svg_line(x_line, y0, x_line, y_bottom, stroke=color, width=line_w))
 
     # Entêtes planètes
-    glyph_size = cell * 0.66
-    fallback_size = max(10, int(cell * 0.36))
+    glyph_size = cell * 0.50
+    fallback_size = max(8, int(cell * 0.30))
 
     for idx, name in enumerate(planet_names):
         col = idx + 1
@@ -289,15 +289,16 @@ def render_aspects_svg(
             cy = (y1 + y2) / 2
 
             href_a = _aspect_href(asset_base_url, kind)
+
             if href_a:
-                parts.append(_svg_image(href_a, cx, cy - cell * 0.06, cell * 0.28))
+                parts.append(_svg_image(href_a, cx, cy - cell * 0.03, cell * 0.42))
             else:
                 parts.append(
                     _svg_text(
                         cx,
-                        cy - cell * 0.05,
+                        cy - cell * 0.03,
                         symbol,
-                        size=max(12, int(cell * 0.34)),
+                        size=max(12, int(cell * 0.42)),
                         weight="700",
                         family="Segoe UI Symbol, Arial Unicode MS, Segoe UI, Arial, sans-serif",
                     )
