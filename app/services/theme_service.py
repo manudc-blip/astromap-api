@@ -21,7 +21,11 @@ def compute_theme_payload(
 
     data = result.to_json()
 
-    domitude_data = build_domitude_payload(data)
+    domitude_data = build_domitude_payload(
+        data,
+        latitude_deg=latitude,
+        longitude_deg=longitude,
+    )
     data.update(domitude_data)
 
     return data
