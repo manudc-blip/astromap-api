@@ -1,5 +1,8 @@
 from app.services.theme_service import compute_theme_payload
-from astromap.core.interpretation import build_interpretation_payload
+from astromap.core.interpretation import (
+    build_interpretation_payload,
+    render_interpretation_html,
+)
 
 
 def compute_interpretation_payload(
@@ -19,9 +22,25 @@ def compute_interpretation_payload(
         tz=tz,
         settings=settings,
     )
-
-    language = "fr"
-    if str(settings.get("language", "fr")).lower().startswith("en"):
-        language = "en"
-
+    language = settings.get("language", "fr")
     return build_interpretation_payload(theme_payload, language=language)
+
+
+def compute_interpretation_html(
+    *,
+    name: str,
+    datetime_local: str,
+    latitude: float,
+    longitude: float,
+    tz: str,
+    settings: dict,
+) -> str:
+    data = compute_interpretation_payload(
+        name=name,
+        datetime_local=datetime_local,
+        latitude=latitude,
+        longitude=longitude,
+        tz=tz,
+        settings=settings,
+    )
+    return render_interpretation_html(data)
