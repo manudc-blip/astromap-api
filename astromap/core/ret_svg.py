@@ -3,6 +3,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from .ret_hp import compute_planet_hierarchy, compute_ret_box_colors
 from .ret_families import compute_ret_ranking
 from .signs_hierarchy import rank_signs
 
