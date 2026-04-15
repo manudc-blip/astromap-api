@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from app.routers.health import router as health_router
 from app.routers.cities import router as cities_router
 from app.routers.theme import router as theme_router
+from app.routers.ret import router as ret_router
 
 app = FastAPI(
     title="AstroMap API",
@@ -33,3 +34,4 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(cities_router)
 app.include_router(theme_router)
+app.include_router(ret_router)
