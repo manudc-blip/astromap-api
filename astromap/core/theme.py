@@ -133,9 +133,10 @@ class Theme:
         # Annoter les planètes avec leur maison/position dans la maison
         _assign_planet_houses(planets, houses)
 
+        orbs = cfg.get("aspects", {}).get("orbs")
         aspects = detect_aspects(
             planets,
-            cfg.get("aspects", {}).get("orbs", {}),
+            orbs if orbs else None,
             exclude_sextiles_from_saturn=False
         )
 
