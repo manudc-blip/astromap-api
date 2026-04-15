@@ -6,6 +6,7 @@ from .interpret_texts import INTRO_TEXTS, PLANET_TEXTS, RET_FAMILY_TEXTS, SIGN_T
 from .ret_hp import compute_planet_hierarchy
 from .ret_families import compute_ret_ranking
 from .signs_hierarchy import rank_signs
+from .houses import sign_name_from_longitude
 
 
 PLANET_TO_TEXT_KEY = {
@@ -132,8 +133,15 @@ def _get_sun_sign(payload: dict[str, Any]) -> str:
 
 def _get_asc_sign(payload: dict[str, Any]) -> str:
     axes = payload.get("axes", {}) or {}
-    asc = axes.get("AS") or axes.get("Asc") or {}
-    return asc.get("sign") or ""
+
+    asc = axes.get("AS")
+    if isinstance(asc, dict):
+        return asc.get("sign") or ""
+
+    if isinstance(asc, (int, float)):
+        return sign_name_from_longitude(float(asc))
+
+    return ""
 
 
 def _compute_dominants(payload: dict[str, Any]) -> tuple[list[str], list[str], list[tuple[str, float]], list[str]]:
