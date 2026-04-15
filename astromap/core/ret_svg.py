@@ -203,7 +203,17 @@ def _planet_href(asset_base_url: str, planet_name: str) -> str | None:
     fn = PLANET_FILES.get(planet_name)
     return f"{asset_base_url}/Planetes/{fn}" if fn else None
 
+def _planet_href_for_box(asset_base_url: str, planet_name: str, box_code: str) -> str | None:
+    fn = PLANET_FILES.get(planet_name)
+    if not fn:
+        return None
 
+    if box_code == "black":
+        white_fn = fn.replace(".svg", "_blanc.svg")
+        return f"{asset_base_url}/Planetes/{white_fn}"
+
+    return f"{asset_base_url}/Planetes/{fn}"
+    
 def _sign_href(asset_base_url: str, sign_name: str) -> str | None:
     fn = SIGN_FILES.get(sign_name)
     return f"{asset_base_url}/Signes/{fn}" if fn else None
@@ -311,7 +321,7 @@ def _draw_center_cell(planet_name: str, box_code: str, cx: float, cy: float, cel
         _svg_diamond(cx, cy, cell_size / 2.0, fill=fill, stroke="#000000", width=2)
     ]
 
-    href = _planet_href(asset_base_url, planet_name)
+    href = _planet_href_for_box(asset_base_url, planet_name, box_code)
     scale = GLYPH_SCALE_RET.get(planet_name, 1.0)
     glyph_px = 36.0 * scale
 
