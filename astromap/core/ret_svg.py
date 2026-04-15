@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import math
 from html import escape
 from typing import Any
 
-from .ret_hp import compute_planet_hierarchy, compute_ret_box_colors
 from .ret_families import compute_ret_ranking
 from .signs_hierarchy import rank_signs
 
 
 TITLE_COLOR = "#0b3d91"
 TEXT_COLOR = "#111111"
-GREY = "#444444"
-LIGHT_GREY = "#bdbdbd"
+BLACK = "#000000"
+MID_GREY = "#BDBDBD"
+DARK_GREY = "#444444"
 
 PLANET_FILES = {
     "Soleil": "Soleil.svg",
@@ -42,6 +41,7 @@ SIGN_FILES = {
     "Poissons": "Poissons.svg",
 }
 
+# Style de légende RET, fidèle au Tkinter
 RET_STYLE = {
     "p": {"shape": "circle", "fill": "#FFFFFF", "stroke": "#000000", "label": "p", "legend": "pouvoir intensif"},
     "E": {"shape": "diamond", "fill": "#FF4A3A", "stroke": "#000000", "label": "E", "legend": "Existence extensive"},
@@ -75,20 +75,6 @@ def _svg_text(
         f'font-family="{family}" font-size="{size}" font-weight="{weight}" '
         f'fill="{fill}" text-anchor="{anchor}" dominant-baseline="{baseline}">'
         f'{escape(str(text))}</text>'
-    )
-
-
-def _svg_line(x1, y1, x2, y2, *, stroke="#000", width=1) -> str:
-    return (
-        f'<line x1="{_fmt(x1)}" y1="{_fmt(y1)}" x2="{_fmt(x2)}" y2="{_fmt(y2)}" '
-        f'stroke="{stroke}" stroke-width="{width}" stroke-linecap="round" />'
-    )
-
-
-def _svg_rect(x, y, w, h, *, fill="#fff", stroke="#000", width=1) -> str:
-    return (
-        f'<rect x="{_fmt(x)}" y="{_fmt(y)}" width="{_fmt(w)}" height="{_fmt(h)}" '
-        f'fill="{fill}" stroke="{stroke}" stroke-width="{width}" />'
     )
 
 
@@ -150,11 +136,39 @@ def _planet_sign_map(theme_payload: dict[str, Any]) -> dict[str, str]:
     return out
 
 
-def _shape_for_ret_family(cx: float, cy: float, fam: str, size: float) -> str:
-    style = RET_STYLE[fam]
-    if style["shape"] == "circle":
-        return _svg_circle(cx, cy, size * 0.58, fill=style["fill"], stroke=style["stroke"], width=1)
-    return _svg_diamond(cx, cy, size, fill=style["fill"], stroke=style["stroke"], width=1)
+def _draw_box_with_inner_symbol(cx: float, cy: float, box_size: float, box_fill: str, inner_family: str | None) -> str:
+    parts: list[str] = []
+
+    # fond de case "boîte"
+    if box_fill == "black":
+        parts.append(_svg_diamond(cx, cy, box_size, fill="#000000", stroke="#000000", width=1))
+    elif box_fill == "gray":
+        parts.append(_svg_diamond(cx, cy, box_size, fill=MID_GREY, stroke="#000000", width=1))
+    else:
+        parts.append(_svg_diamond(cx, cy, box_size, fill="#FFFFFF", stroke="#777777", width=1))
+
+    # forme interne éventuelle
+    if inner_family:
+        style = RET_STYLE[inner_family]
+        if style["shape"] == "circle":
+            parts.append(_svg_circle(cx, cy, box_size * 0.52, fill=style["fill"], stroke=style["stroke"], width=1))
+        else:
+            parts.append(_svg_diamond(cx, cy, box_size * 0.78, fill=style["fill"], stroke=style["stroke"], width=1))
+
+    return "".join(parts)
+
+
+def _ret_family_for_planet(planet: str, ret_order: list[str], family_to_planets: dict[str, list[str]]) -> str | None:
+    for fam in ret_order:
+        if planet in family_to_planets.get(fam, []):
+            return fam
+    return None
+
+
+def _top_planet_for_family(fam: str, ordered_planets: list[str], family_to_planets: dict[str, list[str]]) -> str | None:
+    candidates = family_to_planets.get(fam, [])
+    ranked = [p for p in ordered_planets if p in candidates]
+    return ranked[0] if ranked else (candidates[0] if candidates else None)
 
 
 def render_ret_svg(
@@ -165,8 +179,8 @@ def render_ret_svg(
     language: str = "fr",
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
 ) -> str:
-    ranks, ordered_planets, info = compute_planet_hierarchy(theme_payload, theme_payload)
-    ret_order, ret_details = compute_ret_ranking(ranks)
+    ranks, ordered_planets, _info = compute_planet_hierarchy(theme_payload, theme_payload)
+    ret_order, _ret_details = compute_ret_ranking(ranks)
     sign_ranked = rank_signs(theme_payload.get("planets", []), ranks)
     angular_set = _extract_angular_set(theme_payload)
     box_colors = compute_ret_box_colors(ordered_planets, angular_set, theme_payload.get("aspects", []) or [])
@@ -176,56 +190,84 @@ def render_ret_svg(
 
     w = width
     h = height
-    cx = w * 0.50
-    cy = h * 0.42
 
-    left_x_rank = w * 0.10
-    left_x_planet = w * 0.14
-    left_x_shape = w * 0.19
-    left_x_sign = w * 0.24
-    left_y0 = h * 0.22
-    left_dy = h * 0.062
+    # géométrie générale proche Tkinter
+    left_x_rank = 110
+    left_x_planet = 155
+    left_x_shape = 225
+    left_x_sign = 285
+    left_y0 = 225
+    left_dy = 56
 
-    right_x_num = w * 0.74
-    right_x_shape = w * 0.77
-    right_x_label = w * 0.81
-    right_y0 = h * 0.23
-    right_dy = h * 0.060
-
-    planet_px = 34
-    sign_px = 20
-    small_shape = 19
-
+    center_x = 610
+    center_y = 390
     tile = 46
-    gap = tile * 0.98
+    gap = 45
 
-    # placement losange central
-    positions = {
-        0: (cx, cy - 2 * gap),          # top
-        1: (cx - gap, cy - gap),        # upper-left
-        2: (cx, cy - gap),              # upper-mid
-        3: (cx + gap, cy - gap),        # upper-right
-        4: (cx - 1.5 * gap, cy),        # left-top
-        5: (cx - 0.5 * gap, cy),        # left-mid
-        6: (cx + 0.5 * gap, cy),        # right-mid
-        7: (cx, cy + gap),              # bottom
-    }
+    right_x_num = 890
+    right_x_shape = 930
+    right_x_text = 975
+    right_y0 = 230
+    right_dy = 48
 
+    dom_label_x = 110
+    dom_icons_x = 285
+    dom_planets_y = 735
+    dom_signs_y = 775
+
+    planet_px_left = 36
+    sign_px_left = 20
+    planet_px_center = 48
+    small_shape = 19
+    dom_icon_px = 34
+
+    # Familles RET vers planètes
     family_to_planets = {
         "p": ["Lune"],
-        "R": ["Soleil", "Vénus", "Mercure"],
         "E": ["Jupiter", "Mars", "Saturne"],
-        "T": ["Uranus", "Neptune", "Pluton"],
-        "r": ["Soleil", "Jupiter", "Uranus"],
-        "e": ["Vénus", "Mars", "Neptune"],
         "t": ["Mercure", "Saturne", "Pluton"],
+        "e": ["Vénus", "Mars", "Neptune"],
+        "R": ["Soleil", "Vénus", "Mercure"],
+        "r": ["Soleil", "Jupiter", "Uranus"],
         "P": ["Soleil", "Mars", "Pluton"],
+        "T": ["Uranus", "Neptune", "Pluton"],
     }
 
-    def top_planet_for_family(fam: str) -> str | None:
-        candidates = family_to_planets.get(fam, [])
-        ranked = [p for p in ordered_planets if p in candidates]
-        return ranked[0] if ranked else (candidates[0] if candidates else None)
+    # Cases fixes du losange central, comme le Tkinter
+    pos = {
+        0: (center_x, center_y - 3 * gap),   # sommet
+        1: (center_x, center_y - 2 * gap),   # ligne 2 centre
+        2: (center_x - gap, center_y - gap), # ligne 3 gauche
+        3: (center_x + gap, center_y - gap), # ligne 3 droite
+        4: (center_x - 2 * gap, center_y),   # ligne 4 gauche
+        5: (center_x, center_y),             # ligne 4 centre
+        6: (center_x + 2 * gap, center_y),   # ligne 4 droite
+        7: (center_x - gap, center_y + gap), # ligne 5 gauche
+        8: (center_x + gap, center_y + gap), # ligne 5 droite
+        9: (center_x, center_y + 2 * gap),   # bas
+    }
+
+    # lettres autour du losange, positionnées comme le Tkinter
+    edge_labels = [
+        ("p", center_x, center_y - 3 * gap - 36),
+        ("R", center_x - 32, center_y - 2 * gap - 12),
+        ("r", center_x + 34, center_y - 2 * gap - 12),
+        ("E", center_x - gap - 32, center_y - gap - 18),
+        ("e", center_x + gap + 34, center_y - gap - 18),
+        ("T", center_x - 2 * gap - 28, center_y + 3),
+        ("t", center_x + 2 * gap + 28, center_y + 3),
+        ("P", center_x, center_y + 2 * gap + 38),
+    ]
+
+    # Structure fidèle du losange Tkinter :
+    # 0 sommet = famille 1 seule
+    # 1 = planète 1 sur blanc
+    # 2-3 = planètes 2-3
+    # 4-5-6 = planètes 4-5-6
+    # 7-8 = planètes 7-8
+    # 9 = planète 9 sur blanc
+    # la 10e planète reste dans la colonne gauche, pas dans le losange
+    center_planets = ordered_planets[:9]
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
@@ -233,73 +275,74 @@ def render_ret_svg(
         _svg_text(w / 2, 28, title, size=18, fill=TITLE_COLOR, weight="700", baseline="hanging"),
     ]
 
-    # colonne gauche : classement planétaire
+    # Colonne gauche
     for i, planet in enumerate(ordered_planets[:10], start=1):
         y = left_y0 + (i - 1) * left_dy
-
         parts.append(_svg_text(left_x_rank, y, f"{i}.", size=14, weight="700"))
+
         href_p = _planet_href(asset_base_url, planet)
         if href_p:
-            parts.append(_svg_image(href_p, left_x_planet, y, planet_px))
+            parts.append(_svg_image(href_p, left_x_planet, y, planet_px_left))
         else:
-            parts.append(_svg_text(left_x_planet, y, planet[:1], size=18, weight="700"))
+            parts.append(_svg_text(left_x_planet, y, planet[:1], size=22, weight="700"))
 
-        # case RET colorée
-        fill = box_colors.get(planet, "white")
-        fill_map = {"black": "#000000", "gray": "#9E9E9E", "white": "#FFFFFF"}
-        stroke_map = {"black": "#000000", "gray": "#000000", "white": "#777777"}
-
-        parts.append(_svg_diamond(left_x_shape, y, small_shape, fill=fill_map[fill], stroke=stroke_map[fill], width=1))
-
-        # famille RET dominante de la planète (première famille qui la contient)
-        fam_for_planet = None
-        for fam in ret_order:
-            if planet in family_to_planets.get(fam, []):
-                fam_for_planet = fam
-                break
-
-        if fam_for_planet:
-            style = RET_STYLE[fam_for_planet]
-            if style["shape"] == "circle":
-                parts.append(_svg_circle(left_x_shape, y, small_shape * 0.50, fill=style["fill"], stroke=style["stroke"], width=1))
-            else:
-                parts.append(_svg_diamond(left_x_shape, y, small_shape * 0.78, fill=style["fill"], stroke=style["stroke"], width=1))
+        fam = _ret_family_for_planet(planet, ret_order, family_to_planets)
+        box_fill = box_colors.get(planet, "white")
+        parts.append(_draw_box_with_inner_symbol(left_x_shape, y, small_shape, box_fill, fam))
 
         sign_name = sign_map.get(planet)
         href_s = _sign_href(asset_base_url, sign_name) if sign_name else None
         if href_s:
-            parts.append(_svg_image(href_s, left_x_sign, y, sign_px))
+            parts.append(_svg_image(href_s, left_x_sign, y, sign_px_left))
 
-    # losange central RET
-    for idx, fam in enumerate(ret_order[:8]):
-        x, y = positions[idx]
-        parts.append(_shape_for_ret_family(x, y, fam, tile))
-
-        # glyphe principal de la famille
-        p = top_planet_for_family(fam)
-        href = _planet_href(asset_base_url, p) if p else None
-
-        # texte noir/blanc selon fond
-        fill = RET_STYLE[fam]["fill"]
-        dark_bg = fill in {"#000000", "#444444", "#1E88E5"}
-        txt_color = "#FFFFFF" if dark_bg else "#000000"
-
-        if href:
-            parts.append(_svg_image(href, x, y, 40))
+    # Losange RET central
+    # Sommet : famille 1 seule
+    if ret_order:
+        fam0 = ret_order[0]
+        x, y = pos[0]
+        style = RET_STYLE[fam0]
+        if style["shape"] == "circle":
+            parts.append(_svg_circle(x, y, tile * 0.58, fill=style["fill"], stroke=style["stroke"], width=1))
         else:
-            parts.append(_svg_text(x, y, RET_STYLE[fam]["label"], size=22, weight="700", fill=txt_color))
+            parts.append(_svg_diamond(x, y, tile, fill=style["fill"], stroke=style["stroke"], width=1))
 
-    # petites lettres autour du losange
-    parts.append(_svg_text(cx, cy - 2 * gap - 58, "p", size=14, weight="700"))
-    parts.append(_svg_text(cx - 1.55 * gap, cy - 0.45 * gap, "T", size=14, weight="700", anchor="end"))
-    parts.append(_svg_text(cx - 0.85 * gap, cy - 1.18 * gap, "E", size=14, weight="700", anchor="end"))
-    parts.append(_svg_text(cx - 0.15 * gap, cy - 1.75 * gap, "R", size=14, weight="700", anchor="end"))
-    parts.append(_svg_text(cx + 0.15 * gap, cy - 1.75 * gap, "r", size=14, weight="700", anchor="start"))
-    parts.append(_svg_text(cx + 0.95 * gap, cy - 1.18 * gap, "e", size=14, weight="700", anchor="start"))
-    parts.append(_svg_text(cx + 1.55 * gap, cy - 0.45 * gap, "t", size=14, weight="700", anchor="start"))
-    parts.append(_svg_text(cx, cy + 1.78 * gap, "P", size=14, weight="700"))
+        p = _top_planet_for_family(fam0, ordered_planets, family_to_planets)
+        href = _planet_href(asset_base_url, p) if p else None
+        if href:
+            parts.append(_svg_image(href, x, y, planet_px_center))
 
-    # colonne droite : légende RET
+    # Cases planétaires fixes 1..9
+    center_slots = [
+        (1, center_planets[0] if len(center_planets) > 0 else None),
+        (2, center_planets[1] if len(center_planets) > 1 else None),
+        (3, center_planets[2] if len(center_planets) > 2 else None),
+        (4, center_planets[3] if len(center_planets) > 3 else None),
+        (5, center_planets[4] if len(center_planets) > 4 else None),
+        (6, center_planets[5] if len(center_planets) > 5 else None),
+        (7, center_planets[6] if len(center_planets) > 6 else None),
+        (8, center_planets[7] if len(center_planets) > 7 else None),
+        (9, center_planets[8] if len(center_planets) > 8 else None),
+    ]
+
+    for slot_idx, planet in center_slots:
+        if not planet:
+            continue
+        x, y = pos[slot_idx]
+        fam = _ret_family_for_planet(planet, ret_order, family_to_planets)
+        box_fill = box_colors.get(planet, "white")
+        parts.append(_draw_box_with_inner_symbol(x, y, tile, box_fill, fam))
+
+        href = _planet_href(asset_base_url, planet)
+        if href:
+            parts.append(_svg_image(href, x, y, planet_px_center))
+        else:
+            parts.append(_svg_text(x, y, planet[:1], size=24, weight="700"))
+
+    # Lettres RET autour du losange
+    for txt, x, y in edge_labels:
+        parts.append(_svg_text(x, y, txt, size=14, weight="700"))
+
+    # Légende droite
     for i, fam in enumerate(ret_order[:8], start=1):
         y = right_y0 + (i - 1) * right_dy
         style = RET_STYLE[fam]
@@ -311,41 +354,34 @@ def render_ret_svg(
         else:
             parts.append(_svg_diamond(right_x_shape, y, 19, fill=style["fill"], stroke=style["stroke"], width=1))
 
-        label = style["label"]
-        legend = style["legend"]
         parts.append(
             _svg_text(
-                right_x_label,
+                right_x_text,
                 y,
-                f"{label} ({legend})",
+                f'{style["label"]} ({style["legend"]})',
                 size=12,
                 weight="700",
                 anchor="start",
             )
         )
 
-    # bas gauche : dominantes
+    # Dominantes
     dom_planets = ordered_planets[:4]
     dom_signs = [name for name, _score in sign_ranked[:3]]
 
-    y_dom1 = h * 0.86
-    y_dom2 = h * 0.91
-    x_dom_label = w * 0.10
-    x_dom_start = w * 0.23
-
-    parts.append(_svg_text(x_dom_label, y_dom1, "Planètes dominantes :", size=13, weight="700", anchor="start"))
+    parts.append(_svg_text(dom_label_x, dom_planets_y, "Planètes dominantes :", size=13, weight="700", anchor="start"))
     for j, p in enumerate(dom_planets):
         href = _planet_href(asset_base_url, p)
-        x = x_dom_start + j * 36
+        x = dom_icons_x + j * 32
         if href:
-            parts.append(_svg_image(href, x, y_dom1, 28))
+            parts.append(_svg_image(href, x, dom_planets_y, dom_icon_px))
 
-    parts.append(_svg_text(x_dom_label, y_dom2, "Signes dominants :", size=13, weight="700", anchor="start"))
+    parts.append(_svg_text(dom_label_x, dom_signs_y, "Signes dominants :", size=13, weight="700", anchor="start"))
     for j, s in enumerate(dom_signs):
         href = _sign_href(asset_base_url, s)
-        x = x_dom_start + j * 36
+        x = dom_icons_x + j * 32
         if href:
-            parts.append(_svg_image(href, x, y_dom2, 28))
+            parts.append(_svg_image(href, x, dom_signs_y, dom_icon_px))
 
     parts.append("</svg>")
     return "".join(parts)
