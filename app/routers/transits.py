@@ -13,6 +13,42 @@ class TransitsRequest(ThemeRequest):
     transit_datetime_local: str
     aspect_mode: str = "TN"
 
+@router.post("/svg")
+def compute_transits_svg(payload: TransitsRequest) -> Response:
+    try:
+        data = compute_transits_payload(
+            name=payload.name or "",
+            natal_datetime_local=payload.datetime_local,
+            transit_datetime_local=payload.transit_datetime_local,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            tz=payload.tz,
+            settings=payload.settings.model_dump(),
+            aspect_mode=payload.aspect_mode,
+        )
+
+        lang = "fr"
+        settings_dict = payload.settings.model_dump()
+        if str(settings_dict.get("language", "fr")).lower().startswith("en"):
+            lang = "en"
+
+        svg = render_transits_svg(
+            data,
+            width=1400,
+            height=900,
+            language=lang,
+            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+        )
+
+        return Response(content=svg, media_type="image/svg+xml")
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur interne lors de la génération SVG des transits: {exc}",
+        ) from exc
 
 @router.post("")
 def compute_transits(payload: TransitsRequest):
