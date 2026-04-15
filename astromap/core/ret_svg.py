@@ -4,15 +4,13 @@ from html import escape
 from typing import Any
 
 from .ret_hp import compute_planet_hierarchy, compute_ret_box_colors
-from .ret_families import compute_ret_ranking
 from .signs_hierarchy import rank_signs
+from .ret_families import compute_ret_ranking
 
-
-TITLE_COLOR = "#0b3d91"
+TITLE_COLOR = "#1f4fa3"
 TEXT_COLOR = "#111111"
 BLACK = "#000000"
-MID_GREY = "#BDBDBD"
-DARK_GREY = "#444444"
+MID_GREY = "#A0A0A0"
 
 PLANET_FILES = {
     "Soleil": "Soleil.svg",
@@ -42,16 +40,110 @@ SIGN_FILES = {
     "Poissons": "Poissons.svg",
 }
 
-# Style de légende RET, fidèle au Tkinter
-RET_STYLE = {
-    "p": {"shape": "circle", "fill": "#FFFFFF", "stroke": "#000000", "label": "p", "legend": "pouvoir intensif"},
-    "E": {"shape": "diamond", "fill": "#FF4A3A", "stroke": "#000000", "label": "E", "legend": "Existence extensive"},
-    "t": {"shape": "circle", "fill": "#1E88E5", "stroke": "#000000", "label": "t", "legend": "transcendance intensive"},
-    "e": {"shape": "circle", "fill": "#FF4336", "stroke": "#000000", "label": "e", "legend": "existence intensive"},
-    "R": {"shape": "diamond", "fill": "#FFD200", "stroke": "#000000", "label": "R", "legend": "Représentation extensive"},
-    "r": {"shape": "circle", "fill": "#FFD200", "stroke": "#000000", "label": "r", "legend": "représentation intensive"},
-    "P": {"shape": "diamond", "fill": "#444444", "stroke": "#000000", "label": "P", "legend": "Pouvoir extensif"},
-    "T": {"shape": "diamond", "fill": "#1E88E5", "stroke": "#000000", "label": "T", "legend": "Transcendance extensive"},
+RET_PLANET_CODE_COLORS = {
+    "Lune":    ("#ffffff", None),
+    "Soleil":  ("#ffd000", "#ffd000"),
+    "Mercure": ("#ffd000", "#0090ff"),
+    "Vénus":   ("#ffd000", "#ff3c2f"),
+    "Mars":    ("#ff3c2f", "#ff3c2f"),
+    "Jupiter": ("#ff3c2f", "#ffd000"),
+    "Saturne": ("#ff3c2f", "#0090ff"),
+    "Uranus":  ("#0090ff", "#ffd000"),
+    "Neptune": ("#0090ff", "#ff3c2f"),
+    "Pluton":  ("#0090ff", "#0090ff"),
+}
+
+RET_FAMILY_CODE_FROM_STR = {
+    "R": "R",
+    "Représentation extensive (R)": "R",
+    "Extensive representation (R)": "R",
+    "r": "r",
+    "représentation intensive (r)": "r",
+    "Intensive representation (r)": "r",
+    "E": "E",
+    "Existence extensive (E)": "E",
+    "Extensive existence (E)": "E",
+    "e": "e",
+    "existence intensive (e)": "e",
+    "Intensive existence (e)": "e",
+    "T": "T",
+    "Transcendance extensive (T)": "T",
+    "Extensive transcendence (T)": "T",
+    "t": "t",
+    "transcendance intensive (t)": "t",
+    "Intensive transcendence (t)": "t",
+    "P": "P",
+    "Pouvoir extensif (P)": "P",
+    "Extensive power (P)": "P",
+    "p": "p",
+    "pouvoir intensif (p)": "p",
+    "Intensive power (p)": "p",
+}
+
+RET_FAMILY_MARKERS = {
+    "r": ("circle",  "#ffd000"),
+    "R": ("diamond", "#ffd000"),
+    "e": ("circle",  "#ff3c2f"),
+    "E": ("diamond", "#ff3c2f"),
+    "t": ("circle",  "#0090ff"),
+    "T": ("diamond", "#0090ff"),
+    "p": ("circle",  "#ffffff"),
+    "P": ("diamond", "#404040"),
+}
+
+PLANET_LABELS = {
+    "FR": {
+        "Soleil": "Soleil",
+        "Lune": "Lune",
+        "Mercure": "Mercure",
+        "Vénus": "Vénus",
+        "Mars": "Mars",
+        "Jupiter": "Jupiter",
+        "Saturne": "Saturne",
+        "Uranus": "Uranus",
+        "Neptune": "Neptune",
+        "Pluton": "Pluton",
+    },
+    "EN": {
+        "Soleil": "Sun",
+        "Lune": "Moon",
+        "Mercure": "Mercury",
+        "Vénus": "Venus",
+        "Mars": "Mars",
+        "Jupiter": "Jupiter",
+        "Saturne": "Saturn",
+        "Uranus": "Uranus",
+        "Neptune": "Neptune",
+        "Pluton": "Pluto",
+    },
+}
+
+GLYPH_SCALE_RET = {
+    "Soleil": 1.13,
+    "Lune": 1.00,
+    "Mercure": 1.10,
+    "Vénus": 1.05,
+    "Mars": 1.15,
+    "Jupiter": 1.00,
+    "Saturne": 1.05,
+    "Uranus": 1.05,
+    "Neptune": 1.13,
+    "Pluton": 1.05,
+}
+
+PERCEPTION_COEFFS_SIGNS = {
+    "Bélier": 1.00,
+    "Taureau": 1.02,
+    "Gémeaux": 0.95,
+    "Cancer": 1.00,
+    "Lion": 1.08,
+    "Vierge": 1.05,
+    "Balance": 1.00,
+    "Scorpion": 1.08,
+    "Sagittaire": 0.92,
+    "Capricorne": 1.00,
+    "Verseau": 1.00,
+    "Poissons": 1.00,
 }
 
 
@@ -60,33 +152,33 @@ def _fmt(v: float) -> str:
 
 
 def _svg_text(
-    x,
-    y,
-    text,
+    x: float,
+    y: float,
+    text: str,
     *,
-    size=12,
-    fill=TEXT_COLOR,
-    weight="normal",
-    anchor="middle",
-    baseline="middle",
-    family="Segoe UI, Arial, sans-serif",
+    size: int = 12,
+    fill: str = TEXT_COLOR,
+    weight: str = "normal",
+    anchor: str = "middle",
+    baseline: str = "middle",
+    family: str = "Segoe UI, Arial, sans-serif",
 ) -> str:
     return (
         f'<text x="{_fmt(x)}" y="{_fmt(y)}" '
         f'font-family="{family}" font-size="{size}" font-weight="{weight}" '
         f'fill="{fill}" text-anchor="{anchor}" dominant-baseline="{baseline}">'
-        f'{escape(str(text))}</text>'
+        f"{escape(str(text))}</text>"
     )
 
 
-def _svg_circle(cx, cy, r, *, fill="#fff", stroke="#000", width=1) -> str:
+def _svg_circle(cx: float, cy: float, r: float, *, fill="#fff", stroke="#000", width=1) -> str:
     return (
         f'<circle cx="{_fmt(cx)}" cy="{_fmt(cy)}" r="{_fmt(r)}" '
         f'fill="{fill}" stroke="{stroke}" stroke-width="{width}" />'
     )
 
 
-def _svg_diamond(cx, cy, size, *, fill="#fff", stroke="#000", width=1) -> str:
+def _svg_diamond(cx: float, cy: float, size: float, *, fill="#fff", stroke="#000", width=1) -> str:
     pts = [
         (cx, cy - size),
         (cx + size, cy),
@@ -117,272 +209,320 @@ def _sign_href(asset_base_url: str, sign_name: str) -> str | None:
     return f"{asset_base_url}/Signes/{fn}" if fn else None
 
 
-def _extract_angular_set(theme_payload: dict[str, Any]) -> set[str]:
-    out = set()
-    for item in theme_payload.get("domitudes", []) or []:
-        if item.get("est_angulaire"):
-            name = item.get("planete")
-            if name:
-                out.add(name)
-    return out
+def _planet_label(name: str, language: str) -> str:
+    lang = "EN" if language.lower().startswith("en") else "FR"
+    return PLANET_LABELS[lang].get(name, name)
 
 
-def _planet_sign_map(theme_payload: dict[str, Any]) -> dict[str, str]:
-    out = {}
-    for p in theme_payload.get("planets", []) or []:
-        name = p.get("name")
-        sign = p.get("sign")
-        if name and sign:
-            out[name] = sign
-    return out
+def _extract_angular_set(dom_payload: dict[str, Any] | None) -> set[str]:
+    angular = set()
+    if not dom_payload:
+        return angular
+    for d in dom_payload.get("domitudes", []) or []:
+        if d.get("est_angulaire"):
+            p = d.get("planete")
+            if p:
+                angular.add(p)
+    return angular
 
 
-def _draw_box_with_inner_symbol(cx: float, cy: float, box_size: float, box_fill: str, inner_family: str | None) -> str:
-    parts: list[str] = []
+def _planet_signs(theme_payload: dict[str, Any], dom_payload: dict[str, Any] | None) -> dict[str, str]:
+    out: dict[str, str] = {}
+    planets = theme_payload.get("planets", []) or []
+    domitudes = (dom_payload or {}).get("domitudes", []) or []
 
-    # fond de case "boîte"
-    if box_fill == "black":
-        parts.append(_svg_diamond(cx, cy, box_size, fill="#000000", stroke="#000000", width=1))
-    elif box_fill == "gray":
-        parts.append(_svg_diamond(cx, cy, box_size, fill=MID_GREY, stroke="#000000", width=1))
-    else:
-        parts.append(_svg_diamond(cx, cy, box_size, fill="#FFFFFF", stroke="#777777", width=1))
+    dom_by_name = {
+        d.get("planete") or d.get("planet") or d.get("name"): d
+        for d in domitudes
+    }
 
-    # forme interne éventuelle
-    if inner_family:
-        style = RET_STYLE[inner_family]
-        if style["shape"] == "circle":
-            parts.append(_svg_circle(cx, cy, box_size * 0.52, fill=style["fill"], stroke=style["stroke"], width=1))
-        else:
-            parts.append(_svg_diamond(cx, cy, box_size * 0.78, fill=style["fill"], stroke=style["stroke"], width=1))
+    signs = [
+        "Bélier", "Taureau", "Gémeaux", "Cancer", "Lion", "Vierge",
+        "Balance", "Scorpion", "Sagittaire", "Capricorne", "Verseau", "Poissons"
+    ]
 
+    for p in planets:
+        name = (
+            p.get("name")
+            or p.get("planet")
+            or p.get("planete")
+            or p.get("nom")
+            or p.get("label")
+        )
+        if not name:
+            continue
+
+        sign_name = None
+        dom = dom_by_name.get(name)
+        if dom:
+            sign_name = (
+                dom.get("sign_local")
+                or dom.get("signe_local")
+                or dom.get("sign")
+                or dom.get("signe")
+            )
+
+        if sign_name is None:
+            lon = p.get("lon") or p.get("longitude") or p.get("ecliptic_lon")
+            try:
+                lon_deg = float(lon)
+                sign_name = signs[int((lon_deg % 360.0) // 30)]
+            except Exception:
+                sign_name = None
+
+        if sign_name:
+            out[name] = sign_name
+
+    fr_to_en = PLANET_LABELS["EN"]
+    en_to_fr = {v: k for k, v in fr_to_en.items()}
+
+    aliases: dict[str, str] = {}
+    for pname, sname in out.items():
+        aliases[pname] = sname
+        if pname in fr_to_en:
+            aliases[fr_to_en[pname]] = sname
+        if pname in en_to_fr:
+            aliases[en_to_fr[pname]] = sname
+
+    return aliases
+
+
+def _draw_left_planet_code(planet_name: str, cx: float, cy: float, size: float = 24.0) -> str:
+    colors = RET_PLANET_CODE_COLORS.get(planet_name)
+    if not colors:
+        return ""
+    diamond_color, circle_color = colors
+    parts = [_svg_diamond(cx, cy, size, fill=diamond_color, stroke="#000000", width=1)]
+    if circle_color is not None:
+        r = size * 0.52
+        parts.append(_svg_circle(cx, cy, r, fill=circle_color, stroke="#000000", width=1))
     return "".join(parts)
 
 
-def _ret_family_for_planet(planet: str, ret_order: list[str], family_to_planets: dict[str, list[str]]) -> str | None:
-    for fam in ret_order:
-        if planet in family_to_planets.get(fam, []):
-            return fam
-    return None
+def _draw_center_cell(planet_name: str, box_code: str, cx: float, cy: float, cell_size: float, asset_base_url: str) -> str:
+    if box_code == "black":
+        fill = "#000000"
+    elif box_code in ("gray", "grey"):
+        fill = MID_GREY
+    else:
+        fill = "#FFFFFF"
 
+    parts = [
+        _svg_diamond(cx, cy, cell_size / 2.0, fill=fill, stroke="#000000", width=2)
+    ]
 
-def _top_planet_for_family(fam: str, ordered_planets: list[str], family_to_planets: dict[str, list[str]]) -> str | None:
-    candidates = family_to_planets.get(fam, [])
-    ranked = [p for p in ordered_planets if p in candidates]
-    return ranked[0] if ranked else (candidates[0] if candidates else None)
+    href = _planet_href(asset_base_url, planet_name)
+    scale = GLYPH_SCALE_RET.get(planet_name, 1.0)
+    glyph_px = 36.0 * scale
+
+    if href:
+        parts.append(_svg_image(href, cx, cy, glyph_px))
+    else:
+        parts.append(
+            _svg_text(
+                cx, cy, planet_name[:2],
+                size=24,
+                fill="#FFFFFF" if fill == "#000000" else "#000000",
+                weight="700",
+            )
+        )
+    return "".join(parts)
 
 
 def render_ret_svg(
     theme_payload: dict[str, Any],
+    dom_payload: dict[str, Any] | None = None,
     width: int = 1400,
     height: int = 900,
     *,
     language: str = "fr",
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
 ) -> str:
-    ranks, ordered_planets, _info = compute_planet_hierarchy(theme_payload, theme_payload)
+    ranks, ordered_planets, _info = compute_planet_hierarchy(theme_payload, dom_payload)
+    angular_set = _extract_angular_set(dom_payload)
+    aspects = theme_payload.get("aspects", []) or []
+    box_colors = compute_ret_box_colors(ordered_planets, angular_set, aspects)
+    sign_rank = rank_signs(theme_payload.get("planets", []) or [], ranks)
     ret_order, _ret_details = compute_ret_ranking(ranks)
-    sign_ranked = rank_signs(theme_payload.get("planets", []), ranks)
-    angular_set = _extract_angular_set(theme_payload)
-    box_colors = compute_ret_box_colors(ordered_planets, angular_set, theme_payload.get("aspects", []) or [])
-    sign_map = _planet_sign_map(theme_payload)
+    planet_signs = _planet_signs(theme_payload, dom_payload)
 
-    title = "RET et Hiérarchie Planétaire" if language == "fr" else "RET and Planetary Hierarchy"
+    title = "RET et Hiérarchie Planétaire" if language.lower().startswith("fr") else "RET and Planetary Hierarchy"
 
-    w = width
-    h = height
-
-    # géométrie générale proche Tkinter
-    left_x_rank = 110
-    left_x_planet = 155
-    left_x_shape = 225
-    left_x_sign = 285
-    left_y0 = 225
-    left_dy = 56
-
-    center_x = 610
-    center_y = 390
-    tile = 46
-    gap = 45
-
-    right_x_num = 890
-    right_x_shape = 930
-    right_x_text = 975
-    right_y0 = 230
-    right_dy = 48
-
-    dom_label_x = 110
-    dom_icons_x = 285
-    dom_planets_y = 735
-    dom_signs_y = 775
-
-    planet_px_left = 36
-    sign_px_left = 20
-    planet_px_center = 48
-    small_shape = 19
-    dom_icon_px = 34
-
-    # Familles RET vers planètes
-    family_to_planets = {
-        "p": ["Lune"],
-        "E": ["Jupiter", "Mars", "Saturne"],
-        "t": ["Mercure", "Saturne", "Pluton"],
-        "e": ["Vénus", "Mars", "Neptune"],
-        "R": ["Soleil", "Vénus", "Mercure"],
-        "r": ["Soleil", "Jupiter", "Uranus"],
-        "P": ["Soleil", "Mars", "Pluton"],
-        "T": ["Uranus", "Neptune", "Pluton"],
-    }
-
-    # Cases fixes du losange central, comme le Tkinter
-    pos = {
-        0: (center_x, center_y - 3 * gap),   # sommet
-        1: (center_x, center_y - 2 * gap),   # ligne 2 centre
-        2: (center_x - gap, center_y - gap), # ligne 3 gauche
-        3: (center_x + gap, center_y - gap), # ligne 3 droite
-        4: (center_x - 2 * gap, center_y),   # ligne 4 gauche
-        5: (center_x, center_y),             # ligne 4 centre
-        6: (center_x + 2 * gap, center_y),   # ligne 4 droite
-        7: (center_x - gap, center_y + gap), # ligne 5 gauche
-        8: (center_x + gap, center_y + gap), # ligne 5 droite
-        9: (center_x, center_y + 2 * gap),   # bas
-    }
-
-    # lettres autour du losange, positionnées comme le Tkinter
-    edge_labels = [
-        ("p", center_x, center_y - 3 * gap - 36),
-        ("R", center_x - 32, center_y - 2 * gap - 12),
-        ("r", center_x + 34, center_y - 2 * gap - 12),
-        ("E", center_x - gap - 32, center_y - gap - 18),
-        ("e", center_x + gap + 34, center_y - gap - 18),
-        ("T", center_x - 2 * gap - 28, center_y + 3),
-        ("t", center_x + 2 * gap + 28, center_y + 3),
-        ("P", center_x, center_y + 2 * gap + 38),
-    ]
-
-    # Structure fidèle du losange Tkinter :
-    # 0 sommet = famille 1 seule
-    # 1 = planète 1 sur blanc
-    # 2-3 = planètes 2-3
-    # 4-5-6 = planètes 4-5-6
-    # 7-8 = planètes 7-8
-    # 9 = planète 9 sur blanc
-    # la 10e planète reste dans la colonne gauche, pas dans le losange
-    center_planets = ordered_planets[:9]
-
-    parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
+    parts: list[str] = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
-        _svg_text(w / 2, 28, title, size=18, fill=TITLE_COLOR, weight="700", baseline="hanging"),
+        _svg_text(width / 2.0, 40, title, size=18, fill=TITLE_COLOR, weight="700", baseline="hanging"),
     ]
 
-    # Colonne gauche
-    for i, planet in enumerate(ordered_planets[:10], start=1):
-        y = left_y0 + (i - 1) * left_dy
-        parts.append(_svg_text(left_x_rank, y, f"{i}.", size=14, weight="700"))
+    left_margin = 110
+    top = 120
+    line_h = 48
+    max_num_width = 30
+    padding_num_glyph = 24
 
-        href_p = _planet_href(asset_base_url, planet)
-        if href_p:
-            parts.append(_svg_image(href_p, left_x_planet, y, planet_px_left))
-        else:
-            parts.append(_svg_text(left_x_planet, y, planet[:1], size=22, weight="700"))
+    col_planets_x = left_margin
+    col_ret_x = col_planets_x + 420
+    col_signs_x = col_ret_x + 360
 
-        fam = _ret_family_for_planet(planet, ret_order, family_to_planets)
-        box_fill = box_colors.get(planet, "white")
-        parts.append(_draw_box_with_inner_symbol(left_x_shape, y, small_shape, box_fill, fam))
+    planet_glyph_x = col_planets_x + max_num_width + padding_num_glyph
+    diamond_center_x = planet_glyph_x + 58
+    sign_x = diamond_center_x + 34
 
-        sign_name = sign_map.get(planet)
-        href_s = _sign_href(asset_base_url, sign_name) if sign_name else None
-        if href_s:
-            parts.append(_svg_image(href_s, left_x_sign, y, sign_px_left))
+    small_planet_px = 34
+    small_sign_px = 18
 
-    # Losange RET central
-    # Sommet : famille 1 seule
-    if ret_order:
-        fam0 = ret_order[0]
-        x, y = pos[0]
-        style = RET_STYLE[fam0]
-        if style["shape"] == "circle":
-            parts.append(_svg_circle(x, y, tile * 0.58, fill=style["fill"], stroke=style["stroke"], width=1))
-        else:
-            parts.append(_svg_diamond(x, y, tile, fill=style["fill"], stroke=style["stroke"], width=1))
-
-        p = _top_planet_for_family(fam0, ordered_planets, family_to_planets)
-        href = _planet_href(asset_base_url, p) if p else None
-        if href:
-            parts.append(_svg_image(href, x, y, planet_px_center))
-
-    # Cases planétaires fixes 1..9
-    center_slots = [
-        (1, center_planets[0] if len(center_planets) > 0 else None),
-        (2, center_planets[1] if len(center_planets) > 1 else None),
-        (3, center_planets[2] if len(center_planets) > 2 else None),
-        (4, center_planets[3] if len(center_planets) > 3 else None),
-        (5, center_planets[4] if len(center_planets) > 4 else None),
-        (6, center_planets[5] if len(center_planets) > 5 else None),
-        (7, center_planets[6] if len(center_planets) > 6 else None),
-        (8, center_planets[7] if len(center_planets) > 7 else None),
-        (9, center_planets[8] if len(center_planets) > 8 else None),
-    ]
-
-    for slot_idx, planet in center_slots:
-        if not planet:
-            continue
-        x, y = pos[slot_idx]
-        fam = _ret_family_for_planet(planet, ret_order, family_to_planets)
-        box_fill = box_colors.get(planet, "white")
-        parts.append(_draw_box_with_inner_symbol(x, y, tile, box_fill, fam))
-
-        href = _planet_href(asset_base_url, planet)
-        if href:
-            parts.append(_svg_image(href, x, y, planet_px_center))
-        else:
-            parts.append(_svg_text(x, y, planet[:1], size=24, weight="700"))
-
-    # Lettres RET autour du losange
-    for txt, x, y in edge_labels:
-        parts.append(_svg_text(x, y, txt, size=14, weight="700"))
-
-    # Légende droite
-    for i, fam in enumerate(ret_order[:8], start=1):
-        y = right_y0 + (i - 1) * right_dy
-        style = RET_STYLE[fam]
-
-        parts.append(_svg_text(right_x_num, y, f"{i}.", size=14, weight="700"))
-
-        if style["shape"] == "circle":
-            parts.append(_svg_circle(right_x_shape, y, 11, fill=style["fill"], stroke=style["stroke"], width=1))
-        else:
-            parts.append(_svg_diamond(right_x_shape, y, 19, fill=style["fill"], stroke=style["stroke"], width=1))
+    for rank, pname in enumerate(ordered_planets[:10], start=1):
+        line_center_y = top + (rank - 1) * line_h + line_h / 2.0
 
         parts.append(
             _svg_text(
-                right_x_text,
-                y,
-                f'{style["label"]} ({style["legend"]})',
-                size=12,
+                col_planets_x,
+                line_center_y,
+                f"{rank}.",
+                size=14,
+                fill="#000000",
                 weight="700",
                 anchor="start",
             )
         )
 
-    # Dominantes
-    dom_planets = ordered_planets[:4]
-    dom_signs = [name for name, _score in sign_ranked[:3]]
+        href_p = _planet_href(asset_base_url, pname)
+        if href_p:
+            parts.append(_svg_image(href_p, planet_glyph_x, line_center_y, small_planet_px))
+        else:
+            parts.append(
+                _svg_text(
+                    planet_glyph_x,
+                    line_center_y,
+                    _planet_label(pname, language),
+                    size=14,
+                    weight="700",
+                )
+            )
 
-    parts.append(_svg_text(dom_label_x, dom_planets_y, "Planètes dominantes :", size=13, weight="700", anchor="start"))
-    for j, p in enumerate(dom_planets):
+        parts.append(_draw_left_planet_code(pname, diamond_center_x, line_center_y, 20.0))
+
+        sign_name = planet_signs.get(pname)
+        href_s = _sign_href(asset_base_url, sign_name) if sign_name else None
+        if href_s:
+            coeff = PERCEPTION_COEFFS_SIGNS.get(sign_name, 1.0)
+            parts.append(_svg_image(href_s, sign_x, line_center_y, small_sign_px * coeff))
+
+    diamond_cx = col_ret_x + 20
+    diamond_cy = top + 290
+    cell_size = 105.0
+    step = cell_size * 0.50
+
+    positions = {
+        "Lune":    (0, -4),
+        "Soleil":  (0, -2),
+        "Jupiter": (-1, -1),
+        "Vénus":   (1, -1),
+        "Uranus":  (-2,  0),
+        "Mars":    (0,   0),
+        "Mercure": (2,   0),
+        "Neptune": (-1,  1),
+        "Saturne": (1,   1),
+        "Pluton":  (0,   2),
+    }
+
+    for planet_name, (dx, dy) in positions.items():
+        box_code = box_colors.get(planet_name)
+        if box_code is None:
+            continue
+        cx = diamond_cx + dx * step
+        cy = diamond_cy + dy * step
+        parts.append(_draw_center_cell(planet_name, box_code, cx, cy, cell_size, asset_base_url))
+
+    letters = {
+        "T": (-2.8, -0.8),
+        "E": (-1.8, -1.8),
+        "R": (-0.8, -2.8),
+        "r": (0.8, -2.8),
+        "e": (1.8, -1.8),
+        "t": (2.8, -0.8),
+        "p": (0.0, -5.5),
+        "P": (0.0, 3.5),
+    }
+
+    for txt, (dx, dy) in letters.items():
+        parts.append(
+            _svg_text(
+                diamond_cx + dx * step,
+                diamond_cy + dy * step,
+                txt,
+                size=16,
+                fill="#000000",
+                weight="700",
+            )
+        )
+
+    right_y0 = top + 10
+    right_dy = 50
+    marker_size = 19
+
+    family_labels_fr = {
+        "E": "Existence extensive",
+        "p": "pouvoir intensif",
+        "e": "existence intensive",
+        "R": "Représentation extensive",
+        "r": "représentation intensive",
+        "t": "transcendance intensive",
+        "P": "Pouvoir extensif",
+        "T": "Transcendance extensive",
+    }
+
+    family_labels_en = {
+        "E": "Extensive existence",
+        "p": "Intensive power",
+        "e": "Intensive existence",
+        "R": "Extensive representation",
+        "r": "Intensive representation",
+        "t": "Intensive transcendence",
+        "P": "Extensive power",
+        "T": "Extensive transcendence",
+    }
+
+    fam_labels = family_labels_en if language.lower().startswith("en") else family_labels_fr
+
+    for i, fam in enumerate(ret_order[:8], start=1):
+        y = right_y0 + i * right_dy
+        code = RET_FAMILY_CODE_FROM_STR.get(fam, fam)
+        shape, color = RET_FAMILY_MARKERS[code]
+
+        parts.append(_svg_text(col_signs_x, y, f"{i}.", size=14, weight="700", anchor="start"))
+
+        marker_x = col_signs_x + 38
+        if shape == "circle":
+            parts.append(_svg_circle(marker_x, y, 11, fill=color, stroke="#000000", width=1))
+        else:
+            parts.append(_svg_diamond(marker_x, y, marker_size, fill=color, stroke="#000000", width=1))
+
+        parts.append(_svg_text(col_signs_x + 68, y, code, size=17, weight="700", anchor="start"))
+        parts.append(_svg_text(col_signs_x + 88, y, f"({fam_labels.get(code, code)})", size=12, weight="700", anchor="start"))
+
+    base_y = top + 10 * line_h + 80
+
+    dominant_planets = [p for p in ordered_planets if box_colors.get(p) == "black"]
+    parts.append(_svg_text(left_margin, base_y, "Planètes dominantes :", size=13, weight="700", anchor="start"))
+
+    x_cursor = left_margin + 180
+    for p in dominant_planets:
         href = _planet_href(asset_base_url, p)
-        x = dom_icons_x + j * 32
         if href:
-            parts.append(_svg_image(href, x, dom_planets_y, dom_icon_px))
+            parts.append(_svg_image(href, x_cursor, base_y, 34))
+            x_cursor += 34
 
-    parts.append(_svg_text(dom_label_x, dom_signs_y, "Signes dominants :", size=13, weight="700", anchor="start"))
-    for j, s in enumerate(dom_signs):
-        href = _sign_href(asset_base_url, s)
-        x = dom_icons_x + j * 32
-        if href:
-            parts.append(_svg_image(href, x, dom_signs_y, dom_icon_px))
+    parts.append(_svg_text(left_margin, base_y + 40, "Signes dominants :", size=13, weight="700", anchor="start"))
+
+    x_cursor = left_margin + 160
+    for sign_name, score in sign_rank:
+        if score > 15:
+            href = _sign_href(asset_base_url, sign_name)
+            if href:
+                coeff = PERCEPTION_COEFFS_SIGNS.get(sign_name, 1.0)
+                parts.append(_svg_image(href, x_cursor, base_y + 40, 28 * coeff))
+                x_cursor += 36
 
     parts.append("</svg>")
     return "".join(parts)
