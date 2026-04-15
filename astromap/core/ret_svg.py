@@ -209,10 +209,11 @@ def _planet_href_for_box(asset_base_url: str, planet_name: str, box_code: str) -
         return None
 
     if box_code == "black":
-        white_fn = fn.replace(".svg", "_blanc.svg")
-        return f"{asset_base_url}/Planetes/{white_fn}"
+        chosen = fn.replace(".svg", "_blanc.svg")
+    else:
+        chosen = fn.replace(".svg", "_noir.svg")
 
-    return f"{asset_base_url}/Planetes/{fn}"
+    return f"{asset_base_url}/Planetes/{chosen}"
     
 def _sign_href(asset_base_url: str, sign_name: str) -> str | None:
     fn = SIGN_FILES.get(sign_name)
