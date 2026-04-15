@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 
 from app.schemas import ThemeRequest
 from app.services.transits_service import compute_transits_payload
+from astromap.core.transits_svg import render_transits_svg
 
 
 router = APIRouter(prefix="/transits", tags=["transits"])
