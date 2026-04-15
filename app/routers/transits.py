@@ -31,12 +31,14 @@ def compute_transits_svg(payload: TransitsRequest) -> Response:
         settings_dict = payload.settings.model_dump()
         if str(settings_dict.get("language", "fr")).lower().startswith("en"):
             lang = "en"
-
+        
         svg = render_transits_svg(
-            data,
+            data["natal"],
+            data["transit"],
             width=1400,
             height=900,
             language=lang,
+            aspect_mode=payload.aspect_mode,
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
         )
 
