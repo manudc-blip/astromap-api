@@ -215,8 +215,8 @@ def render_aspects_svg(
         parts.append(_svg_line(x_line, y0, x_line, y_bottom, stroke=color, width=line_w))
 
     # Entêtes planètes
-    glyph_size = cell * 0.50
-    fallback_size = max(8, int(cell * 0.30))
+    glyph_size = cell * 0.66
+    fallback_size = max(10, int(cell * 0.36))
 
     for idx, name in enumerate(planet_names):
         col = idx + 1
@@ -288,22 +288,27 @@ def render_aspects_svg(
             cx = (x1 + x2) / 2
             cy = (y1 + y2) / 2
 
-            parts.append(
-                _svg_text(
-                    cx,
-                    cy - cell * 0.05,
-                    symbol,
-                    size=max(12, int(cell * 0.34)),
-                    weight="700",
-                    family="Segoe UI Symbol, Arial Unicode MS, Segoe UI, Arial, sans-serif",
+            href_a = _aspect_href(asset_base_url, kind)
+            if href_a:
+                parts.append(_svg_image(href_a, cx, cy - cell * 0.06, cell * 0.28))
+            else:
+                parts.append(
+                    _svg_text(
+                        cx,
+                        cy - cell * 0.05,
+                        symbol,
+                        size=max(12, int(cell * 0.34)),
+                        weight="700",
+                        family="Segoe UI Symbol, Arial Unicode MS, Segoe UI, Arial, sans-serif",
+                    )
                 )
-            )
+            
             parts.append(
                 _svg_text(
                     cx,
-                    cy + cell * 0.30,
+                    cy + cell * 0.33,
                     orb_str,
-                    size=max(6, int(cell * 0.14)),
+                    size=max(7, int(cell * 0.15)),
                     fill="#111111",
                 )
             )
@@ -332,9 +337,9 @@ def render_aspects_svg(
         line2 = "Aspects calculés en sphère locale (déclinaison réelle)" if language == "fr" else \
                 "Aspects computed in local sphere (true declination)"
 
-        parts.append(_svg_text(x0, legend_y, title_leg, size=9, weight="700", anchor="start", fill="#333333"))
-        parts.append(_svg_text(x0, legend_y + 14, line1, size=9, anchor="start", fill="#444444"))
-        parts.append(_svg_text(x0, legend_y + 28, line2, size=9, anchor="start", fill="#444444"))
-
+        parts.append(_svg_text(x0, legend_y, title_leg, size=11, weight="700", anchor="start", fill="#333333"))
+        parts.append(_svg_text(x0, legend_y + 16, line1, size=10, anchor="start", fill="#444444"))
+        parts.append(_svg_text(x0, legend_y + 32, line2, size=10, anchor="start", fill="#444444"))
+        
     parts.append("</svg>")
     return "".join(parts)
