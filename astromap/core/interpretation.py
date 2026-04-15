@@ -127,7 +127,12 @@ def _sign_text(language: str, sign_name: str) -> dict[str, str]:
 def _get_sun_sign(payload: dict[str, Any]) -> str:
     for p in payload.get("planets", []) or []:
         if p.get("name") == "Soleil":
-            return p.get("sign") or ""
+            sign = p.get("sign")
+            if sign:
+                return sign
+            lon = p.get("lon")
+            if isinstance(lon, (int, float)):
+                return sign_name_from_longitude(float(lon))
     return ""
 
 
