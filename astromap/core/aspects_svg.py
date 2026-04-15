@@ -42,6 +42,13 @@ PLANET_FILES = {
     "Pluto": "Pluton.svg",
 }
 
+ASPECT_FILES = {
+    "CONJ": "Conjonction.svg",
+    "OPP": "Opposition.svg",
+    "SQR": "Carré.svg",
+    "TRI": "Trigone.svg",
+    "SEX": "Sextile.svg",
+}
 
 def _fmt(v: float) -> str:
     return f"{v:.2f}"
@@ -96,7 +103,10 @@ def _planet_href(asset_base_url: str, planet_name: str) -> str | None:
     fn = PLANET_FILES.get(planet_name)
     return f"{asset_base_url}/Planetes/{fn}" if fn else None
 
-
+def _aspect_href(asset_base_url: str, aspect_type: str) -> str | None:
+    fn = ASPECT_FILES.get(aspect_type)
+    return f"{asset_base_url}/Aspects/{fn}" if fn else None
+    
 def _orb_to_str(orb: float | None) -> str:
     if orb is None:
         return ""
@@ -165,10 +175,10 @@ def render_aspects_svg(
 
     title = "Aspects planétaires" if language == "fr" else "Planetary aspects"
 
-    top_margin = 90
-    side_margin = 230
-    grid_width = width - side_margin - 20
-    grid_height = height - top_margin - 80
+    top_margin = 78
+    side_margin = 160
+    grid_width = width - side_margin - 40
+    grid_height = height - top_margin - 95
     grid_size = min(grid_width, grid_height)
     cell = grid_size / (n + 1)
     if cell < 25:
