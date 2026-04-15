@@ -157,6 +157,9 @@ def render_aspects_svg(
             f"</svg>"
         )
 
+    if not aspects:
+        aspects = detect_aspects(planets)
+
     planet_names = _ordered_planet_names(planets)
     n = len(planet_names)
 
