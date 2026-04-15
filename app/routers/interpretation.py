@@ -1,0 +1,28 @@
+from fastapi import APIRouter, HTTPException
+
+from app.schemas import ThemeRequest
+from app.services.interpretation_service import compute_interpretation_payload
+
+router = APIRouter(prefix="/interpretation", tags=["interpretation"])
+
+
+@router.post("")
+def compute_interpretation(payload: ThemeRequest):
+    try:
+        data = compute_interpretation_payload(
+            name=payload.name or "",
+            datetime_local=payload.datetime_local,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            tz=payload.tz,
+            settings=payload.settings.model_dump(),
+        )
+        return {"data": data}
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur interne lors du calcul de l'interprétation: {exc}",
+        ) from exc
