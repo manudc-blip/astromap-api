@@ -1,4 +1,5 @@
 from astromap.core.theme import Theme
+from astromap.core.domitude_conditionaliste import build_domitude_payload
 
 
 def compute_theme_payload(
@@ -17,4 +18,10 @@ def compute_theme_payload(
         tz=tz,
         settings=settings,
     )
-    return result.to_json()
+
+    data = result.to_json()
+
+    domitude_data = build_domitude_payload(data)
+    data.update(domitude_data)
+
+    return data
