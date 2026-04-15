@@ -26,6 +26,7 @@ def compute_ret_svg(
 
     return render_ret_svg(
         data,
+        dom_payload=data,
         width=1400,
         height=900,
         language=lang,
