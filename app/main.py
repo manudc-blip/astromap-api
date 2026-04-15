@@ -8,6 +8,7 @@ from app.routers.cities import router as cities_router
 from app.routers.theme import router as theme_router
 from app.routers.ret import router as ret_router
 from app.routers.transits import router as transits_router
+from app.routers.aspects import router as aspects_router
 
 app = FastAPI(
     title="AstroMap API",
@@ -37,3 +38,4 @@ app.include_router(cities_router)
 app.include_router(theme_router)
 app.include_router(ret_router)
 app.include_router(transits_router)
+app.include_router(aspects_router)
