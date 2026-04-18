@@ -61,6 +61,13 @@ export async function getThemeJson(payload: ThemeRequestPayload) {
   });
 }
 
+export async function getTransitsJson(payload: TransitsRequestPayload) {
+  return apiJson<ThemeResponsePayload>("/transits", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function getSvgForTab(tab: Exclude<TabKey, "interpretation" | "transits">, payload: ThemeRequestPayload) {
   const pathByTab: Record<Exclude<TabKey, "interpretation" | "transits">, string> = {
     ecliptic: "/theme/svg",
