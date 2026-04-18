@@ -1,230 +1,603 @@
-import type { AstroFormState, CitySearchItem, TabKey } from "../types/astromap";
-import { CityAutocomplete } from "./CityAutocomplete";
+import React from "react";
 
-type Props = {
-  form: AstroFormState;
-  activeTab: TabKey;
-  loading: boolean;
-  coordsLocked: boolean;
-  onChange: <K extends keyof AstroFormState>(key: K, value: AstroFormState[K]) => void;
+import logoFr from "../assets/sidebar/logo_fr.png";
+import logoEn from "../assets/sidebar/logo_en.png";
+
+import flagFr from "../assets/sidebar/flag_fr.png";
+import flagEn from "../assets/sidebar/flag_en.png";
+
+import iconCalendar from "../assets/sidebar/icon_calendar.png";
+import iconTime from "../assets/sidebar/icon_time.png";
+import iconLocation from "../assets/sidebar/icon_location.png";
+import iconCoordinates from "../assets/sidebar/icon_coordinates.png";
+import iconCompute from "../assets/sidebar/icon_compute.png";
+import iconReset from "../assets/sidebar/icon_reset.png";
+import iconSave from "../assets/sidebar/icon_save.png";
+import iconId from "../assets/sidebar/icon_id.png";
+import iconWorldSearch from "../assets/sidebar/icon_world_search.png";
+import iconInfo from "../assets/sidebar/icon_info.png";
+import iconCalendarTransit from "../assets/sidebar/icon_calendar_transit.png";
+import iconAspectsTransit from "../assets/sidebar/icon_aspects_transit.png";
+
+export type AstroLang = "fr" | "en";
+export type AstroTabKey =
+  | "ecliptic"
+  | "domitude"
+  | "ret"
+  | "transits"
+  | "aspects"
+  | "interpretation";
+
+export type IdentMode = "ID" | "WORLD";
+export type TimeRef = "HO" | "TU";
+export type CoordsDisplayMode = "DEC" | "DMS";
+export type TransitAspectMode = "TN" | "TT";
+
+export interface SidebarSuggestion {
+  id?: string | number;
+  label: string;
+  subLabel?: string;
+  disabled?: boolean;
+  kind?: "header" | "item";
+}
+
+export interface AstroSidebarForm {
+  name: string;
+  day: string;
+  month: string;
+  year: string;
+  hour: string;
+  minute: string;
+  timeRef: TimeRef;
+
+  city: string;
+  lat: string;
+  lon: string;
+  timezone: string;
+
+  lang: AstroLang;
+
+  transitDay: string;
+  transitMonth: string;
+  transitYear: string;
+  transitAspectMode: TransitAspectMode;
+  transitPanelExpanded: boolean;
+}
+
+export interface AstroSidebarProps {
+  form: AstroSidebarForm;
+  activeTab: AstroTabKey;
+
+  identMode?: IdentMode;
+  dnSource?: string;
+  cityHint?: string;
+  coordsLocked?: boolean;
+  coordsDisplayMode?: CoordsDisplayMode;
+
+  showDnSuggestions?: boolean;
+  dnSuggestions?: SidebarSuggestion[];
+  showCitySuggestions?: boolean;
+  citySuggestions?: SidebarSuggestion[];
+
+  onFormChange: (patch: Partial<AstroSidebarForm>) => void;
+
+  onToggleIdentMode?: () => void;
+  onToggleTimeRef: () => void;
+  onToggleCoordsDisplay?: () => void;
+  onToggleTransitPanel: () => void;
+
+  onShiftNatalDate: (step: 1 | -1) => void;
+  onShiftNatalTime: (step: 1 | -1) => void;
+  onShiftTransitDate: (step: 1 | -1) => void;
+
+  onCompute: () => void;
   onReset: () => void;
-  onCalculate: () => void;
   onExport: () => void;
-  onCitySelected: () => void;
-  onCoordsManualEdit: () => void;
+
+  onSelectDnSuggestion?: (item: SidebarSuggestion) => void;
+  onSelectCitySuggestion?: (item: SidebarSuggestion) => void;
+}
+
+const TEXT = {
+  fr: {
+    module: "Module AstroMap",
+    identification: "Identification",
+    searchDn: "Recherche DN",
+    nameOptional: "Nom (facultatif)",
+    dateTime: "Date & heure",
+    dateLabel: "Date (locale) JJ/MM/AAAA",
+    timeLabelLocal: "Heure (locale) HH:MM",
+    timeLabelUtc: "Heure (UTC) HH:MM",
+    timeReference: "Référence heure",
+    location: "Localisation",
+    citySearch: "Ville (recherche)",
+    cityHint: "Saisie assistée",
+    latLon: "Latitude, Longitude",
+    timezone: "Fuseau horaire (ex. Europe/Paris ou +01:00)",
+    options: "Options",
+    language: "Langue",
+    transits: "Transits",
+    actions: "Actions",
+    reset: "Réinitialiser",
+    compute: "Calculer",
+    export: "Exporter...",
+    ho: "HO",
+    tu: "TU",
+    transitNatal: "Transits → Natal",
+    transitTransit: "Entre transits",
+  },
+  en: {
+    module: "AstroMap Module",
+    identification: "Identification",
+    searchDn: "DN search",
+    nameOptional: "Name (optional)",
+    dateTime: "Date & time",
+    dateLabel: "Date (local) DD/MM/YYYY",
+    timeLabelLocal: "Time (local) HH:MM",
+    timeLabelUtc: "Time (UTC) HH:MM",
+    timeReference: "Time reference",
+    location: "Location",
+    citySearch: "City (search)",
+    cityHint: "Assisted entry",
+    latLon: "Latitude, Longitude",
+    timezone: "Time zone (e.g. Europe/Paris or +01:00)",
+    options: "Options",
+    language: "Language",
+    transits: "Transits",
+    actions: "Actions",
+    reset: "Reset",
+    compute: "Compute",
+    export: "Export...",
+    ho: "LT",
+    tu: "UT",
+    transitNatal: "Transit → Natal",
+    transitTransit: "Between transits",
+  },
 };
 
-export function AstroSidebar({
-  form,
-  activeTab,
-  loading,
-  coordsLocked,
-  onChange,
-  onReset,
-  onCalculate,
-  onExport,
-  onCitySelected,
-  onCoordsManualEdit,
-}: Props) {
-  const isEn = form.language === "en";
+function LabelWithIcon(props: {
+  icon?: string;
+  text: string;
+  extraRight?: React.ReactNode;
+}) {
+  return (
+    <div className="astromap-label-row">
+      <div className="astromap-label-left">
+        {props.icon ? (
+          <img className="astromap-inline-icon" src={props.icon} alt="" />
+        ) : null}
+        <span>{props.text}</span>
+      </div>
+      {props.extraRight ? (
+        <div className="astromap-label-right">{props.extraRight}</div>
+      ) : null}
+    </div>
+  );
+}
 
-  const ui = isEn
-    ? {
-        identification: "Identification",
-        name: "Name (optional)",
-        dateTime: "Date & time",
-        date: "Date",
-        time: "Time",
-        timeRef: "Time reference",
-        city: "City (search)",
-        cityHint: "Assisted input",
-        location: "Location",
-        latLon: "Latitude, Longitude",
-        tz: "Time zone",
-        language: "Language",
-        options: "Options",
-        actions: "Actions",
-        reset: "Reset",
-        calculate: "Compute",
-        export: "Export",
-        transitDate: "Transit date",
-        aspectMode: "Aspect mode",
-        tn: "Transit → Natal",
-        tt: "Between transits",
-      }
-    : {
-        identification: "Identification",
-        name: "Nom (facultatif)",
-        dateTime: "Date & heure",
-        date: "Date",
-        time: "Heure",
-        timeRef: "Référence heure",
-        city: "Ville (recherche)",
-        cityHint: "Saisie assistée",
-        location: "Localisation",
-        latLon: "Latitude, Longitude",
-        tz: "Fuseau horaire",
-        language: "Langue",
-        options: "Options",
-        actions: "Actions",
-        reset: "Réinitialiser",
-        calculate: "Calculer",
-        export: "Exporter",
-        transitDate: "Date du transit",
-        aspectMode: "Mode des aspects",
-        tn: "Transits → Natal",
-        tt: "Entre transits",
-      };
+function MiniSpinButton(props: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="astromap-mini-btn"
+      onClick={props.onClick}
+      aria-label={props.label}
+      title={props.label}
+    >
+      {props.label}
+    </button>
+  );
+}
 
-  const handleCitySelect = (city: CitySearchItem) => {
-    onChange("cityQuery", city.display);
-    onChange("latitude", String(city.lat));
-    onChange("longitude", String(city.lon));
-    onChange("tz", city.tz);
-    onCitySelected();
-  };
+function SuggestionDropdown(props: {
+  variant: "city" | "dn";
+  items: SidebarSuggestion[];
+  onSelect?: (item: SidebarSuggestion) => void;
+}) {
+  if (!props.items.length) return null;
 
   return (
-    <aside className="gm-sidebar">
-      <div className="gm-logo-block">
-        <div className="gm-logo-title">GéoAstro</div>
-        <div className="gm-logo-subtitle">Module AstroMap</div>
+    <div
+      className={`astromap-suggestions astromap-suggestions--${props.variant}`}
+    >
+      {props.items.map((item, index) => {
+        const key = item.id ?? `${props.variant}-${index}`;
+
+        if (item.kind === "header") {
+          return (
+            <div key={key} className="astromap-suggestion-header">
+              {item.label}
+            </div>
+          );
+        }
+
+        return (
+          <button
+            key={key}
+            type="button"
+            className={`astromap-suggestion-item ${
+              item.subLabel ? "astromap-suggestion-item--two-lines" : ""
+            }`}
+            disabled={item.disabled}
+            onClick={() => props.onSelect?.(item)}
+          >
+            <span className="astromap-suggestion-main">{item.label}</span>
+            {item.subLabel ? (
+              <span className="astromap-suggestion-sub">{item.subLabel}</span>
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function AstroSidebar({
+  form,
+  activeTab,
+  identMode = "ID",
+  dnSource = "",
+  cityHint,
+  coordsLocked = false,
+  coordsDisplayMode = "DEC",
+  showDnSuggestions = false,
+  dnSuggestions = [],
+  showCitySuggestions = false,
+  citySuggestions = [],
+  onFormChange,
+  onToggleIdentMode,
+  onToggleTimeRef,
+  onToggleCoordsDisplay,
+  onToggleTransitPanel,
+  onShiftNatalDate,
+  onShiftNatalTime,
+  onShiftTransitDate,
+  onCompute,
+  onReset,
+  onExport,
+  onSelectDnSuggestion,
+  onSelectCitySuggestion,
+}: AstroSidebarProps) {
+  const t = TEXT[form.lang];
+  const isTransitTab = activeTab === "transits";
+  const logoSrc = form.lang === "fr" ? logoFr : logoEn;
+  const identIcon = identMode === "WORLD" ? iconWorldSearch : iconId;
+  const timeRefLabel = form.timeRef === "TU" ? t.tu : t.ho;
+  const coordsToggleLabel = coordsDisplayMode === "DEC" ? "10" : "60";
+
+  return (
+    <div className="astromap-sidebar-panel">
+      <div className="astromap-logo-wrap">
+        <img className="astromap-logo" src={logoSrc} alt="GéoAstro" />
+        <div className="astromap-logo-subtitle">{t.module}</div>
       </div>
 
-      <section className="gm-section">
-        <h3>{ui.identification}</h3>
-        <label>{ui.name}</label>
-        <input
-          className="gm-input"
-          value={form.name}
-          onChange={(e) => onChange("name", e.target.value)}
-        />
-      </section>
+      <section className="astromap-sidebar-section">
+        <h3 className="astromap-section-title">{t.identification}</h3>
 
-      <section className="gm-section">
-        <h3>{ui.dateTime}</h3>
+        <div className="astromap-name-header">
+          <label className="astromap-field-label" htmlFor="astromap-name">
+            {identMode === "WORLD" ? t.searchDn : t.nameOptional}
+          </label>
 
-        <label>{ui.date}</label>
-        <div className="gm-inline-3">
-          <input className="gm-input" value={form.day} onChange={(e) => onChange("day", e.target.value)} />
-          <input className="gm-input" value={form.month} onChange={(e) => onChange("month", e.target.value)} />
-          <input className="gm-input" value={form.year} onChange={(e) => onChange("year", e.target.value)} />
+          <button
+            type="button"
+            className="astromap-ident-toggle"
+            onClick={onToggleIdentMode}
+            title={identMode === "WORLD" ? t.searchDn : t.nameOptional}
+          >
+            <img src={identIcon} alt="" />
+          </button>
         </div>
 
-        <label>{ui.time}</label>
-        <div className="gm-inline-2">
-          <input className="gm-input" value={form.hour} onChange={(e) => onChange("hour", e.target.value)} />
-          <input className="gm-input" value={form.minute} onChange={(e) => onChange("minute", e.target.value)} />
-        </div>
-
-        <label>{ui.timeRef}</label>
-        <div className="gm-radio-row">
-          <label><input type="radio" checked={form.timeRef === "HO"} onChange={() => onChange("timeRef", "HO")} /> HO</label>
-          <label><input type="radio" checked={form.timeRef === "TU"} onChange={() => onChange("timeRef", "TU")} /> TU</label>
-        </div>
-      </section>
-
-      <section className="gm-section">
-        <h3>{ui.location}</h3>
-
-        <label>{ui.city}</label>
-        <CityAutocomplete
-          value={form.cityQuery}
-          language={form.language}
-          onChange={(value) => {
-            onChange("cityQuery", value);
-          }}
-          onSelect={handleCitySelect}
-        />
-        <div className="gm-hint">{ui.cityHint}</div>
-
-        <label>{ui.latLon}</label>
-        <div className="gm-inline-2">
+        <div className="astromap-dropdown-host">
           <input
-            className="gm-input"
-            value={form.latitude}
-            readOnly={coordsLocked}
-            onChange={(e) => {
-              onCoordsManualEdit();
-              onChange("latitude", e.target.value);
-            }}
+            id="astromap-name"
+            className="astromap-input"
+            value={form.name}
+            onChange={(e) => onFormChange({ name: e.target.value })}
+          />
+
+          {identMode === "WORLD" && dnSource ? (
+            <div className="astromap-dn-source">
+              <img src={iconInfo} alt="" />
+              <span>{dnSource}</span>
+            </div>
+          ) : null}
+
+          {showDnSuggestions ? (
+            <SuggestionDropdown
+              variant="dn"
+              items={dnSuggestions}
+              onSelect={onSelectDnSuggestion}
+            />
+          ) : null}
+        </div>
+      </section>
+
+      <section className="astromap-sidebar-section">
+        <h3 className="astromap-section-title">{t.dateTime}</h3>
+
+        <LabelWithIcon icon={iconCalendar} text={t.dateLabel} />
+
+        <div className="astromap-row astromap-row--date">
+          <input
+            className="astromap-input astromap-input--dd"
+            value={form.day}
+            onChange={(e) => onFormChange({ day: e.target.value })}
           />
           <input
-            className="gm-input"
-            value={form.longitude}
-            readOnly={coordsLocked}
-            onChange={(e) => {
-              onCoordsManualEdit();
-              onChange("longitude", e.target.value);
-            }}
+            className="astromap-input astromap-input--dd"
+            value={form.month}
+            onChange={(e) => onFormChange({ month: e.target.value })}
           />
+          <input
+            className="astromap-input astromap-input--yyyy"
+            value={form.year}
+            onChange={(e) => onFormChange({ year: e.target.value })}
+          />
+
+          <MiniSpinButton label="+" onClick={() => onShiftNatalDate(1)} />
+          <MiniSpinButton label="-" onClick={() => onShiftNatalDate(-1)} />
         </div>
 
-        <label>{ui.tz}</label>
-        <input
-          className="gm-input"
-          value={form.tz}
-          onChange={(e) => onChange("tz", e.target.value)}
+        <LabelWithIcon
+          icon={iconTime}
+          text={form.timeRef === "TU" ? t.timeLabelUtc : t.timeLabelLocal}
+        />
+
+        <div className="astromap-row astromap-row--time">
+          <input
+            className="astromap-input astromap-input--time"
+            value={form.hour}
+            onChange={(e) => onFormChange({ hour: e.target.value })}
+          />
+          <input
+            className="astromap-input astromap-input--time"
+            value={form.minute}
+            onChange={(e) => onFormChange({ minute: e.target.value })}
+          />
+
+          <MiniSpinButton label="+" onClick={() => onShiftNatalTime(1)} />
+          <MiniSpinButton label="-" onClick={() => onShiftNatalTime(-1)} />
+        </div>
+
+        <LabelWithIcon
+          text={`${t.timeReference} :`}
+          extraRight={
+            <button
+              type="button"
+              className="astromap-small-toggle"
+              onClick={onToggleTimeRef}
+            >
+              {timeRefLabel}
+            </button>
+          }
         />
       </section>
 
-      <section className="gm-section">
-        <h3>{ui.options}</h3>
+      <section className="astromap-sidebar-section">
+        <h3 className="astromap-section-title">{t.location}</h3>
 
-        <label>{ui.language}</label>
-        <div className="gm-radio-row">
-          <label><input type="radio" checked={form.language === "fr"} onChange={() => onChange("language", "fr")} /> FR</label>
-          <label><input type="radio" checked={form.language === "en"} onChange={() => onChange("language", "en")} /> EN</label>
+        <LabelWithIcon icon={iconLocation} text={t.citySearch} />
+
+        <div className="astromap-dropdown-host">
+          <input
+            className="astromap-input"
+            value={form.city}
+            onChange={(e) => onFormChange({ city: e.target.value })}
+          />
+
+          <div className="astromap-hint">{cityHint || t.cityHint}</div>
+
+          {showCitySuggestions ? (
+            <SuggestionDropdown
+              variant="city"
+              items={citySuggestions}
+              onSelect={onSelectCitySuggestion}
+            />
+          ) : null}
         </div>
 
-        {activeTab === "transits" && (
-          <>
-            <div className="gm-divider" />
+        <LabelWithIcon
+          icon={iconCoordinates}
+          text={t.latLon}
+          extraRight={
+            <button
+              type="button"
+              className="astromap-small-toggle astromap-small-toggle--coords"
+              onClick={onToggleCoordsDisplay}
+            >
+              {coordsToggleLabel}
+            </button>
+          }
+        />
 
-            <label>{ui.transitDate}</label>
-            <div className="gm-inline-3">
-              <input className="gm-input" value={form.transitDay} onChange={(e) => onChange("transitDay", e.target.value)} />
-              <input className="gm-input" value={form.transitMonth} onChange={(e) => onChange("transitMonth", e.target.value)} />
-              <input className="gm-input" value={form.transitYear} onChange={(e) => onChange("transitYear", e.target.value)} />
-            </div>
+        <div className="astromap-row astromap-row--coords">
+          <input
+            className="astromap-input astromap-input--coord"
+            value={form.lat}
+            readOnly={coordsLocked}
+            onChange={(e) => onFormChange({ lat: e.target.value })}
+          />
+          <input
+            className="astromap-input astromap-input--coord"
+            value={form.lon}
+            readOnly={coordsLocked}
+            onChange={(e) => onFormChange({ lon: e.target.value })}
+          />
+        </div>
 
-            <label>{ui.aspectMode}</label>
-            <div className="gm-radio-col">
-              <label>
-                <input
-                  type="radio"
-                  checked={form.transitAspectMode === "TN"}
-                  onChange={() => onChange("transitAspectMode", "TN")}
-                />
-                {ui.tn}
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  checked={form.transitAspectMode === "TT"}
-                  onChange={() => onChange("transitAspectMode", "TT")}
-                />
-                {ui.tt}
-              </label>
-            </div>
-          </>
-        )}
+        <label className="astromap-field-label" htmlFor="astromap-timezone">
+          {t.timezone}
+        </label>
+        <input
+          id="astromap-timezone"
+          className="astromap-input"
+          value={form.timezone}
+          onChange={(e) => onFormChange({ timezone: e.target.value })}
+        />
       </section>
 
-      <section className="gm-section">
-        <h3>{ui.actions}</h3>
-        <div className="gm-actions">
-          <button type="button" className="gm-btn" onClick={onReset} disabled={loading}>
-            {ui.reset}
-          </button>
-          <button type="button" className="gm-btn gm-btn-primary" onClick={onCalculate} disabled={loading}>
-            {loading ? "..." : ui.calculate}
-          </button>
-          <button type="button" className="gm-btn" onClick={onExport}>
-            {ui.export}
-          </button>
+      <section className="astromap-sidebar-section">
+        <h3 className="astromap-section-title">{t.options}</h3>
+
+        <div className="astromap-language-row">
+          <span className="astromap-field-label">{t.language}</span>
+
+          <label className="astromap-radio-inline">
+            <input
+              type="radio"
+              checked={form.lang === "fr"}
+              onChange={() => onFormChange({ lang: "fr" })}
+            />
+            <img src={flagFr} alt="" />
+            <span>FR</span>
+          </label>
+
+          <label className="astromap-radio-inline">
+            <input
+              type="radio"
+              checked={form.lang === "en"}
+              onChange={() => onFormChange({ lang: "en" })}
+            />
+            <img src={flagEn} alt="" />
+            <span>EN</span>
+          </label>
         </div>
       </section>
-    </aside>
+
+      {isTransitTab ? (
+        <section className="astromap-sidebar-section astromap-sidebar-section--transits">
+          <div className="astromap-transit-header">
+            <h3 className="astromap-section-title">{t.transits}</h3>
+            <button
+              type="button"
+              className="astromap-transit-toggle"
+              onClick={onToggleTransitPanel}
+            >
+              {form.transitPanelExpanded ? "▾" : "▸"}
+            </button>
+          </div>
+
+          {form.transitPanelExpanded ? (
+            <>
+              <div className="astromap-transit-block">
+                <div className="astromap-inline-icon-line">
+                  <img
+                    className="astromap-transit-banner-icon"
+                    src={iconCalendarTransit}
+                    alt=""
+                  />
+                </div>
+
+                <div className="astromap-row astromap-row--date astromap-row--transit-date">
+                  <input
+                    className="astromap-input astromap-input--dd"
+                    value={form.transitDay}
+                    onChange={(e) =>
+                      onFormChange({ transitDay: e.target.value })
+                    }
+                  />
+                  <input
+                    className="astromap-input astromap-input--dd"
+                    value={form.transitMonth}
+                    onChange={(e) =>
+                      onFormChange({ transitMonth: e.target.value })
+                    }
+                  />
+                  <input
+                    className="astromap-input astromap-input--yyyy"
+                    value={form.transitYear}
+                    onChange={(e) =>
+                      onFormChange({ transitYear: e.target.value })
+                    }
+                  />
+
+                  <MiniSpinButton
+                    label="+"
+                    onClick={() => onShiftTransitDate(1)}
+                  />
+                  <MiniSpinButton
+                    label="-"
+                    onClick={() => onShiftTransitDate(-1)}
+                  />
+                </div>
+              </div>
+
+              <div className="astromap-transit-block astromap-transit-block--aspects">
+                <div className="astromap-inline-icon-line">
+                  <img
+                    className="astromap-transit-aspects-icon"
+                    src={iconAspectsTransit}
+                    alt=""
+                  />
+                </div>
+
+                <div className="astromap-radio-stack">
+                  <label className="astromap-radio-inline astromap-radio-inline--plain">
+                    <input
+                      type="radio"
+                      checked={form.transitAspectMode === "TN"}
+                      onChange={() =>
+                        onFormChange({ transitAspectMode: "TN" })
+                      }
+                    />
+                    <span>{t.transitNatal}</span>
+                  </label>
+
+                  <label className="astromap-radio-inline astromap-radio-inline--plain">
+                    <input
+                      type="radio"
+                      checked={form.transitAspectMode === "TT"}
+                      onChange={() =>
+                        onFormChange({ transitAspectMode: "TT" })
+                      }
+                    />
+                    <span>{t.transitTransit}</span>
+                  </label>
+                </div>
+              </div>
+            </>
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="astromap-sidebar-section astromap-sidebar-section--actions">
+        <h3 className="astromap-section-title">{t.actions}</h3>
+
+        <div className="astromap-actions-row">
+          <button
+            type="button"
+            className="astromap-action-btn"
+            onClick={onReset}
+          >
+            <img src={iconReset} alt="" />
+            <span>{t.reset}</span>
+          </button>
+
+          <button
+            type="button"
+            className="astromap-action-btn astromap-action-btn--primary"
+            onClick={onCompute}
+          >
+            <img src={iconCompute} alt="" />
+            <span>{t.compute}</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className="astromap-action-btn astromap-action-btn--full"
+          onClick={onExport}
+        >
+          <img src={iconSave} alt="" />
+          <span>{t.export}</span>
+        </button>
+      </section>
+    </div>
   );
 }
