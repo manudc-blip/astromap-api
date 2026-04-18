@@ -5,20 +5,26 @@ type Props = {
   form: AstroFormState;
   activeTab: TabKey;
   loading: boolean;
+  coordsLocked: boolean;
   onChange: <K extends keyof AstroFormState>(key: K, value: AstroFormState[K]) => void;
   onReset: () => void;
   onCalculate: () => void;
   onExport: () => void;
+  onCitySelected: () => void;
+  onCoordsManualEdit: () => void;
 };
 
 export function AstroSidebar({
   form,
   activeTab,
   loading,
+  coordsLocked,
   onChange,
   onReset,
   onCalculate,
   onExport,
+  onCitySelected,
+  onCoordsManualEdit,
 }: Props) {
   const isEn = form.language === "en";
 
@@ -31,6 +37,7 @@ export function AstroSidebar({
         time: "Time",
         timeRef: "Time reference",
         city: "City (search)",
+        cityHint: "Assisted input",
         location: "Location",
         latLon: "Latitude, Longitude",
         tz: "Time zone",
@@ -53,6 +60,7 @@ export function AstroSidebar({
         time: "Heure",
         timeRef: "Référence heure",
         city: "Ville (recherche)",
+        cityHint: "Saisie assistée",
         location: "Localisation",
         latLon: "Latitude, Longitude",
         tz: "Fuseau horaire",
@@ -73,6 +81,7 @@ export function AstroSidebar({
     onChange("latitude", String(city.lat));
     onChange("longitude", String(city.lon));
     onChange("tz", city.tz);
+    onCitySelected();
   };
 
   return (
@@ -122,21 +131,32 @@ export function AstroSidebar({
         <CityAutocomplete
           value={form.cityQuery}
           language={form.language}
-          onChange={(value) => onChange("cityQuery", value)}
+          onChange={(value) => {
+            onChange("cityQuery", value);
+          }}
           onSelect={handleCitySelect}
         />
+        <div className="gm-hint">{ui.cityHint}</div>
 
         <label>{ui.latLon}</label>
         <div className="gm-inline-2">
           <input
             className="gm-input"
             value={form.latitude}
-            onChange={(e) => onChange("latitude", e.target.value)}
+            readOnly={coordsLocked}
+            onChange={(e) => {
+              onCoordsManualEdit();
+              onChange("latitude", e.target.value);
+            }}
           />
           <input
             className="gm-input"
             value={form.longitude}
-            onChange={(e) => onChange("longitude", e.target.value)}
+            readOnly={coordsLocked}
+            onChange={(e) => {
+              onCoordsManualEdit();
+              onChange("longitude", e.target.value);
+            }}
           />
         </div>
 
