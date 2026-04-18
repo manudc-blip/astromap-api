@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { AstroSidebar } from "../components/AstroSidebar";
+import { DetailsPanel } from "../components/DetailsPanel";
 import { buildThemeRequestPayload, buildTransitsRequestPayload, createDefaultFormState } from "../lib/datetime";
-import { getInterpretationHtml, getSvgForTab, getThemeJson, getTransitsSvg } from "../lib/api";
-import type { AstroFormState, TabKey } from "../types/astromap";
+import { getInterpretationHtml, getSvgForTab, getThemeJson, getTransitsJson, getTransitsSvg } from "../lib/api";
+import { buildPlanetDetails, getPlanetNames } from "../lib/details";
+import type { AstroFormState, ChartPayload, DetailOrigin, TabKey } from "../types/astromap";
 
 const TABS: { key: TabKey; fr: string; en: string }[] = [
   { key: "ecliptic", fr: "Écliptique", en: "Ecliptic" },
@@ -30,9 +32,13 @@ export default function AstroMapPage() {
   const [submittedForm, setSubmittedForm] = useState<AstroFormState | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("ecliptic");
   const [cache, setCache] = useState<CacheState>({});
-  const [themeJson, setThemeJson] = useState<unknown>(null);
+  const [themePayload, setThemePayload] = useState<ChartPayload | null>(null);
+  const [transitsPayload, setTransitsPayload] = useState<ChartPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coordsLocked, setCoordsLocked] = useState(false);
+  const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
+  const [selectedOrigin, setSelectedOrigin] = useState<DetailOrigin>("natal");
 
   const isEn = form.language === "en";
 
@@ -43,20 +49,27 @@ export default function AstroMapPage() {
   const loadTab = async (tab: TabKey, currentForm: AstroFormState, force = false) => {
     if (!force && cache[tab]) return;
 
-    const themePayload = buildThemeRequestPayload(currentForm);
-
-    let content = "";
+    const themeReq = buildThemeRequestPayload(currentForm);
 
     if (tab === "interpretation") {
-      content = await getInterpretationHtml(themePayload);
-    } else if (tab === "transits") {
-      const transitPayload = buildTransitsRequestPayload(currentForm);
-      content = await getTransitsSvg(transitPayload);
-    } else {
-      content = await getSvgForTab(tab as Exclude<TabKey, "interpretation" | "transits">, themePayload);
+      const html = await getInterpretationHtml(themeReq);
+      setCache((prev) => ({ ...prev, interpretation: html }));
+      return;
     }
 
-    setCache((prev) => ({ ...prev, [tab]: content }));
+    if (tab === "transits") {
+      const transitReq = buildTransitsRequestPayload(currentForm);
+      const [svg, json] = await Promise.all([
+        getTransitsSvg(transitReq),
+        getTransitsJson(transitReq),
+      ]);
+      setTransitsPayload(json.data as ChartPayload);
+      setCache((prev) => ({ ...prev, transits: svg }));
+      return;
+    }
+
+    const svg = await getSvgForTab(tab as Exclude<TabKey, "interpretation" | "transits">, themeReq);
+    setCache((prev) => ({ ...prev, [tab]: svg }));
   };
 
   const handleCalculate = async () => {
@@ -65,13 +78,16 @@ export default function AstroMapPage() {
 
     try {
       const nextSubmitted = { ...form };
-      const themePayload = buildThemeRequestPayload(nextSubmitted);
-      const themeData = await getThemeJson(themePayload);
+      const themeReq = buildThemeRequestPayload(nextSubmitted);
+      const themeData = await getThemeJson(themeReq);
 
       setSubmittedForm(nextSubmitted);
-      setThemeJson(themeData.data);
+      setThemePayload(themeData.data as ChartPayload);
+      setTransitsPayload(null);
       setCache({});
-      setCache({});
+      setSelectedPlanet(null);
+      setSelectedOrigin("natal");
+
       await loadTab(activeTab, nextSubmitted, true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -105,12 +121,25 @@ export default function AstroMapPage() {
     };
   }, [activeTab, submittedForm]);
 
+  useEffect(() => {
+    if (activeTab === "transits") {
+      setSelectedOrigin("transits");
+    } else {
+      setSelectedOrigin("natal");
+    }
+    setSelectedPlanet(null);
+  }, [activeTab]);
+
   const handleReset = () => {
     setForm(createDefaultFormState());
     setSubmittedForm(null);
-    setThemeJson(null);
+    setThemePayload(null);
+    setTransitsPayload(null);
     setCache({});
     setError(null);
+    setCoordsLocked(false);
+    setSelectedPlanet(null);
+    setSelectedOrigin("natal");
     setActiveTab("ecliptic");
   };
 
@@ -128,16 +157,28 @@ export default function AstroMapPage() {
 
   const currentContent = useMemo(() => cache[activeTab] || "", [cache, activeTab]);
 
+  const detailsPayload = selectedOrigin === "transits" ? transitsPayload : themePayload;
+  const availablePlanets = useMemo(() => getPlanetNames(detailsPayload), [detailsPayload]);
+  const detailState = useMemo(
+    () => buildPlanetDetails(detailsPayload, selectedPlanet, form.language, selectedOrigin),
+    [detailsPayload, selectedPlanet, form.language, selectedOrigin]
+  );
+
+  const showDetails = activeTab === "ecliptic" || activeTab === "domitude" || activeTab === "transits";
+
   return (
     <div className="gm-app">
       <AstroSidebar
         form={form}
         activeTab={activeTab}
         loading={loading}
+        coordsLocked={coordsLocked}
         onChange={updateField}
         onReset={handleReset}
         onCalculate={handleCalculate}
         onExport={handleExport}
+        onCitySelected={() => setCoordsLocked(true)}
+        onCoordsManualEdit={() => setCoordsLocked(false)}
       />
 
       <main className="gm-main">
@@ -154,35 +195,47 @@ export default function AstroMapPage() {
           ))}
         </div>
 
-        <div className="gm-result-wrap">
-          {error && <div className="gm-error">{error}</div>}
-
-          {!submittedForm && !error && (
-            <div className="gm-empty">
-              {isEn
-                ? "Fill the sidebar and click Compute."
-                : "Renseigne la sidebar puis clique sur Calculer."}
-            </div>
-          )}
-
-          {!!submittedForm && !error && activeTab !== "interpretation" && !!currentContent && (
-            <div
-              className="gm-svg-panel"
-              dangerouslySetInnerHTML={{ __html: currentContent }}
+        <div className={`gm-main-grid ${showDetails ? "has-details" : ""}`}>
+          {showDetails && (
+            <DetailsPanel
+              language={form.language}
+              availablePlanets={availablePlanets}
+              selectedPlanet={selectedPlanet}
+              details={detailState}
+              onSelectPlanet={setSelectedPlanet}
             />
           )}
 
-          {!!submittedForm && !error && activeTab === "interpretation" && !!currentContent && (
-            <iframe
-              title="interpretation"
-              className="gm-interpretation-frame"
-              srcDoc={currentContent}
-            />
-          )}
+          <div className="gm-result-wrap">
+            {error && <div className="gm-error">{error}</div>}
+
+            {!submittedForm && !error && (
+              <div className="gm-empty">
+                {isEn
+                  ? "Fill the sidebar and click Compute."
+                  : "Renseigne la sidebar puis clique sur Calculer."}
+              </div>
+            )}
+
+            {!!submittedForm && !error && activeTab !== "interpretation" && !!currentContent && (
+              <div
+                className="gm-svg-panel"
+                dangerouslySetInnerHTML={{ __html: currentContent }}
+              />
+            )}
+
+            {!!submittedForm && !error && activeTab === "interpretation" && !!currentContent && (
+              <iframe
+                title="interpretation"
+                className="gm-interpretation-frame"
+                srcDoc={currentContent}
+              />
+            )}
+          </div>
         </div>
 
         <div className="gm-footer">
-          {themeJson ? (
+          {themePayload ? (
             <span>{isEn ? "Backend connected" : "Backend connecté"}</span>
           ) : (
             <span>{isEn ? "No calculated chart yet" : "Aucun thème calculé pour l’instant"}</span>
