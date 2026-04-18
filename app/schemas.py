@@ -1,9 +1,12 @@
 from typing import Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ThemeSettings(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     house_system: str = Field(default="Placidus")
+    language: str = Field(default="fr")
 
 
 class ThemeRequest(BaseModel):
