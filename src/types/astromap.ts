@@ -9,6 +9,7 @@ export type TabKey =
 export type TimeReference = "HO" | "TU";
 export type TransitAspectMode = "TN" | "TT";
 export type UiLanguage = "fr" | "en";
+export type DetailOrigin = "natal" | "transits";
 
 export interface AstroFormState {
   name: string;
@@ -63,4 +64,41 @@ export interface CitySearchItem {
   lat: number;
   lon: number;
   tz: string;
+}
+
+export interface PlanetPayload {
+  name?: string;
+  lon?: number | string;
+  lat?: number | string;
+  declination?: number | string;
+  house?: number | string;
+  retro?: boolean | number | string;
+  retrograde?: boolean | number | string;
+  rflag?: boolean | number | string;
+  daily_motion?: number | string;
+  [key: string]: unknown;
+}
+
+export interface AspectPayload {
+  p1?: string;
+  p2?: string;
+  type?: string;
+  orb?: number | string;
+  [key: string]: unknown;
+}
+
+export interface ChartPayload {
+  planets?: PlanetPayload[];
+  aspects?: AspectPayload[];
+  houses?: Record<string, unknown>[];
+  axes?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface PlanetDetails {
+  title: string;
+  color: string;
+  positionLines: string[];
+  aspectLines: string[];
+  ephemerisLines: string[];
 }
