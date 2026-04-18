@@ -1,361 +1,508 @@
 :root {
-  --bg: #fafaf7;
-  --panel: #ffffff;
-  --border: #d9d9d2;
-  --text: #222222;
-  --muted: #6b7280;
-  --accent: #1f4fa3;
-  --soft-accent: #0b3d91;
-  --hover: #ecece6;
+  --astromap-ui-bg: #fafaf7;
+  --astromap-panel-border: #c9c9c9;
+  --astromap-input-border: #bfc3c8;
+  --astromap-soft-border: #d7dbe0;
+  --astromap-text: #111827;
+  --astromap-muted: #6b7280;
+  --astromap-title: #374151;
+  --astromap-hover: #e5e7eb;
+  --astromap-active: #dbe9f6;
+  --astromap-white: #ffffff;
 }
 
-* {
+.astromap-app {
+  display: grid;
+  grid-template-columns: 272px 1fr;
+  min-height: 100vh;
+  background: var(--astromap-ui-bg);
+  color: var(--astromap-text);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.astromap-sidebar-shell {
+  padding: 10px 10px 10px 10px;
+  background: var(--astromap-ui-bg);
+}
+
+.astromap-sidebar-panel {
+  position: relative;
+  width: 242px;
+  border: 1px solid var(--astromap-panel-border);
+  background: var(--astromap-ui-bg);
+  padding: 10px;
   box-sizing: border-box;
 }
 
-html,
-body,
-#root {
-  margin: 0;
-  min-height: 100%;
-  font-family: "Segoe UI", Arial, sans-serif;
-  color: var(--text);
-  background: var(--bg);
-}
-
-.gm-app {
-  display: grid;
-  grid-template-columns: 262px 1fr;
-  min-height: 100vh;
-}
-
-.gm-sidebar {
-  background: var(--bg);
-  border-right: 1px solid var(--border);
-  padding: 10px;
-}
-
-.gm-logo-block {
-  margin-bottom: 18px;
+.astromap-logo-wrap {
   text-align: center;
+  margin-bottom: 14px;
 }
 
-.gm-logo-title {
-  font-size: 28px;
-  color: #8a6118;
-  line-height: 1.1;
+.astromap-logo {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
 }
 
-.gm-logo-subtitle {
-  margin-top: 6px;
-  color: #6b7280;
-  font-size: 14px;
+.astromap-logo-subtitle {
+  margin-top: 2px;
+  color: #5b6470;
+  font-size: 13px;
 }
 
-.gm-section {
-  margin-bottom: 16px;
+.astromap-sidebar-section {
+  border-top: 1px solid var(--astromap-soft-border);
+  padding-top: 10px;
+  margin-top: 10px;
 }
 
-.gm-section h3 {
-  font-size: 14px;
-  margin: 0 0 10px;
-  color: #1f2937;
+.astromap-sidebar-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.astromap-section-title {
+  margin: 0 0 8px 0;
+  font-size: 13px;
   font-weight: 700;
+  color: var(--astromap-title);
 }
 
-.gm-section label {
+.astromap-field-label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--astromap-text);
 }
 
-.gm-input {
-  width: 100%;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid #cfcfc8;
-  background: white;
-  font-size: 14px;
-}
-
-.gm-input[readonly] {
-  background: #f4f5f7;
-  color: #444;
-}
-
-.gm-hint {
-  margin-top: 4px;
-  margin-bottom: 10px;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.gm-inline-2,
-.gm-inline-3,
-.gm-radio-row,
-.gm-radio-col,
-.gm-actions {
+.astromap-name-header {
   display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
   gap: 8px;
+  margin-bottom: 4px;
 }
 
-.gm-inline-2 {
-  grid-template-columns: 1fr 1fr;
-}
-
-.gm-inline-3 {
-  grid-template-columns: 1fr 1fr 1.4fr;
-}
-
-.gm-radio-row {
-  grid-template-columns: 1fr 1fr;
-}
-
-.gm-radio-col {
-  grid-template-columns: 1fr;
-}
-
-.gm-radio-row label,
-.gm-radio-col label {
-  font-size: 13px;
-  margin-bottom: 0;
-}
-
-.gm-actions {
-  grid-template-columns: 1fr 1fr;
-}
-
-.gm-btn {
-  border: 1px solid #cfcfc8;
-  background: #fff;
-  padding: 10px 12px;
+.astromap-ident-toggle,
+.astromap-small-toggle,
+.astromap-mini-btn,
+.astromap-transit-toggle {
+  border: 1px solid var(--astromap-input-border);
+  background: var(--astromap-ui-bg);
+  color: var(--astromap-text);
   cursor: pointer;
+  box-shadow: none;
+  border-radius: 0;
+  font-family: inherit;
 }
 
-.gm-btn:hover {
-  background: var(--hover);
+.astromap-ident-toggle {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.gm-btn-primary {
-  background: #eef4ff;
-  border-color: #b7c8ee;
-  color: #163d82;
+.astromap-ident-toggle img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.astromap-small-toggle {
+  min-width: 48px;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.astromap-small-toggle--coords {
+  min-width: 32px;
+  padding: 0 6px;
+}
+
+.astromap-mini-btn {
+  width: 22px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.astromap-transit-toggle {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  font-size: 12px;
+}
+
+.astromap-ident-toggle:hover,
+.astromap-small-toggle:hover,
+.astromap-mini-btn:hover,
+.astromap-transit-toggle:hover,
+.astromap-action-btn:hover {
+  background: var(--astromap-hover);
+}
+
+.astromap-ident-toggle:active,
+.astromap-small-toggle:active,
+.astromap-mini-btn:active,
+.astromap-transit-toggle:active,
+.astromap-action-btn:active {
+  background: #eceee8;
+}
+
+.astromap-label-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.astromap-label-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.astromap-label-right {
+  display: inline-flex;
+  align-items: center;
+}
+
+.astromap-inline-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.astromap-inline-icon-line {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.astromap-transit-banner-icon {
+  width: 32px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.astromap-transit-aspects-icon {
+  width: 24px;
+  height: 12px;
+  object-fit: contain;
+}
+
+.astromap-input {
+  width: 100%;
+  height: 30px;
+  box-sizing: border-box;
+  border: 1px solid var(--astromap-input-border);
+  background: var(--astromap-white);
+  padding: 4px 7px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--astromap-text);
+  border-radius: 0;
+  outline: none;
+}
+
+.astromap-input:focus {
+  border-color: #8aa7d6;
+}
+
+.astromap-input[readonly] {
+  background: #f3f4f6;
+}
+
+.astromap-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.astromap-row--date,
+.astromap-row--time,
+.astromap-row--coords,
+.astromap-row--transit-date {
+  gap: 4px;
+}
+
+.astromap-input--dd {
+  width: 54px;
+  flex: 0 0 54px;
+}
+
+.astromap-input--yyyy {
+  width: 72px;
+  flex: 0 0 72px;
+}
+
+.astromap-input--time {
+  width: 58px;
+  flex: 0 0 58px;
+}
+
+.astromap-input--coord {
+  width: calc(50% - 2px);
+}
+
+.astromap-dropdown-host {
+  position: relative;
+  margin-bottom: 6px;
+}
+
+.astromap-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--astromap-muted);
+}
+
+.astromap-dn-source {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--astromap-muted);
+}
+
+.astromap-dn-source img {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  margin-top: 1px;
+}
+
+.astromap-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 50;
+  border: 1px solid var(--astromap-panel-border);
+  background: var(--astromap-ui-bg);
+  box-shadow: none;
+  max-height: 250px;
+  overflow: auto;
+}
+
+.astromap-suggestion-header {
+  padding: 6px 8px;
+  background: #eef2f7;
+  color: var(--astromap-muted);
+  font-size: 12px;
   font-weight: 600;
 }
 
-.gm-divider {
-  border-top: 1px solid var(--border);
-  margin: 12px 0;
-}
-
-.city-autocomplete {
-  position: relative;
-}
-
-.city-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 20;
-  background: #fff;
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-  max-height: 240px;
-  overflow: auto;
-}
-
-.city-option {
+.astromap-suggestion-item {
+  display: block;
   width: 100%;
   text-align: left;
-  padding: 8px 10px;
-  border: 0;
-  background: #fff;
+  background: var(--astromap-ui-bg);
+  border: none;
+  border-top: 1px solid #eceff3;
+  padding: 6px 8px;
   cursor: pointer;
+  font-family: inherit;
 }
 
-.city-option:hover {
-  background: #f3f6fb;
+.astromap-suggestion-item:first-child {
+  border-top: none;
 }
 
-.gm-main {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  min-width: 0;
+.astromap-suggestion-item:hover {
+  background: #ddebff;
 }
 
-.gm-tabs {
-  display: flex;
-  gap: 2px;
-  padding: 10px 12px 0;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
+.astromap-suggestion-item--two-lines {
+  padding-top: 7px;
+  padding-bottom: 7px;
 }
 
-.gm-tab {
-  border: 1px solid var(--border);
-  border-bottom: 0;
-  background: #f6f6f2;
-  padding: 10px 16px;
-  cursor: pointer;
-}
-
-.gm-tab.is-active {
-  background: #fff;
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.gm-main-grid {
+.astromap-suggestion-main {
   display: block;
-  min-width: 0;
-  min-height: 0;
+  font-size: 13px;
+  color: var(--astromap-text);
 }
 
-.gm-main-grid.has-details {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  min-width: 0;
-  min-height: 0;
+.astromap-suggestion-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--astromap-muted);
 }
 
-.gm-details-card {
-  background: var(--bg);
-  border-right: 1px solid var(--border);
-  padding: 12px;
-  min-width: 0;
-}
-
-.gm-details-header {
+.astromap-language-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 10px;
 }
 
-.gm-details-title {
-  font-size: 22px;
-  color: var(--soft-accent);
-  font-weight: 700;
-}
-
-.gm-copy-btn {
-  border: 1px solid #cfcfc8;
-  background: #fff;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.gm-copy-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.gm-planet-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.gm-planet-chip {
-  border: 1px solid #cfd5df;
-  background: #fff;
-  padding: 5px 8px;
+.astromap-radio-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   cursor: pointer;
+  user-select: none;
 }
 
-.gm-planet-chip.is-active {
-  background: #eef4ff;
-  border-color: #b7c8ee;
-  color: #163d82;
-  font-weight: 700;
+.astromap-radio-inline img {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
 }
 
-.gm-details-empty {
-  border: 1px solid var(--border);
-  background: #fff;
-  padding: 10px;
-  color: var(--muted);
-  font-size: 13px;
+.astromap-radio-inline input {
+  margin: 0;
+  accent-color: #2563eb;
 }
 
-.gm-details-body {
-  border: 1px solid var(--border);
-  background: #fff;
-  padding: 12px;
+.astromap-radio-inline--plain img {
+  display: none;
 }
 
-.gm-details-planet {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.gm-details-section {
-  margin-bottom: 14px;
-}
-
-.gm-details-section-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--soft-accent);
+.astromap-transit-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 6px;
 }
 
-.gm-details-line {
+.astromap-transit-block {
+  margin-bottom: 8px;
+}
+
+.astromap-radio-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  row-gap: 6px;
+}
+
+.astromap-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.astromap-action-btn {
+  height: 32px;
+  border: 1px solid var(--astromap-input-border);
+  background: var(--astromap-ui-bg);
+  color: var(--astromap-text);
+  border-radius: 0;
+  cursor: pointer;
+  font-family: inherit;
   font-size: 13px;
-  line-height: 1.45;
-  white-space: pre-wrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-.gm-muted {
-  color: var(--muted);
+.astromap-action-btn img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
-.gm-result-wrap {
-  padding: 12px;
+.astromap-action-btn--primary {
+  font-weight: 600;
+}
+
+.astromap-action-btn--full {
+  width: 100%;
+}
+
+.astromap-sidebar-section--actions {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* ---- classes utiles pour le layout principal ---- */
+
+.astromap-main {
+  display: grid;
+  grid-template-rows: auto 1fr;
   min-width: 0;
-  min-height: 0;
+  border-left: 1px solid var(--astromap-panel-border);
+}
+
+.astromap-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: end;
+  background: var(--astromap-ui-bg);
+  border-bottom: 1px solid var(--astromap-panel-border);
+  padding-left: 0;
+}
+
+.astromap-tab {
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid var(--astromap-panel-border);
+  border-bottom: none;
+  background: var(--astromap-ui-bg);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  margin-right: -1px;
+}
+
+.astromap-tab:hover {
+  background: var(--astromap-hover);
+}
+
+.astromap-tab--active {
+  background: #ffffff;
+  font-weight: 600;
+}
+
+.astromap-stage {
+  position: relative;
   overflow: auto;
-  background: #fff;
+  background: #ffffff;
 }
 
-.gm-empty,
-.gm-error {
-  padding: 18px;
-  border: 1px solid var(--border);
-  background: #fff;
+.astromap-canvas-host {
+  position: relative;
+  min-height: calc(100vh - 90px);
+  background: #ffffff;
 }
 
-.gm-error {
-  color: #a61b1b;
-  background: #fff6f6;
-}
+@media (max-width: 1120px) {
+  .astromap-app {
+    grid-template-columns: 1fr;
+  }
 
-.gm-svg-panel {
-  min-width: 980px;
-}
+  .astromap-sidebar-shell {
+    padding-bottom: 0;
+  }
 
-.gm-svg-panel svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  background: #fff;
-}
+  .astromap-sidebar-panel {
+    width: 100%;
+    max-width: 420px;
+  }
 
-.gm-interpretation-frame {
-  width: 100%;
-  min-height: 78vh;
-  border: 0;
-  background: #fff;
-}
-
-.gm-footer {
-  border-top: 1px solid var(--border);
-  padding: 10px 14px;
-  font-size: 12px;
-  color: var(--muted);
-  background: var(--bg);
+  .astromap-main {
+    border-left: none;
+    border-top: 1px solid var(--astromap-panel-border);
+  }
 }
