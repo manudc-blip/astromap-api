@@ -13,16 +13,16 @@ STRUCT_GREY = "#4A4A4A"
 SHOW_ASPECT_CURSORS = True
 
 PERCEPTION_COEFFS = {
-    "Soleil": 1.30,
-    "Lune": 1.25,
-    "Mercure": 1.05,
-    "Vénus": 1.08,
-    "Mars": 1.10,
-    "Jupiter": 1.22,
-    "Saturne": 1.18,
-    "Uranus": 1.08,
-    "Neptune": 1.08,
-    "Pluton": 1.08,
+    "Soleil": 1.00,
+    "Lune": 1.00,
+    "Mercure": 1.20,
+    "Vénus": 1.10,
+    "Mars": 1.05,
+    "Jupiter": 1.05,
+    "Saturne": 1.15,
+    "Uranus": 1.15,
+    "Neptune": 1.05,
+    "Pluton": 1.10,
 }
 
 PLANET_FILES = {
