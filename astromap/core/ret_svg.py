@@ -118,7 +118,7 @@ PLANET_LABELS = {
     },
 }
 
-PERCEPTION_COEFFS = {
+GLYPH_SCALE_RET = {
     "Soleil": 1.00,
     "Lune": 1.00,
     "Mercure": 1.20,
@@ -130,7 +130,6 @@ PERCEPTION_COEFFS = {
     "Neptune": 1.05,
     "Pluton": 1.10,
 }
-
 
 PERCEPTION_COEFFS_SIGNS = {
     "Bélier": 1.00,
