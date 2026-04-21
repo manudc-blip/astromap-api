@@ -119,16 +119,16 @@ PLANET_LABELS = {
 }
 
 GLYPH_SCALE_RET = {
-    "Soleil": 1.13,
+    "Soleil": 1.00,
     "Lune": 1.00,
-    "Mercure": 1.10,
-    "Vénus": 1.05,
-    "Mars": 1.15,
-    "Jupiter": 1.00,
-    "Saturne": 1.05,
-    "Uranus": 1.05,
-    "Neptune": 1.13,
-    "Pluton": 1.05,
+    "Mercure": 1.20,
+    "Vénus": 1.10,
+    "Mars": 1.05,
+    "Jupiter": 1.05,
+    "Saturne": 1.15,
+    "Uranus": 1.15,
+    "Neptune": 1.05,
+    "Pluton": 1.10,
 }
 
 PERCEPTION_COEFFS_SIGNS = {
