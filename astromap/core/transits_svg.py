@@ -84,15 +84,39 @@ def _svg_text(
     )
 
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
+def _svg_image(
+    href: str,
+    x_center: float,
+    y_center: float,
+    size_px: float,
+    *,
+    elem_id: str | None = None,
+    class_name: str | None = None,
+    data_planet: str | None = None,
+    title: str | None = None,
+) -> str:
     half = size_px / 2.0
+
+    attrs = []
+    if elem_id:
+        attrs.append(f'id="{escape(elem_id)}"')
+    if class_name:
+        attrs.append(f'class="{escape(class_name)}"')
+    if data_planet:
+        attrs.append(f'data-planet="{escape(data_planet)}"')
+
+    attrs_str = (" " + " ".join(attrs)) if attrs else ""
+    title_part = f"<title>{escape(title)}</title>" if title else ""
+
     return (
+        f"<g{attrs_str}>"
+        f"{title_part}"
         f'<image href="{escape(href)}" '
         f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
         f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
         f'preserveAspectRatio="xMidYMid meet" />'
+        f"</g>"
     )
-
 
 def _pol_to_xy(cx: float, cy: float, r: float, deg: float) -> tuple[float, float]:
     th = math.radians(deg)
@@ -485,7 +509,18 @@ def render_transits_svg(
         if not href:
             href = _planet_href(asset_base_url, name)
         if href:
-            parts.append(_svg_image(href, gx, gy, d["px"]))
+            parts.append(
+                _svg_image(
+                    href,
+                    gx,
+                    gy,
+                    d["px"],
+                    elem_id=f"transit_planet_{name}",
+                    class_name="transit_planet transit",
+                    data_planet=name,
+                    title=name,
+                )
+            )
 
         try:
             n = int(round(float(d["deg_in_sign"]))) % 30
