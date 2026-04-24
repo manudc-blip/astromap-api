@@ -150,7 +150,6 @@ PERCEPTION_COEFFS_SIGNS = {
 def _fmt(v: float) -> str:
     return f"{v:.2f}"
 
-
 def _svg_text(
     x: float,
     y: float,
@@ -162,14 +161,18 @@ def _svg_text(
     anchor: str = "middle",
     baseline: str = "middle",
     family: str = "Segoe UI, Arial, sans-serif",
+    rotate: float | None = None,
 ) -> str:
+    transform = ""
+    if rotate is not None:
+        transform = f' transform="rotate({rotate} {_fmt(x)} {_fmt(y)})"'
+
     return (
-        f'<text x="{_fmt(x)}" y="{_fmt(y)}" '
+        f'<text x="{_fmt(x)}" y="{_fmt(y)}"{transform} '
         f'font-family="{family}" font-size="{size}" font-weight="{weight}" '
         f'fill="{fill}" text-anchor="{anchor}" dominant-baseline="{baseline}">'
         f"{escape(str(text))}</text>"
     )
-
 
 def _svg_circle(cx: float, cy: float, r: float, *, fill="#fff", stroke="#000", width=1) -> str:
     return (
@@ -362,7 +365,17 @@ def render_ret_svg(
     parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
-        _svg_text(width / 2.0, 40, title, size=18, fill=TITLE_COLOR, weight="700", baseline="hanging"),
+
+        _svg_text(
+            width / 2.0,
+            22,
+            title,
+            size=22,
+            fill=TITLE_COLOR,
+            weight="700",
+            baseline="hanging",
+            family="Segoe UI, Arial, sans-serif",
+        ),
     ]
 
     left_margin = 110
@@ -446,25 +459,26 @@ def render_ret_svg(
         parts.append(_draw_center_cell(planet_name, box_code, cx, cy, cell_size, asset_base_url))
 
     letters = {
-        "T": (-2.8, -0.8),
-        "E": (-1.8, -1.8),
-        "R": (-0.8, -2.8),
-        "r": (0.8, -2.8),
-        "e": (1.8, -1.8),
-        "t": (2.8, -0.8),
-        "p": (0.0, -5.5),
-        "P": (0.0, 3.5),
+        "T": (-2.8, -0.8, -45),
+        "E": (-1.8, -1.8, -45),
+        "R": (-0.8, -2.8, -45),
+        "r": (0.8, -2.8, 45),
+        "e": (1.8, -1.8, 45),
+        "t": (2.8, -0.8, 45),
+        "p": (0.0, -5.5, 0),
+        "P": (0.0, 3.5, 0),
     }
 
-    for txt, (dx, dy) in letters.items():
+    for txt, (dx, dy, angle) in letters.items():
         parts.append(
             _svg_text(
                 diamond_cx + dx * step,
                 diamond_cy + dy * step,
                 txt,
-                size=16,
+                size=15,
                 fill="#000000",
                 weight="700",
+                rotate=angle,
             )
         )
 
