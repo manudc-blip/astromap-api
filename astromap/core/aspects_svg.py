@@ -64,7 +64,7 @@ def _svg_text(
     weight="normal",
     anchor="middle",
     baseline="middle",
-    family="Segoe UI Symbol, Segoe UI, Arial, sans-serif",
+    family="Segoe UI, Arial, sans-serif",
 ) -> str:
     return (
         f'<text x="{_fmt(x)}" y="{_fmt(y)}" '
@@ -175,17 +175,21 @@ def render_aspects_svg(
 
     title = "Aspects planétaires" if language == "fr" else "Planetary aspects"
 
-    top_margin = 72
-    side_margin = 210
-    grid_width = width - side_margin - 20
-    grid_height = height - top_margin - 35
+    top_margin = 86
+    left_margin = 205
+    right_margin = 40
+    bottom_margin = 110
+
+    grid_width = width - left_margin - right_margin
+    grid_height = height - top_margin - bottom_margin
     grid_size = min(grid_width, grid_height)
+
     cell = grid_size / (n + 1)
     if cell < 25:
         cell = 25
         grid_size = cell * (n + 1)
 
-    x0 = side_margin
+    x0 = left_margin
     y0 = top_margin
     x_right = x0 + (n + 1) * cell
     y_bottom = y0 + (n + 1) * cell
@@ -195,9 +199,9 @@ def render_aspects_svg(
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
         _svg_text(
             width / 2,
-            22,
+            24,
             title,
-            size=18,
+            size=24,
             fill=TITLE_COLOR,
             weight="700",
             baseline="hanging",
@@ -224,8 +228,8 @@ def render_aspects_svg(
         parts.append(_svg_line(x_line, y0, x_line, y_bottom, stroke=color, width=line_w))
 
     # Entêtes planètes
-    glyph_size = cell * 0.54
-    fallback_size = max(9, int(cell * 0.32))
+    glyph_size = cell * 0.50
+    fallback_size = max(8, int(cell * 0.30))
 
     for idx, name in enumerate(planet_names):
         col = idx + 1
