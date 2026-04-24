@@ -429,7 +429,7 @@ def render_ret_svg(
                 )
             )
 
-        parts.append(_draw_left_planet_code(pname, diamond_center_x, line_center_y, 20.0))
+        parts.append(_draw_left_planet_code(pname, diamond_center_x, line_center_y, 22.0))
 
         sign_name = planet_signs.get(pname)
         href_s = _sign_href(asset_base_url, sign_name) if sign_name else None
@@ -491,7 +491,7 @@ def render_ret_svg(
 
     right_y0 = top + 10
     right_dy = 50
-    marker_size = 19
+    marker_size = 21
 
     family_labels_fr = {
         "E": "Existence extensive",
@@ -535,7 +535,7 @@ def render_ret_svg(
 
         marker_x = col_signs_x + 38
         if shape == "circle":
-            parts.append(_svg_circle(marker_x, y, 11, fill=color, stroke="#000000", width=1))
+            parts.append(_svg_circle(marker_x, y, 12, fill=color, stroke="#000000", width=1))
         else:
             parts.append(_svg_diamond(marker_x, y, marker_size, fill=color, stroke="#000000", width=1))
 
