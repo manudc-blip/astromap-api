@@ -175,10 +175,10 @@ def render_aspects_svg(
 
     title = "Aspects planétaires" if language == "fr" else "Planetary aspects"
 
-    top_margin = 90
-    side_margin = 230
-    grid_width = width - side_margin - 30
-    grid_height = height - top_margin - 70
+    top_margin = 72
+    side_margin = 210
+    grid_width = width - side_margin - 20
+    grid_height = height - top_margin - 35
     grid_size = min(grid_width, grid_height)
     cell = grid_size / (n + 1)
     if cell < 25:
@@ -193,7 +193,7 @@ def render_aspects_svg(
     parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
-        _svg_text(width / 2, 22, title, size=18, fill=TITLE_COLOR, weight="700", baseline="hanging"),
+        _svg_text(width / 2, 20, title, size=24, fill=TITLE_COLOR, weight="700", baseline="hanging"),
     ]
 
     # Fond grille
@@ -215,8 +215,8 @@ def render_aspects_svg(
         parts.append(_svg_line(x_line, y0, x_line, y_bottom, stroke=color, width=line_w))
 
     # Entêtes planètes
-    glyph_size = cell * 0.50
-    fallback_size = max(8, int(cell * 0.30))
+    glyph_size = cell * 0.58
+    fallback_size = max(10, int(cell * 0.34))
 
     for idx, name in enumerate(planet_names):
         col = idx + 1
@@ -291,14 +291,14 @@ def render_aspects_svg(
             href_a = _aspect_href(asset_base_url, kind)
 
             if href_a:
-                parts.append(_svg_image(href_a, cx, cy - cell * 0.03, cell * 0.42))
+                parts.append(_svg_image(href_a, cx, cy - cell * 0.03, cell * 0.48))
             else:
                 parts.append(
                     _svg_text(
                         cx,
                         cy - cell * 0.03,
                         symbol,
-                        size=max(12, int(cell * 0.42)),
+                        size=max(14, int(cell * 0.48)),
                         weight="700",
                         family="Segoe UI Symbol, Arial Unicode MS, Segoe UI, Arial, sans-serif",
                     )
@@ -309,7 +309,7 @@ def render_aspects_svg(
                     cx,
                     cy + cell * 0.33,
                     orb_str,
-                    size=max(7, int(cell * 0.15)),
+                    size=max(8, int(cell * 0.17)),
                     fill="#111111",
                 )
             )
