@@ -428,7 +428,7 @@ def render_ret_svg(
             )
         )
 
-        href_p = _planet_href(asset_base_url, pname)
+        href_p = _planet_href_for_box(asset_base_url, pname, "white")
         if href_p:
             scale = LEFT_PLANET_SCALE.get(pname, 1.0)
             parts.append(_svg_image(href_p, planet_glyph_x, line_center_y, small_planet_px * scale))
@@ -591,7 +591,7 @@ def render_ret_svg(
 
     x_cursor = left_margin + 210
     for p in dominant_planets:
-        href = _planet_href(asset_base_url, p)
+        href = _planet_href_for_box(asset_base_url, p, "white")
         if href:
             parts.append(_svg_image(href, x_cursor, base_y, 34))
             x_cursor += 34
