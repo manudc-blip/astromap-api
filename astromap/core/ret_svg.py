@@ -408,7 +408,7 @@ def render_ret_svg(
                 col_planets_x,
                 line_center_y,
                 f"{rank}.",
-                size=14,
+                size=LEFT_RANK_SIZE,
                 fill="#000000",
                 weight="700",
                 anchor="start",
@@ -517,49 +517,49 @@ def render_ret_svg(
 
     fam_labels = family_labels_en if language.lower().startswith("en") else family_labels_fr
 
-    for i, fam in enumerate(ret_order[:8], start=1):
-        y = right_y0 + i * right_dy
-        code = RET_FAMILY_CODE_FROM_STR.get(fam, fam)
-        shape, color = RET_FAMILY_MARKERS[code]
+        for i, fam in enumerate(ret_order[:8], start=1):
+            y = right_y0 + i * right_dy
+            code = RET_FAMILY_CODE_FROM_STR.get(fam, fam)
+            shape, color = RET_FAMILY_MARKERS[code]
 
-    parts.append(
-        _svg_text(
-            col_signs_x,
-            y,
-            f"{i}.",
-            size=RIGHT_RANK_SIZE,
-            weight="700",
-            anchor="start",
+        parts.append(
+            _svg_text(
+                col_signs_x,
+                y,
+                f"{i}.",
+                size=RIGHT_RANK_SIZE,
+                weight="700",
+                anchor="start",
+            )
         )
-    )
 
-    marker_x = col_signs_x + 38
-    if shape == "circle":
-        parts.append(_svg_circle(marker_x, y, 11, fill=color, stroke="#000000", width=1))
-    else:
-        parts.append(_svg_diamond(marker_x, y, marker_size, fill=color, stroke="#000000", width=1))
+        marker_x = col_signs_x + 38
+        if shape == "circle":
+            parts.append(_svg_circle(marker_x, y, 11, fill=color, stroke="#000000", width=1))
+        else:
+            parts.append(_svg_diamond(marker_x, y, marker_size, fill=color, stroke="#000000", width=1))
 
-    parts.append(
-        _svg_text(
-            col_signs_x + 68,
-            y,
-            code,
-            size=RIGHT_CODE_SIZE,
-            weight="700",
-            anchor="start",
+        parts.append(
+            _svg_text(
+                col_signs_x + 68,
+                y,
+                code,
+                size=RIGHT_CODE_SIZE,
+                weight="700",
+                anchor="start",
+            )
         )
-    )
 
-    parts.append(
-        _svg_text(
-            col_signs_x + 92,
-            y,
-            f"({fam_labels.get(code, code)})",
-            size=RIGHT_LABEL_SIZE,
-            weight="700",
-            anchor="start",
+        parts.append(
+            _svg_text(
+                col_signs_x + 92,
+                y,
+                f"({fam_labels.get(code, code)})",
+                size=RIGHT_LABEL_SIZE,
+                weight="700",
+                anchor="start",
+            )
         )
-    )
  
     base_y = top + 10 * line_h + 80
 
