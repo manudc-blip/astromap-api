@@ -138,10 +138,10 @@ LEFT_PLANET_SCALE = {
     "Vénus": 1.00,
     "Mars": 0.95,
     "Jupiter": 1.00,
-    "Saturne": 1.02,
+    "Saturne": 1.05,
     "Uranus": 1.00,
     "Neptune": 0.98,
-    "Pluton": 1.00,
+    "Pluton": 1.03,
 }
 
 PERCEPTION_COEFFS_SIGNS = {
