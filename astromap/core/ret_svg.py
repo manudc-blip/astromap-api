@@ -146,6 +146,11 @@ PERCEPTION_COEFFS_SIGNS = {
     "Poissons": 1.00,
 }
 
+LEFT_RANK_SIZE = 16
+RIGHT_RANK_SIZE = 16
+RIGHT_CODE_SIZE = 19
+RIGHT_LABEL_SIZE = 14
+BOTTOM_LABEL_SIZE = 15
 
 def _fmt(v: float) -> str:
     return f"{v:.2f}"
@@ -419,7 +424,7 @@ def render_ret_svg(
                     planet_glyph_x,
                     line_center_y,
                     _planet_label(pname, language),
-                    size=14,
+                    size=LEFT_RANK_SIZE,
                     weight="700",
                 )
             )
@@ -517,32 +522,78 @@ def render_ret_svg(
         code = RET_FAMILY_CODE_FROM_STR.get(fam, fam)
         shape, color = RET_FAMILY_MARKERS[code]
 
-        parts.append(_svg_text(col_signs_x, y, f"{i}.", size=14, weight="700", anchor="start"))
+    parts.append(
+        _svg_text(
+            col_signs_x,
+            y,
+            f"{i}.",
+            size=RIGHT_RANK_SIZE,
+            weight="700",
+            anchor="start",
+        )
+    )
 
-        marker_x = col_signs_x + 38
-        if shape == "circle":
-            parts.append(_svg_circle(marker_x, y, 11, fill=color, stroke="#000000", width=1))
-        else:
-            parts.append(_svg_diamond(marker_x, y, marker_size, fill=color, stroke="#000000", width=1))
+    marker_x = col_signs_x + 38
+    if shape == "circle":
+        parts.append(_svg_circle(marker_x, y, 11, fill=color, stroke="#000000", width=1))
+    else:
+        parts.append(_svg_diamond(marker_x, y, marker_size, fill=color, stroke="#000000", width=1))
 
-        parts.append(_svg_text(col_signs_x + 68, y, code, size=17, weight="700", anchor="start"))
-        parts.append(_svg_text(col_signs_x + 88, y, f"({fam_labels.get(code, code)})", size=12, weight="700", anchor="start"))
+    parts.append(
+        _svg_text(
+            col_signs_x + 68,
+            y,
+            code,
+            size=RIGHT_CODE_SIZE,
+            weight="700",
+            anchor="start",
+        )
+    )
 
+    parts.append(
+        _svg_text(
+            col_signs_x + 92,
+            y,
+            f"({fam_labels.get(code, code)})",
+            size=RIGHT_LABEL_SIZE,
+            weight="700",
+            anchor="start",
+        )
+    )
+ 
     base_y = top + 10 * line_h + 80
 
     dominant_planets = [p for p in ordered_planets if box_colors.get(p) == "black"]
-    parts.append(_svg_text(left_margin, base_y, "Planètes dominantes :", size=13, weight="700", anchor="start"))
+    parts.append(
+        _svg_text(
+            left_margin,
+            base_y,
+            "Planètes dominantes :",
+            size=BOTTOM_LABEL_SIZE,
+            weight="700",
+            anchor="start",
+        )
+    )
 
-    x_cursor = left_margin + 180
+    x_cursor = left_margin + 210
     for p in dominant_planets:
         href = _planet_href(asset_base_url, p)
         if href:
             parts.append(_svg_image(href, x_cursor, base_y, 34))
             x_cursor += 34
 
-    parts.append(_svg_text(left_margin, base_y + 40, "Signes dominants :", size=13, weight="700", anchor="start"))
+    parts.append(
+        _svg_text(
+            left_margin,
+            base_y + 40,
+            "Signes dominants :",
+            size=BOTTOM_LABEL_SIZE,
+            weight="700",
+            anchor="start",
+        )
+    )
 
-    x_cursor = left_margin + 160
+    x_cursor = left_margin + 190
     for sign_name, score in sign_rank:
         if score > 15:
             href = _sign_href(asset_base_url, sign_name)
