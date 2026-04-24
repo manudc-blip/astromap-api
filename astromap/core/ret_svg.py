@@ -398,7 +398,7 @@ def render_ret_svg(
     sign_x = diamond_center_x + 34
 
     small_planet_px = 34
-    small_sign_px = 14
+    small_sign_px = 15
 
     for rank, pname in enumerate(ordered_planets[:10], start=1):
         line_center_y = top + (rank - 1) * line_h + line_h / 2.0
