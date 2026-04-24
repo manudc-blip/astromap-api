@@ -131,6 +131,19 @@ GLYPH_SCALE_RET = {
     "Pluton": 1.10,
 }
 
+LEFT_PLANET_SCALE = {
+    "Soleil": 0.95,
+    "Lune": 1.00,
+    "Mercure": 1.10,
+    "Vénus": 1.00,
+    "Mars": 0.92,
+    "Jupiter": 1.00,
+    "Saturne": 1.00,
+    "Uranus": 1.00,
+    "Neptune": 1.00,
+    "Pluton": 1.00,
+}
+
 PERCEPTION_COEFFS_SIGNS = {
     "Bélier": 1.00,
     "Taureau": 1.02,
@@ -417,7 +430,8 @@ def render_ret_svg(
 
         href_p = _planet_href(asset_base_url, pname)
         if href_p:
-            parts.append(_svg_image(href_p, planet_glyph_x, line_center_y, small_planet_px))
+            scale = LEFT_PLANET_SCALE.get(pname, 1.0)
+            parts.append(_svg_image(href_p, planet_glyph_x, line_center_y, small_planet_px * scale))
         else:
             parts.append(
                 _svg_text(
