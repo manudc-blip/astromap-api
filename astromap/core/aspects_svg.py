@@ -193,7 +193,16 @@ def render_aspects_svg(
     parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
-        _svg_text(width / 2, 20, title, size=24, fill=TITLE_COLOR, weight="700", baseline="hanging"),
+        _svg_text(
+            width / 2,
+            22,
+            title,
+            size=18,
+            fill=TITLE_COLOR,
+            weight="700",
+            baseline="hanging",
+            family="Segoe UI, Arial, sans-serif",
+        ),
     ]
 
     # Fond grille
@@ -215,8 +224,8 @@ def render_aspects_svg(
         parts.append(_svg_line(x_line, y0, x_line, y_bottom, stroke=color, width=line_w))
 
     # Entêtes planètes
-    glyph_size = cell * 0.58
-    fallback_size = max(10, int(cell * 0.34))
+    glyph_size = cell * 0.54
+    fallback_size = max(9, int(cell * 0.32))
 
     for idx, name in enumerate(planet_names):
         col = idx + 1
@@ -291,14 +300,14 @@ def render_aspects_svg(
             href_a = _aspect_href(asset_base_url, kind)
 
             if href_a:
-                parts.append(_svg_image(href_a, cx, cy - cell * 0.03, cell * 0.48))
+                parts.append(_svg_image(href_a, cx, cy - cell * 0.03, cell * 0.44))
             else:
                 parts.append(
                     _svg_text(
                         cx,
                         cy - cell * 0.03,
                         symbol,
-                        size=max(14, int(cell * 0.48)),
+                        size=max(13, int(cell * 0.44)),
                         weight="700",
                         family="Segoe UI Symbol, Arial Unicode MS, Segoe UI, Arial, sans-serif",
                     )
