@@ -459,14 +459,14 @@ def render_ret_svg(
         parts.append(_draw_center_cell(planet_name, box_code, cx, cy, cell_size, asset_base_url))
 
     letters = {
-        "T": (-2.8, -0.8, -45),
-        "E": (-1.8, -1.8, -45),
-        "R": (-0.8, -2.8, -45),
-        "r": (0.8, -2.8, 45),
-        "e": (1.8, -1.8, 45),
-        "t": (2.8, -0.8, 45),
-        "p": (0.0, -5.5, 0),
-        "P": (0.0, 3.5, 0),
+        "T": (-2.55, -0.75, -45),
+        "E": (-1.70, -1.70, -45),
+        "R": (-0.75, -2.55, -45),
+        "r": (0.75, -2.55, 45),
+        "e": (1.70, -1.70, 45),
+        "t": (2.55, -0.75, 45),
+        "p": (0.0, -5.10, 0),
+        "P": (0.0, 3.25, 0),
     }
 
     for txt, (dx, dy, angle) in letters.items():
@@ -475,7 +475,7 @@ def render_ret_svg(
                 diamond_cx + dx * step,
                 diamond_cy + dy * step,
                 txt,
-                size=15,
+                size=19 if txt in {"T", "E", "R", "r", "e", "t"} else 18,
                 fill="#000000",
                 weight="700",
                 rotate=angle,
