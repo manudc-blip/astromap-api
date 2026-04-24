@@ -134,9 +134,9 @@ GLYPH_SCALE_RET = {
 LEFT_PLANET_SCALE = {
     "Soleil": 0.95,
     "Lune": 1.00,
-    "Mercure": 1.10,
+    "Mercure": 1.05,
     "Vénus": 1.00,
-    "Mars": 0.92,
+    "Mars": 0.95,
     "Jupiter": 1.00,
     "Saturne": 1.00,
     "Uranus": 1.00,
