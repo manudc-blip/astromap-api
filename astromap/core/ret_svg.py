@@ -164,7 +164,7 @@ RIGHT_RANK_SIZE = 16
 RIGHT_CODE_SIZE = 19
 RIGHT_LABEL_SIZE = 14
 BOTTOM_LABEL_SIZE = 15
-GLYPH_NEUTRAL_OPACITY = 0.80
+GLYPH_NEUTRAL_OPACITY = 0.72
 
 def _fmt(v: float) -> str:
     return f"{v:.2f}"
@@ -610,7 +610,8 @@ def render_ret_svg(
     for p in dominant_planets:
         href = _planet_href_for_box(asset_base_url, p, "white")
         if href:
-            parts.append(_svg_image(href, x_cursor, base_y, 34, opacity=GLYPH_NEUTRAL_OPACITY))
+            scale = LEFT_PLANET_SCALE.get(p, 1.0)
+            parts.append(_svg_image(href, x_cursor, base_y, 34 * scale, opacity=GLYPH_NEUTRAL_OPACITY))
             x_cursor += 34
 
     parts.append(
