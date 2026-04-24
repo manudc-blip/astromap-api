@@ -138,7 +138,7 @@ LEFT_PLANET_SCALE = {
     "Vénus": 1.00,
     "Mars": 0.95,
     "Jupiter": 1.00,
-    "Saturne": 1.00,
+    "Saturne": 1.02,
     "Uranus": 1.00,
     "Neptune": 0.98,
     "Pluton": 1.00,
