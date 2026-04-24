@@ -515,12 +515,12 @@ def render_ret_svg(
         "T": "Extensive transcendence",
     }
 
-        fam_labels = family_labels_en if language.lower().startswith("en") else family_labels_fr
+    fam_labels = family_labels_en if language.lower().startswith("en") else family_labels_fr
 
-        for i, fam in enumerate(ret_order[:8], start=1):
-            y = right_y0 + i * right_dy
-            code = RET_FAMILY_CODE_FROM_STR.get(fam, fam)
-            shape, color = RET_FAMILY_MARKERS[code]
+    for i, fam in enumerate(ret_order[:8], start=1):
+        y = right_y0 + i * right_dy
+        code = RET_FAMILY_CODE_FROM_STR.get(fam, fam)
+        shape, color = RET_FAMILY_MARKERS[code]
 
         parts.append(
             _svg_text(
