@@ -132,8 +132,8 @@ GLYPH_SCALE_RET = {
 }
 
 LEFT_PLANET_SCALE = {
-    "Soleil": 0.95,
-    "Lune": 1.00,
+    "Soleil": 0.93,
+    "Lune": 0.98,
     "Mercure": 1.05,
     "Vénus": 1.00,
     "Mars": 0.95,
@@ -164,6 +164,7 @@ RIGHT_RANK_SIZE = 16
 RIGHT_CODE_SIZE = 19
 RIGHT_LABEL_SIZE = 14
 BOTTOM_LABEL_SIZE = 15
+GLYPH_NEUTRAL_OPACITY = 0.72
 
 def _fmt(v: float) -> str:
     return f"{v:.2f}"
@@ -210,15 +211,22 @@ def _svg_diamond(cx: float, cy: float, size: float, *, fill="#fff", stroke="#000
     return f'<polygon points="{pts_str}" fill="{fill}" stroke="{stroke}" stroke-width="{width}" />'
 
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
+def _svg_image(
+    href: str,
+    x_center: float,
+    y_center: float,
+    size_px: float,
+    *,
+    opacity: float | None = None,
+) -> str:
     half = size_px / 2.0
+    opacity_attr = f' opacity="{opacity}"' if opacity is not None else ""
     return (
         f'<image href="{escape(href)}" '
         f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
         f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
-        f'preserveAspectRatio="xMidYMid meet" />'
+        f'preserveAspectRatio="xMidYMid meet"{opacity_attr} />'
     )
-
 
 def _planet_href(asset_base_url: str, planet_name: str) -> str | None:
     fn = PLANET_FILES.get(planet_name)
@@ -430,8 +438,17 @@ def render_ret_svg(
 
         href_p = _planet_href_for_box(asset_base_url, pname, "white")
         if href_p:
-            scale = LEFT_PLANET_SCALE.get(pname, 1.0)
-            parts.append(_svg_image(href_p, planet_glyph_x, line_center_y, small_planet_px * scale))
+            scale = LEFT_PLANET_SCALE.get(pname, 1.0) if "LEFT_PLANET_SCALE" in globals() else 1.0
+            parts.append(
+                _svg_image(
+                    href_p,
+                    planet_glyph_x,
+                    line_center_y,
+                    small_planet_px * scale,
+                    opacity=GLYPH_NEUTRAL_OPACITY,
+                )
+            )
+
         else:
             parts.append(
                 _svg_text(
@@ -593,7 +610,7 @@ def render_ret_svg(
     for p in dominant_planets:
         href = _planet_href_for_box(asset_base_url, p, "white")
         if href:
-            parts.append(_svg_image(href, x_cursor, base_y, 34))
+            parts.append(_svg_image(href, x_cursor, base_y, 34, opacity=GLYPH_NEUTRAL_OPACITY))
             x_cursor += 34
 
     parts.append(
