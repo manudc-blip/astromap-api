@@ -223,7 +223,12 @@ def render_transits_svg(
     size0 = min(w, h) - 2 * margin
     scale_theme = 0.80
     size = int(size0 * scale_theme)
-    cx, cy = w / 2, h / 2
+    # Même offset que dans render_ecliptic_svg
+    THEME_OFFSET_X = 60      # vers la droite
+    THEME_OFFSET_Y = -18     # vers le haut
+
+    cx = w / 2 + THEME_OFFSET_X
+    cy = h / 2 + THEME_OFFSET_Y
 
     r_outer = size * 0.36
     r_inner = size * 0.23
@@ -282,10 +287,6 @@ def render_transits_svg(
         asset_base_url=asset_base_url,
     )
     parts.append(_extract_svg_inner(natal_svg))
-
-    # Correction : le thème natal extrait est déjà décalé verticalement.
-    # On applique le même décalage aux éléments de transit.
-    parts.append('<g transform="translate(0, 18)">')
 
     # 2) Aspects transit
     transit_aspect_color = "#b567d6"
@@ -643,7 +644,6 @@ def render_transits_svg(
         except Exception:
             pass
 
-    parts.append("</g>")  # ferme le groupe de correction verticale des transits
     parts.append("</g>")  # ferme le groupe principal
 
     # 4) Titre transit
