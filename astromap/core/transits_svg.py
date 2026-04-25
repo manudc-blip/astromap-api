@@ -316,6 +316,69 @@ def _build_visible_conj_arc(cx: float, cy: float, r: float, a1: float, a2: float
 
     return _arc_points(cx, cy, r, start, extent, steps=steps)
 
+def _draw_outer_conjunction_marker(
+    parts: list[str],
+    cx: float,
+    cy: float,
+    r_base: float,
+    a1: float,
+    a2: float,
+    *,
+    stroke: str,
+):
+    r1 = r_base + 10
+    r2 = r_base + 22
+
+    x1, y1 = _pol_to_xy(cx, cy, r1, a1)
+    x2, y2 = _pol_to_xy(cx, cy, r2, a1)
+    x3, y3 = _pol_to_xy(cx, cy, r1, a2)
+    x4, y4 = _pol_to_xy(cx, cy, r2, a2)
+
+    parts.append(
+        _svg_line(
+            x1,
+            y1,
+            x2,
+            y2,
+            stroke=stroke,
+            width=2.2,
+            linecap="round",
+        )
+    )
+
+    parts.append(
+        _svg_line(
+            x3,
+            y3,
+            x4,
+            y4,
+            stroke=stroke,
+            width=2.2,
+            linecap="round",
+        )
+    )
+
+    pts = _build_visible_conj_arc(
+        cx,
+        cy,
+        r2,
+        a1,
+        a2,
+        min_extent_deg=8.0,
+        steps=32,
+    )
+
+    parts.append(
+        _svg_polyline(
+            pts,
+            stroke=stroke,
+            width=2.2,
+            fill="none",
+            linecap="round",
+            linejoin="round",
+        )
+    )
+
 def render_transits_svg(
     natal_payload: dict[str, Any],
     transit_payload: dict[str, Any],
@@ -459,46 +522,15 @@ def render_transits_svg(
 
             if a_type == "CONJ":
                 if p1 in angles_transit and p2 in angles_transit:
-                    a1 = angles_transit[p1]
-                    a2 = angles_transit[p2]
-
-                    pts = _build_visible_conj_arc(
+                    _draw_outer_conjunction_marker(
+                        parts,
                         cx,
                         cy,
-                        r_aspect - 14,
-                        a1,
-                        a2,
-                        min_extent_deg=16.0,
-                        steps=40,
+                        r_outer,
+                        angles_transit[p1],
+                        angles_transit[p2],
+                        stroke=transit_aspect_color,
                     )
-
-                    parts.append(
-                        _svg_polyline(
-                            pts,
-                            stroke=transit_aspect_color,
-                            width=3.0,
-                            fill="none",
-                            linecap="round",
-                            linejoin="round",
-                        )
-                    )
-
-                    mid = (a1 + _short_arc_extent(a1, a2) / 2.0 + 360.0) % 360.0
-                    x1, y1 = _pol_to_xy(cx, cy, r_aspect - 28, mid)
-                    x2, y2 = _pol_to_xy(cx, cy, r_aspect + 8, mid)
-
-                    parts.append(
-                        _svg_line(
-                            x1,
-                            y1,
-                            x2,
-                            y2,
-                            stroke=transit_aspect_color,
-                            width=2.4,
-                            linecap="round",
-                        )
-                    )
-
                 continue
 
             if p1 in transit_xy and p2 in transit_xy:
@@ -556,46 +588,15 @@ def render_transits_svg(
 
             if a_type == "CONJ":
                 if p_t in angles_transit and p_n in angles_natal:
-                    a1 = angles_transit[p_t]
-                    a2 = angles_natal[p_n]
-
-                    pts = _build_visible_conj_arc(
+                    _draw_outer_conjunction_marker(
+                        parts,
                         cx,
                         cy,
-                        r_aspect - 14,
-                        a1,
-                        a2,
-                        min_extent_deg=16.0,
-                        steps=40,
+                        r_outer,
+                        angles_transit[p_t],
+                        angles_natal[p_n],
+                        stroke=transit_aspect_color,
                     )
-
-                    parts.append(
-                        _svg_polyline(
-                            pts,
-                            stroke=transit_aspect_color,
-                            width=3.0,
-                            fill="none",
-                            linecap="round",
-                            linejoin="round",
-                        )
-                    )
-
-                    mid = (a1 + _short_arc_extent(a1, a2) / 2.0 + 360.0) % 360.0
-                    x1, y1 = _pol_to_xy(cx, cy, r_aspect - 28, mid)
-                    x2, y2 = _pol_to_xy(cx, cy, r_aspect + 8, mid)
-
-                    parts.append(
-                        _svg_line(
-                            x1,
-                            y1,
-                            x2,
-                            y2,
-                            stroke=transit_aspect_color,
-                            width=2.4,
-                            linecap="round",
-                        )
-                    )
-
                 continue
 
             if p_t in transit_xy and p_n in natal_xy:
