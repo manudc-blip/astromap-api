@@ -223,12 +223,8 @@ def render_transits_svg(
     size0 = min(w, h) - 2 * margin
     scale_theme = 0.80
     size = int(size0 * scale_theme)
-    # Même offset que dans render_ecliptic_svg
-    THEME_OFFSET_X = 60      # vers la droite
-    THEME_OFFSET_Y = -18     # vers le haut
-
-    cx = w / 2 + THEME_OFFSET_X
-    cy = h / 2 + THEME_OFFSET_Y
+    cx = w / 2
+    cy = h / 2
 
     r_outer = size * 0.36
     r_inner = size * 0.23
@@ -276,16 +272,18 @@ def render_transits_svg(
     parts.append('<g>')
 
     # 1) Fond natal complet, identique à l’écliptique, sans titre
-    natal_svg = render_ecliptic_svg(
-        natal_payload,
-        width=width,
-        height=height,
-        language=language,
-        show_title=False,
-        show_houses=True,
-        show_aspects=True,
-        asset_base_url=asset_base_url,
-    )
+natal_svg = render_ecliptic_svg(
+    natal_payload,
+    width=width,
+    height=height,
+    language=language,
+    show_title=False,
+    show_houses=True,
+    show_aspects=True,
+    asset_base_url=asset_base_url,
+    center_dx=0,
+    center_dy=0,
+)
     parts.append(_extract_svg_inner(natal_svg))
 
     # 2) Aspects transit
