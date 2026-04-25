@@ -142,40 +142,6 @@ def _transit_dash(kind: str):
         return "1 3"
     return None
 
-def _short_angle_delta(a1: float, a2: float) -> float:
-    return (a2 - a1 + 180.0) % 360.0 - 180.0
-
-
-def _svg_arc_polyline(
-    cx: float,
-    cy: float,
-    r: float,
-    a1: float,
-    a2: float,
-    *,
-    stroke: str = "#0077CC",
-    width: float = 1.4,
-    steps: int = 28,
-) -> str:
-    delta = _short_angle_delta(a1, a2)
-    parts = []
-
-    for offset in (-1.8, 1.8):
-        pts = []
-
-        for i in range(steps + 1):
-            t = i / steps
-            a = a1 + delta * t
-            x, y = _pol_to_xy(cx, cy, r + offset, a)
-            pts.append(f"{_fmt(x)},{_fmt(y)}")
-
-        parts.append(
-            f'<polyline points="{" ".join(pts)}" '
-            f'stroke="{stroke}" stroke-width="{width}" '
-            f'fill="none" stroke-linecap="round" stroke-linejoin="round" />'
-        )
-
-    return "".join(parts)
 
 def _extract_svg_inner(svg: str) -> str:
     start = svg.find(">")
@@ -223,7 +189,10 @@ def render_transits_svg(
     size0 = min(w, h) - 2 * margin
     scale_theme = 0.80
     size = int(size0 * scale_theme)
-    cx, cy = w / 2, h / 2
+    theme_dx = 100.0
+    theme_dy = 12.0
+
+    cx, cy = w / 2 + theme_dx, h / 2 + theme_dy
 
     r_outer = size * 0.36
     r_inner = size * 0.23
@@ -235,7 +204,7 @@ def render_transits_svg(
 
     r2_grid_in = r_inner + gap_in
     r2_grid_out = r2_grid_in + grid_band
-    r_cursor_end = r2_grid_in + (r2_grid_out - r2_grid_in) * 0.38
+    r_link_inner = (r2_grid_in + r2_grid_out) * 0.5
 
     circ_out_w = 3.0
     gap_out = circ_out_w / 2.0
@@ -243,14 +212,13 @@ def render_transits_svg(
     r_grid_out = r_outer - gap_out
     r_grid_in = r_grid_out - grid_band
     r_link_outer = (r_grid_in + r_grid_out) * 0.5
-    r_conj_outer = r_grid_out + 6.0
 
     outer_gap_min = int(size * 0.030)
     outer_gap_factor = 1.30
     outer_gap = max(outer_gap_min, int(px_planet_base * outer_gap_factor))
 
     r_planet_transit = r_outer + outer_gap + int(size * 0.13)
-    r_line_start = r_grid_in + 3.0
+    r_line_start = r_link_outer
     r_elbow = (r_line_start + r_planet_transit) / 2.0
     r_aspect = r_inner
 
@@ -268,7 +236,6 @@ def render_transits_svg(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
     ]
-    parts.append('<g>')
 
     # 1) Fond natal complet, identique à l’écliptique, sans titre
     natal_svg = render_ecliptic_svg(
@@ -280,12 +247,10 @@ def render_transits_svg(
         show_houses=True,
         show_aspects=True,
         asset_base_url=asset_base_url,
+        center_dx=theme_dx,
+        center_dy=theme_dy,
     )
-    parts.append(_extract_svg_inner(natal_svg))
-
-    # Correction : le thème natal extrait est déjà décalé verticalement.
-    # On applique le même décalage aux éléments de transit.
-    parts.append('<g transform="translate(0, 18)">')
+    parts.append('<g>')
 
     # 2) Aspects transit
     transit_aspect_color = "#b567d6"
@@ -314,31 +279,6 @@ def render_transits_svg(
 
     if (aspect_mode or "TN").upper() == "TT":
         aspects_list = detect_aspects(transit_payload.get("planets", []))
-
-        for a in aspects_list:
-            if a.get("type") != "CONJ":
-                continue
-
-            p1 = a.get("p1")
-            p2 = a.get("p2")
-
-            a1 = angles_transit.get(p1)
-            a2 = angles_transit.get(p2)
-
-            if a1 is None or a2 is None:
-                continue
-
-            parts.append(
-                _svg_arc_polyline(
-                    cx,
-                    cy,
-                    r_conj_outer,
-                    a1,
-                    a2,
-                    stroke=transit_aspect_color,
-                    width=transit_aspect_width,
-                )
-            )
 
         for a in aspects_list:
             if a.get("type") == "CONJ":
@@ -370,7 +310,7 @@ def render_transits_svg(
                         continue
 
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
-                    x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
+                    x2, y2 = _pol_to_xy(cx, cy, r_link_inner, ang)
                     parts.append(
                         _svg_line(
                             x1, y1, x2, y2,
@@ -386,31 +326,6 @@ def render_transits_svg(
             side_a="T",
             side_b="N",
         )
-
-        for a in aspects_tn:
-            if a.get("type") != "CONJ":
-                continue
-
-            p_t = a.get("p1")
-            p_n = a.get("p2")
-
-            a1 = angles_transit.get(p_t)
-            a2 = angles_natal.get(p_n)
-
-            if a1 is None or a2 is None:
-                continue
-
-            parts.append(
-                _svg_arc_polyline(
-                    cx,
-                    cy,
-                    r_conj_outer,
-                    a1,
-                    a2,
-                    stroke=transit_aspect_color,
-                    width=transit_aspect_width,
-                )
-            )
 
         for a in aspects_tn:
             if a.get("type") == "CONJ":
@@ -442,7 +357,7 @@ def render_transits_svg(
                         continue
 
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
-                    x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
+                    x2, y2 = _pol_to_xy(cx, cy, r_link_inner, ang)
                     parts.append(
                         _svg_line(
                             x1, y1, x2, y2,
@@ -572,14 +487,7 @@ def render_transits_svg(
 
         xb0, yb0 = _pol_to_xy(cx, cy, r_line_start, ang_band)
         xb1, yb1 = _pol_to_xy(cx, cy, r_elbow, ang_band)
-        parts.append(
-            _svg_line(
-                xb0, yb0, xb1, yb1,
-                stroke="#b567d6",
-                width=1,
-                linecap="butt",
-            )
-        )
+        parts.append(_svg_line(xb0, yb0, xb1, yb1, stroke="#b567d6", width=1))
 
         half_px = 0.5 * d["px"]
         dx, dy = (gx - xb1), (gy - yb1)
@@ -588,14 +496,7 @@ def render_transits_svg(
         if dist > 0 and stop_from_elbow > 0:
             t = stop_from_elbow / dist
             xo, yo = (xb1 + dx * t, yb1 + dy * t)
-            parts.append(
-                _svg_line(
-                    xb1, yb1, xo, yo,
-                    stroke="#b567d6",
-                    width=1,
-                    linecap="butt",
-                )
-            )
+            parts.append(_svg_line(xb1, yb1, xo, yo, stroke="#b567d6", width=1))
 
         # halo blanc si passe sur un axe
         for label in ("AS", "DS", "MC", "FC"):
@@ -642,9 +543,6 @@ def render_transits_svg(
                 )
         except Exception:
             pass
-
-    parts.append("</g>")  # ferme le groupe de correction verticale des transits
-    parts.append("</g>")  # ferme le groupe principal
 
     # 4) Titre transit
     age_text = None
