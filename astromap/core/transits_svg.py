@@ -142,6 +142,35 @@ def _transit_dash(kind: str):
         return "1 3"
     return None
 
+def _short_angle_delta(a1: float, a2: float) -> float:
+    return (a2 - a1 + 180.0) % 360.0 - 180.0
+
+
+def _svg_arc_polyline(
+    cx: float,
+    cy: float,
+    r: float,
+    a1: float,
+    a2: float,
+    *,
+    stroke: str = "#0070d9",
+    width: float = 2.2,
+    steps: int = 10,
+) -> str:
+    delta = _short_angle_delta(a1, a2)
+    pts = []
+
+    for i in range(steps + 1):
+        t = i / steps
+        a = a1 + delta * t
+        x, y = _pol_to_xy(cx, cy, r, a)
+        pts.append(f"{_fmt(x)},{_fmt(y)}")
+
+    return (
+        f'<polyline points="{" ".join(pts)}" '
+        f'stroke="{stroke}" stroke-width="{width}" '
+        f'fill="none" stroke-linecap="round" stroke-linejoin="round" />'
+    )
 
 def _extract_svg_inner(svg: str) -> str:
     start = svg.find(">")
@@ -209,6 +238,7 @@ def render_transits_svg(
     r_grid_out = r_outer - gap_out
     r_grid_in = r_grid_out - grid_band
     r_link_outer = (r_grid_in + r_grid_out) * 0.5
+    r_conj_outer = r_grid_out + 7.0
 
     outer_gap_min = int(size * 0.030)
     outer_gap_factor = 1.30
@@ -281,6 +311,31 @@ def render_transits_svg(
         aspects_list = detect_aspects(transit_payload.get("planets", []))
 
         for a in aspects_list:
+            if a.get("type") != "CONJ":
+                continue
+
+            p1 = a.get("p1")
+            p2 = a.get("p2")
+
+            a1 = angles_transit.get(p1)
+            a2 = angles_transit.get(p2)
+
+            if a1 is None or a2 is None:
+                continue
+
+            parts.append(
+                _svg_arc_polyline(
+                    cx,
+                    cy,
+                    r_conj_outer,
+                    a1,
+                    a2,
+                    stroke="#0070d9",
+                    width=2.4,
+                )
+            )
+
+        for a in aspects_list:
             if a.get("type") == "CONJ":
                 continue
 
@@ -326,6 +381,31 @@ def render_transits_svg(
             side_a="T",
             side_b="N",
         )
+
+        for a in aspects_tn:
+            if a.get("type") != "CONJ":
+                continue
+
+            p_t = a.get("p1")
+            p_n = a.get("p2")
+
+            a1 = angles_transit.get(p_t)
+            a2 = angles_natal.get(p_n)
+
+            if a1 is None or a2 is None:
+                continue
+
+            parts.append(
+                _svg_arc_polyline(
+                    cx,
+                    cy,
+                    r_conj_outer,
+                    a1,
+                    a2,
+                    stroke="#0070d9",
+                    width=2.4,
+                )
+            )
 
         for a in aspects_tn:
             if a.get("type") == "CONJ":
