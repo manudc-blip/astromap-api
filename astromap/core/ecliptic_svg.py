@@ -225,8 +225,8 @@ def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list
         c2x2 = cx + r_cursor_end * math.cos(th2)
         c2y2 = cy - r_cursor_end * math.sin(th2)
 
-        items.append(_svg_line(c1x1, c1y1, c1x2, c1y2, stroke=color, width=1, linecap="butt"))
-        items.append(_svg_line(c2x1, c2y1, c2x2, c2y2, stroke=color, width=1, linecap="butt"))
+        items.append(_svg_line(c1x1, c1y1, c1x2, c1y2, stroke=color, width=1.3, linecap="butt"))
+        items.append(_svg_line(c2x1, c2y1, c2x2, c2y2, stroke=color, width=1.3, linecap="butt"))
 
     return items
 
