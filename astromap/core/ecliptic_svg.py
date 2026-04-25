@@ -186,7 +186,7 @@ def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list
 
     r2_grid_in = r_inner + gap_in
     r2_grid_out = r2_grid_in + grid_band
-    r_cursor_end = r2_grid_in + (r2_grid_out - r2_grid_in) * 0.38
+    r_cursor_end = r2_grid_out
 
     planets = {p["name"]: p for p in layout["planets"]}
     items = []
