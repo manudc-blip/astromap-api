@@ -563,9 +563,9 @@ def render_transits_svg(
     parts.append(
         _svg_text(
             w / 2,
-            24,
+            23,
             title_text,
-            size=24,
+            size=23,
             fill="#1f4fa3",
             weight="700",
             baseline="hanging",
