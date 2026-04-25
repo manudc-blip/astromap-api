@@ -177,6 +177,16 @@ def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list
     cx = layout["meta"]["center"]["x"]
     cy = layout["meta"]["center"]["y"]
     r_aspect = layout["radii"]["aspect"]
+    r_inner = layout["radii"]["inner"]
+    r_outer = layout["radii"]["outer"]
+
+    grid_band = (r_outer / 0.36) * 0.020
+    circ_in_w = 2.0
+    gap_in = circ_in_w / 2.0
+
+    r2_grid_in = r_inner + gap_in
+    r2_grid_out = r2_grid_in + grid_band
+    r_cursor_end = r2_grid_in + (r2_grid_out - r2_grid_in) * 0.38
 
     planets = {p["name"]: p for p in layout["planets"]}
     items = []
@@ -205,8 +215,20 @@ def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list
         color, dash, width = _aspect_style(a_type)
         items.append(_svg_line(x1, y1, x2, y2, stroke=color, width=width, dash=dash))
 
-    return items
+        c1x1 = cx + r2_grid_in * math.cos(th1)
+        c1y1 = cy - r2_grid_in * math.sin(th1)
+        c1x2 = cx + r_cursor_end * math.cos(th1)
+        c1y2 = cy - r_cursor_end * math.sin(th1)
 
+        c2x1 = cx + r2_grid_in * math.cos(th2)
+        c2y1 = cy - r2_grid_in * math.sin(th2)
+        c2x2 = cx + r_cursor_end * math.cos(th2)
+        c2y2 = cy - r_cursor_end * math.sin(th2)
+
+        items.append(_svg_line(c1x1, c1y1, c1x2, c1y2, stroke=color, width=1, linecap="butt"))
+        items.append(_svg_line(c2x1, c2y1, c2x2, c2y2, stroke=color, width=1, linecap="butt"))
+
+    return items
 
 def render_ecliptic_svg(
     payload: dict[str, Any],
