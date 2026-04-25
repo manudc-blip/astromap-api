@@ -367,6 +367,7 @@ def render_domitude_svg(
                 family="Segoe UI, Arial, sans-serif",
             )
         )
+    parts.append('<g transform="translate(0, 18)">')
 
     # Bandes/graduations externes
     for deg in range(0, 360, GRID_STEP):
@@ -851,5 +852,6 @@ def render_domitude_svg(
                 )
             )
 
+    parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
