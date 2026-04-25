@@ -299,6 +299,7 @@ def render_ecliptic_svg(
                 family="Segoe UI, Arial, sans-serif",
             )
         )
+    parts.append('<g transform="translate(0, 18)">')
 
     if show_aspects:
         parts.extend(_build_aspect_lines(payload, layout))
@@ -505,5 +506,6 @@ def render_ecliptic_svg(
                     )
                 )
 
+    parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
