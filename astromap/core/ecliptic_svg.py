@@ -368,7 +368,7 @@ def render_ecliptic_svg(
         parts.append(
             _svg_text(
                 lbl["x"], lbl["y"], hm["roman"],
-                size=16,
+                size=12,
                 fill=HOUSE_MARK_COLOR,
             )
         )
