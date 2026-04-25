@@ -358,12 +358,13 @@ def render_domitude_svg(
         parts.append(
             _svg_text(
                 w / 2,
-                10,
+                22,
                 title,
-                size=18,
+                size=24,
                 fill=TITLE_COLOR,
                 weight="700",
                 baseline="hanging",
+                family="Segoe UI, Arial, sans-serif",
             )
         )
 
