@@ -153,14 +153,14 @@ def _svg_arc_polyline(
     a1: float,
     a2: float,
     *,
-    stroke: str = "#0070d9",
-    width: float = 2.4,
-    steps: int = 10,
+    stroke: str = "#0077CC",
+    width: float = 1.4,
+    steps: int = 28,
 ) -> str:
     delta = _short_angle_delta(a1, a2)
     parts = []
 
-    for offset in (-2.0, 2.0):
+    for offset in (-1.8, 1.8):
         pts = []
 
         for i in range(steps + 1):
@@ -335,8 +335,8 @@ def render_transits_svg(
                     r_conj_outer,
                     a1,
                     a2,
-                    stroke="#0070d9",
-                    width=2.4,
+                    stroke="#0077CC",
+                    width=1.4,
                 )
             )
 
@@ -407,8 +407,8 @@ def render_transits_svg(
                     r_conj_outer,
                     a1,
                     a2,
-                    stroke="#0070d9",
-                    width=2.4,
+                    stroke="#0077CC",
+                    width=1.4,
                 )
             )
 
