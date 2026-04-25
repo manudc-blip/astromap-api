@@ -154,23 +154,28 @@ def _svg_arc_polyline(
     a2: float,
     *,
     stroke: str = "#0070d9",
-    width: float = 2.2,
+    width: float = 2.4,
     steps: int = 10,
 ) -> str:
     delta = _short_angle_delta(a1, a2)
-    pts = []
+    parts = []
 
-    for i in range(steps + 1):
-        t = i / steps
-        a = a1 + delta * t
-        x, y = _pol_to_xy(cx, cy, r, a)
-        pts.append(f"{_fmt(x)},{_fmt(y)}")
+    for offset in (-2.0, 2.0):
+        pts = []
 
-    return (
-        f'<polyline points="{" ".join(pts)}" '
-        f'stroke="{stroke}" stroke-width="{width}" '
-        f'fill="none" stroke-linecap="round" stroke-linejoin="round" />'
-    )
+        for i in range(steps + 1):
+            t = i / steps
+            a = a1 + delta * t
+            x, y = _pol_to_xy(cx, cy, r + offset, a)
+            pts.append(f"{_fmt(x)},{_fmt(y)}")
+
+        parts.append(
+            f'<polyline points="{" ".join(pts)}" '
+            f'stroke="{stroke}" stroke-width="{width}" '
+            f'fill="none" stroke-linecap="round" stroke-linejoin="round" />'
+        )
+
+    return "".join(parts)
 
 def _extract_svg_inner(svg: str) -> str:
     start = svg.find(">")
@@ -238,7 +243,7 @@ def render_transits_svg(
     r_grid_out = r_outer - gap_out
     r_grid_in = r_grid_out - grid_band
     r_link_outer = (r_grid_in + r_grid_out) * 0.5
-    r_conj_outer = r_grid_out + 7.0
+    r_conj_outer = r_grid_out + 6.0
 
     outer_gap_min = int(size * 0.030)
     outer_gap_factor = 1.30
