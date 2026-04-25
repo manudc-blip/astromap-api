@@ -150,6 +150,27 @@ def _extract_svg_inner(svg: str) -> str:
         return svg
     return svg[start + 1:end]
 
+def _svg_polyline(points, stroke="#000", width=1, fill="none", dash=None, linecap="round", linejoin="round") -> str:
+    pts_attr = " ".join(f"{_fmt(x)},{_fmt(y)}" for x, y in points)
+    dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+    return (
+        f'<polyline points="{pts_attr}" '
+        f'stroke="{stroke}" stroke-width="{width}" fill="{fill}" '
+        f'stroke-linecap="{linecap}" stroke-linejoin="{linejoin}"{dash_attr} />'
+    )
+
+
+def _arc_points(cx: float, cy: float, r: float, start_deg: float, extent_deg: float, steps: int = 24):
+    pts = []
+    for i in range(steps + 1):
+        t = i / steps if steps else 0.0
+        a = start_deg + extent_deg * t
+        pts.append(_pol_to_xy(cx, cy, r, a))
+    return pts
+
+
+def _short_arc_extent(a1: float, a2: float) -> float:
+    return ((a2 - a1 + 540.0) % 360.0) - 180.0
 
 def render_transits_svg(
     natal_payload: dict[str, Any],
@@ -281,11 +302,31 @@ def render_transits_svg(
         aspects_list = detect_aspects(transit_payload.get("planets", []))
 
         for a in aspects_list:
-            if a.get("type") == "CONJ":
-                continue
-
             p1 = a.get("p1")
             p2 = a.get("p2")
+            a_type = a.get("type")
+
+            if a_type == "CONJ":
+                if p1 in angles_transit and p2 in angles_transit:
+                    a1 = angles_transit[p1]
+                    a2 = angles_transit[p2]
+                    extent = _short_arc_extent(a1, a2)
+
+                    if abs(extent) < 0.35:
+                        extent = 0.35 if extent >= 0 else -0.35
+
+                    pts = _arc_points(cx, cy, r_aspect, a1, extent, steps=18)
+                    parts.append(
+                        _svg_polyline(
+                            pts,
+                            stroke=transit_aspect_color,
+                            width=transit_aspect_width,
+                            fill="none",
+                            linecap="butt",
+                            linejoin="round",
+                        )
+                    )
+                continue
 
             if p1 in transit_xy and p2 in transit_xy:
                 parts.append(
@@ -294,7 +335,7 @@ def render_transits_svg(
                         *transit_xy[p2],
                         stroke=transit_aspect_color,
                         width=transit_aspect_width,
-                        dash=_transit_dash(a.get("type")),
+                        dash=_transit_dash(a_type),
                         linecap="butt",
                     )
                 )
@@ -328,11 +369,31 @@ def render_transits_svg(
         )
 
         for a in aspects_tn:
-            if a.get("type") == "CONJ":
-                continue
-
             p_t = a.get("p1")
             p_n = a.get("p2")
+            a_type = a.get("type")
+
+            if a_type == "CONJ":
+                if p_t in angles_transit and p_n in angles_natal:
+                    a1 = angles_transit[p_t]
+                    a2 = angles_natal[p_n]
+                    extent = _short_arc_extent(a1, a2)
+
+                    if abs(extent) < 0.35:
+                        extent = 0.35 if extent >= 0 else -0.35
+
+                    pts = _arc_points(cx, cy, r_aspect, a1, extent, steps=18)
+                    parts.append(
+                        _svg_polyline(
+                            pts,
+                            stroke=transit_aspect_color,
+                            width=transit_aspect_width,
+                            fill="none",
+                            linecap="butt",
+                            linejoin="round",
+                        )
+                    )
+                continue
 
             if p_t in transit_xy and p_n in natal_xy:
                 parts.append(
@@ -341,7 +402,7 @@ def render_transits_svg(
                         *natal_xy[p_n],
                         stroke=transit_aspect_color,
                         width=transit_aspect_width,
-                        dash=_transit_dash(a.get("type")),
+                        dash=_transit_dash(a_type),
                         linecap="butt",
                     )
                 )
