@@ -12,9 +12,6 @@ from .ecliptic_svg import render_ecliptic_svg
 STRUCT_GREY = "#4A4A4A"
 SHOW_ASPECT_CURSORS = True
 
-FORCED_CONJUNCTION_ORB_TT = 8.0
-FORCED_CONJUNCTION_ORB_TN = 8.0
-
 PERCEPTION_COEFFS = {
     "Soleil": 1.00,
     "Lune": 1.00,
@@ -145,133 +142,6 @@ def _transit_dash(kind: str):
         return "1 3"
     return None
 
-def _aspect_type(a: dict) -> str:
-    raw = str(
-        a.get("type")
-        or a.get("aspect")
-        or a.get("kind")
-        or a.get("code")
-        or a.get("name")
-        or ""
-    ).upper().strip()
-
-    if "☌" in raw:
-        return "CONJ"
-
-    aliases = {
-        "CON": "CONJ",
-        "CONJ": "CONJ",
-        "CONJONCTION": "CONJ",
-        "CONJUNCTION": "CONJ",
-        "0": "CONJ",
-        "0°": "CONJ",
-        "0.0": "CONJ",
-    }
-
-    return aliases.get(raw, raw)
-
-
-def _angle_sep_deg(a: float, b: float) -> float:
-    return abs((a - b + 180.0) % 360.0 - 180.0)
-
-
-def _planet_lon_items(planets: list[dict[str, Any]]) -> list[tuple[str, float]]:
-    items = []
-
-    for p in planets or []:
-        name = p.get("name")
-        lon = p.get("lon")
-
-        if not name or lon is None:
-            continue
-
-        try:
-            items.append((str(name), float(lon) % 360.0))
-        except Exception:
-            continue
-
-    return items
-
-
-def _add_missing_tt_conjunctions(
-    aspects: list[dict[str, Any]],
-    transit_planets: list[dict[str, Any]],
-    *,
-    orb: float,
-) -> list[dict[str, Any]]:
-    out = list(aspects or [])
-
-    existing = set()
-    for a in out:
-        if _aspect_type(a) == "CONJ":
-            p1 = str(a.get("p1", ""))
-            p2 = str(a.get("p2", ""))
-            existing.add(frozenset((p1, p2)))
-
-    items = _planet_lon_items(transit_planets)
-
-    for i in range(len(items)):
-        p1, lon1 = items[i]
-
-        for j in range(i + 1, len(items)):
-            p2, lon2 = items[j]
-            sep = _angle_sep_deg(lon1, lon2)
-
-            if sep <= orb:
-                key = frozenset((p1, p2))
-
-                if key not in existing:
-                    out.append(
-                        {
-                            "p1": p1,
-                            "p2": p2,
-                            "type": "CONJ",
-                            "orb": sep,
-                            "forced": True,
-                        }
-                    )
-                    existing.add(key)
-
-    return out
-
-
-def _add_missing_tn_conjunctions(
-    aspects: list[dict[str, Any]],
-    transit_planets: list[dict[str, Any]],
-    natal_planets: list[dict[str, Any]],
-    *,
-    orb: float,
-) -> list[dict[str, Any]]:
-    out = list(aspects or [])
-
-    existing = set()
-    for a in out:
-        if _aspect_type(a) == "CONJ":
-            existing.add((str(a.get("p1", "")), str(a.get("p2", ""))))
-
-    transit_items = _planet_lon_items(transit_planets)
-    natal_items = _planet_lon_items(natal_planets)
-
-    for p_t, lon_t in transit_items:
-        for p_n, lon_n in natal_items:
-            sep = _angle_sep_deg(lon_t, lon_n)
-
-            if sep <= orb:
-                key = (p_t, p_n)
-
-                if key not in existing:
-                    out.append(
-                        {
-                            "p1": p_t,
-                            "p2": p_n,
-                            "type": "CONJ",
-                            "orb": sep,
-                            "forced": True,
-                        }
-                    )
-                    existing.add(key)
-
-    return out
 
 def _extract_svg_inner(svg: str) -> str:
     start = svg.find(">")
@@ -280,95 +150,6 @@ def _extract_svg_inner(svg: str) -> str:
         return svg
     return svg[start + 1:end]
 
-def _svg_polyline(points, stroke="#000", width=1, fill="none", dash=None, linecap="round", linejoin="round") -> str:
-    pts_attr = " ".join(f"{_fmt(x)},{_fmt(y)}" for x, y in points)
-    dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
-    return (
-        f'<polyline points="{pts_attr}" '
-        f'stroke="{stroke}" stroke-width="{width}" fill="{fill}" '
-        f'stroke-linecap="{linecap}" stroke-linejoin="{linejoin}"{dash_attr} />'
-    )
-
-
-def _arc_points(cx: float, cy: float, r: float, start_deg: float, extent_deg: float, steps: int = 24):
-    pts = []
-    for i in range(steps + 1):
-        t = i / steps if steps else 0.0
-        a = start_deg + extent_deg * t
-        pts.append(_pol_to_xy(cx, cy, r, a))
-    return pts
-
-
-def _short_arc_extent(a1: float, a2: float) -> float:
-    return ((a2 - a1 + 540.0) % 360.0) - 180.0
-
-
-def _build_visible_conj_arc(cx: float, cy: float, r: float, a1: float, a2: float, *, min_extent_deg: float = 2.6, steps: int = 24):
-    extent = _short_arc_extent(a1, a2)
-
-    if abs(extent) < min_extent_deg:
-        sign = -1.0 if extent < 0 else 1.0
-        mid = (a1 + extent / 2.0 + 360.0) % 360.0
-        start = mid - sign * (min_extent_deg / 2.0)
-        extent = sign * min_extent_deg
-    else:
-        start = a1
-
-    return _arc_points(cx, cy, r, start, extent, steps=steps)
-
-def _draw_outer_conjunction_link(
-    parts: list[str],
-    cx: float,
-    cy: float,
-    r_start: float,
-    r_end: float,
-    a1: float,
-    a2: float,
-    *,
-    stroke: str,
-    width: float = 2.0,
-):
-    x1, y1 = _pol_to_xy(cx, cy, r_start, a1)
-    x2, y2 = _pol_to_xy(cx, cy, r_end, a1)
-
-    x3, y3 = _pol_to_xy(cx, cy, r_start, a2)
-    x4, y4 = _pol_to_xy(cx, cy, r_end, a2)
-
-    parts.append(
-        _svg_line(
-            x1,
-            y1,
-            x2,
-            y2,
-            stroke=stroke,
-            width=width,
-            linecap="round",
-        )
-    )
-
-    parts.append(
-        _svg_line(
-            x3,
-            y3,
-            x4,
-            y4,
-            stroke=stroke,
-            width=width,
-            linecap="round",
-        )
-    )
-
-    parts.append(
-        _svg_line(
-            x2,
-            y2,
-            x4,
-            y4,
-            stroke=stroke,
-            width=width,
-            linecap="round",
-        )
-    )
 
 def render_transits_svg(
     natal_payload: dict[str, Any],
@@ -496,35 +277,15 @@ def render_transits_svg(
             angles_transit[name] = ang
             transit_xy[name] = _pol_to_xy(cx, cy, r_aspect, ang)
 
-    mode = (aspect_mode or "TN").upper()
-    is_tt_mode = mode in ("TT", "ET", "ENTRE_TRANSITS", "TRANSIT_TRANSIT")
-
-    if is_tt_mode:
-        aspects_list = _add_missing_tt_conjunctions(
-            detect_aspects(transit_payload.get("planets", [])),
-            transit_payload.get("planets", []),
-            orb=FORCED_CONJUNCTION_ORB_TT,
-        )
+    if (aspect_mode or "TN").upper() == "TT":
+        aspects_list = detect_aspects(transit_payload.get("planets", []))
 
         for a in aspects_list:
+            if a.get("type") == "CONJ":
+                continue
+
             p1 = a.get("p1")
             p2 = a.get("p2")
-            a_type = _aspect_type(a)
-
-            if a_type == "CONJ":
-                if p1 in angles_transit and p2 in angles_transit:
-                    _draw_outer_conjunction_link(
-                        parts,
-                        cx,
-                        cy,
-                        r_grid_out + 4,
-                        r_planet_transit - 18,
-                        angles_transit[p1],
-                        angles_transit[p2],
-                        stroke=transit_aspect_color,
-                        width=2.0,
-                    )
-                continue
 
             if p1 in transit_xy and p2 in transit_xy:
                 parts.append(
@@ -533,66 +294,45 @@ def render_transits_svg(
                         *transit_xy[p2],
                         stroke=transit_aspect_color,
                         width=transit_aspect_width,
-                        dash=_transit_dash(a_type),
+                        dash=_transit_dash(a.get("type")),
                         linecap="butt",
                     )
                 )
 
         if SHOW_ASPECT_CURSORS:
             for a in aspects_list:
+                if a.get("type") == "CONJ":
+                    continue
+
                 for name in (a.get("p1"), a.get("p2")):
                     ang = angles_transit.get(name)
-
                     if ang is None:
                         continue
 
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
                     x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
-
                     parts.append(
                         _svg_line(
-                            x1,
-                            y1,
-                            x2,
-                            y2,
+                            x1, y1, x2, y2,
                             stroke=transit_aspect_color,
                             width=1,
                             linecap="butt",
                         )
                     )
-
     else:
-        aspects_tn = _add_missing_tn_conjunctions(
-            detect_aspects_between(
-                transit_payload.get("planets", []),
-                natal_payload.get("planets", []),
-                side_a="T",
-                side_b="N",
-            ),
+        aspects_tn = detect_aspects_between(
             transit_payload.get("planets", []),
             natal_payload.get("planets", []),
-            orb=FORCED_CONJUNCTION_ORB_TN,
+            side_a="T",
+            side_b="N",
         )
 
         for a in aspects_tn:
+            if a.get("type") == "CONJ":
+                continue
+
             p_t = a.get("p1")
             p_n = a.get("p2")
-            a_type = _aspect_type(a)
-
-            if a_type == "CONJ":
-                if p_t in angles_transit and p_n in angles_natal:
-                    _draw_outer_conjunction_link(
-                        parts,
-                        cx,
-                        cy,
-                        r_grid_out + 4,
-                        r_planet_transit - 18,
-                        angles_transit[p_t],
-                        angles_natal[p_n],
-                        stroke=transit_aspect_color,
-                        width=2.0,
-                    )
-                continue
 
             if p_t in transit_xy and p_n in natal_xy:
                 parts.append(
@@ -601,31 +341,26 @@ def render_transits_svg(
                         *natal_xy[p_n],
                         stroke=transit_aspect_color,
                         width=transit_aspect_width,
-                        dash=_transit_dash(a_type),
+                        dash=_transit_dash(a.get("type")),
                         linecap="butt",
                     )
                 )
 
         if SHOW_ASPECT_CURSORS:
             for a in aspects_tn:
-                for name, angle_map in (
-                    (a.get("p1"), angles_transit),
-                    (a.get("p2"), angles_natal),
-                ):
-                    ang = angle_map.get(name)
+                if a.get("type") == "CONJ":
+                    continue
 
+                for name, angle_map in ((a.get("p1"), angles_transit), (a.get("p2"), angles_natal)):
+                    ang = angle_map.get(name)
                     if ang is None:
                         continue
 
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
                     x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
-
                     parts.append(
                         _svg_line(
-                            x1,
-                            y1,
-                            x2,
-                            y2,
+                            x1, y1, x2, y2,
                             stroke=transit_aspect_color,
                             width=1,
                             linecap="butt",
