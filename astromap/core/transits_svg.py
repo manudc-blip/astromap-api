@@ -201,7 +201,7 @@ def render_transits_svg(
 
     r2_grid_in = r_inner + gap_in
     r2_grid_out = r2_grid_in + grid_band
-    r_link_inner = (r2_grid_in + r2_grid_out) * 0.5
+    r_cursor_end = r2_grid_in + (r2_grid_out - r2_grid_in) * 0.38
 
     circ_out_w = 3.0
     gap_out = circ_out_w / 2.0
@@ -304,7 +304,6 @@ def render_transits_svg(
                     if ang is None:
                         continue
 
-                    r_cursor_end = r2_grid_in + (r2_grid_out - r2_grid_in) * 0.38
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
                     x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
                     parts.append(
@@ -353,7 +352,7 @@ def render_transits_svg(
                         continue
 
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
-                    x2, y2 = _pol_to_xy(cx, cy, r_link_inner, ang)
+                    x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
                     parts.append(
                         _svg_line(
                             x1, y1, x2, y2,
