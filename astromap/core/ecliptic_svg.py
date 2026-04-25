@@ -268,12 +268,13 @@ def render_ecliptic_svg(
         parts.append(
             _svg_text(
                 width / 2,
-                28,
+                22,
                 title,
-                size=28,
+                size=24,
                 fill=TITLE_COLOR,
                 weight="700",
                 baseline="hanging",
+                family="Segoe UI, Arial, sans-serif",
             )
         )
 
@@ -469,7 +470,7 @@ def render_ecliptic_svg(
             parts.append(
                 _svg_text(
                     deg["x"], deg["y"], str(deg["value"]),
-                    size=15,
+                    size=11,
                     fill="#000000",
                 )
             )
@@ -477,7 +478,7 @@ def render_ecliptic_svg(
                 parts.append(
                     _svg_text(
                         deg["retro_x"], deg["retro_y"], "R",
-                        size=12,
+                        size=9,
                         fill="#000000",
                     )
                 )
