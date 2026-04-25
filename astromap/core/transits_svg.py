@@ -272,18 +272,18 @@ def render_transits_svg(
     parts.append('<g>')
 
     # 1) Fond natal complet, identique à l’écliptique, sans titre
-natal_svg = render_ecliptic_svg(
-    natal_payload,
-    width=width,
-    height=height,
-    language=language,
-    show_title=False,
-    show_houses=True,
-    show_aspects=True,
-    asset_base_url=asset_base_url,
-    center_dx=0,
-    center_dy=0,
-)
+    natal_svg = render_ecliptic_svg(
+        natal_payload,
+        width=width,
+        height=height,
+        language=language,
+        show_title=False,
+        show_houses=True,
+        show_aspects=True,
+        asset_base_url=asset_base_url,
+        center_dx=0,
+        center_dy=0,
+    )
     parts.append(_extract_svg_inner(natal_svg))
 
     # 2) Aspects transit
