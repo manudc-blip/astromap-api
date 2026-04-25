@@ -483,7 +483,9 @@ def render_domitude_svg(
         elif label in ("FC", "IC"):
             r_axis_end = r_axes - CAP_FC - AXIS_WIDTH / 2
 
-        x0, y0 = _pol_to_xy(cx, cy, r_outer, a)
+        # Démarre juste à l'extérieur du cercle pour ne pas recouvrir la roue
+        axis_start_gap = AXIS_WIDTH / 2.0 + 0.5
+        x0, y0 = _pol_to_xy(cx, cy, r_outer + axis_start_gap, a)
         x1, y1 = _pol_to_xy(cx, cy, r_axis_end, a)
         parts.append(_svg_line(x0, y0, x1, y1, stroke="#222222", width=AXIS_WIDTH))
 
