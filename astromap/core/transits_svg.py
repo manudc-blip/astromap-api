@@ -12,6 +12,9 @@ from .ecliptic_svg import render_ecliptic_svg
 STRUCT_GREY = "#4A4A4A"
 SHOW_ASPECT_CURSORS = True
 
+FORCED_CONJUNCTION_ORB_TT = 8.0
+FORCED_CONJUNCTION_ORB_TN = 8.0
+
 PERCEPTION_COEFFS = {
     "Soleil": 1.00,
     "Lune": 1.00,
@@ -143,14 +146,132 @@ def _transit_dash(kind: str):
     return None
 
 def _aspect_type(a: dict) -> str:
-    raw = str(a.get("type", "")).upper().strip()
+    raw = str(
+        a.get("type")
+        or a.get("aspect")
+        or a.get("kind")
+        or a.get("code")
+        or a.get("name")
+        or ""
+    ).upper().strip()
+
+    if "☌" in raw:
+        return "CONJ"
+
     aliases = {
         "CON": "CONJ",
+        "CONJ": "CONJ",
         "CONJONCTION": "CONJ",
         "CONJUNCTION": "CONJ",
-        "☌": "CONJ",
+        "0": "CONJ",
+        "0°": "CONJ",
+        "0.0": "CONJ",
     }
+
     return aliases.get(raw, raw)
+
+
+def _angle_sep_deg(a: float, b: float) -> float:
+    return abs((a - b + 180.0) % 360.0 - 180.0)
+
+
+def _planet_lon_items(planets: list[dict[str, Any]]) -> list[tuple[str, float]]:
+    items = []
+
+    for p in planets or []:
+        name = p.get("name")
+        lon = p.get("lon")
+
+        if not name or lon is None:
+            continue
+
+        try:
+            items.append((str(name), float(lon) % 360.0))
+        except Exception:
+            continue
+
+    return items
+
+
+def _add_missing_tt_conjunctions(
+    aspects: list[dict[str, Any]],
+    transit_planets: list[dict[str, Any]],
+    *,
+    orb: float,
+) -> list[dict[str, Any]]:
+    out = list(aspects or [])
+
+    existing = set()
+    for a in out:
+        if _aspect_type(a) == "CONJ":
+            p1 = str(a.get("p1", ""))
+            p2 = str(a.get("p2", ""))
+            existing.add(frozenset((p1, p2)))
+
+    items = _planet_lon_items(transit_planets)
+
+    for i in range(len(items)):
+        p1, lon1 = items[i]
+
+        for j in range(i + 1, len(items)):
+            p2, lon2 = items[j]
+            sep = _angle_sep_deg(lon1, lon2)
+
+            if sep <= orb:
+                key = frozenset((p1, p2))
+
+                if key not in existing:
+                    out.append(
+                        {
+                            "p1": p1,
+                            "p2": p2,
+                            "type": "CONJ",
+                            "orb": sep,
+                            "forced": True,
+                        }
+                    )
+                    existing.add(key)
+
+    return out
+
+
+def _add_missing_tn_conjunctions(
+    aspects: list[dict[str, Any]],
+    transit_planets: list[dict[str, Any]],
+    natal_planets: list[dict[str, Any]],
+    *,
+    orb: float,
+) -> list[dict[str, Any]]:
+    out = list(aspects or [])
+
+    existing = set()
+    for a in out:
+        if _aspect_type(a) == "CONJ":
+            existing.add((str(a.get("p1", "")), str(a.get("p2", ""))))
+
+    transit_items = _planet_lon_items(transit_planets)
+    natal_items = _planet_lon_items(natal_planets)
+
+    for p_t, lon_t in transit_items:
+        for p_n, lon_n in natal_items:
+            sep = _angle_sep_deg(lon_t, lon_n)
+
+            if sep <= orb:
+                key = (p_t, p_n)
+
+                if key not in existing:
+                    out.append(
+                        {
+                            "p1": p_t,
+                            "p2": p_n,
+                            "type": "CONJ",
+                            "orb": sep,
+                            "forced": True,
+                        }
+                    )
+                    existing.add(key)
+
+    return out
 
 def _extract_svg_inner(svg: str) -> str:
     start = svg.find(">")
@@ -322,7 +443,11 @@ def render_transits_svg(
             transit_xy[name] = _pol_to_xy(cx, cy, r_aspect, ang)
 
     if (aspect_mode or "TN").upper() == "TT":
-        aspects_list = detect_aspects(transit_payload.get("planets", []))
+        aspects_list = _add_missing_tt_conjunctions(
+            detect_aspects(transit_payload.get("planets", [])),
+            transit_payload.get("planets", []),
+            orb=FORCED_CONJUNCTION_ORB_TT,
+        )
 
         for a in aspects_list:
             p1 = a.get("p1")
@@ -337,18 +462,18 @@ def render_transits_svg(
                     pts = _build_visible_conj_arc(
                         cx,
                         cy,
-                        r_aspect - 5,
+                        r_aspect - 14,
                         a1,
                         a2,
-                        min_extent_deg=8.0,
-                        steps=32,
+                        min_extent_deg=16.0,
+                        steps=40,
                     )
 
                     parts.append(
                         _svg_polyline(
                             pts,
                             stroke=transit_aspect_color,
-                            width=2.2,
+                            width=3.0,
                             fill="none",
                             linecap="round",
                             linejoin="round",
@@ -386,12 +511,16 @@ def render_transits_svg(
                         )
                     )
 
-    else:
-        aspects_tn = detect_aspects_between(
+        aspects_tn = _add_missing_tn_conjunctions(
+            detect_aspects_between(
+                transit_payload.get("planets", []),
+                natal_payload.get("planets", []),
+                side_a="T",
+                side_b="N",
+            ),
             transit_payload.get("planets", []),
             natal_payload.get("planets", []),
-            side_a="T",
-            side_b="N",
+            orb=FORCED_CONJUNCTION_ORB_TN,
         )
 
         for a in aspects_tn:
