@@ -248,6 +248,10 @@ def render_transits_svg(
     )
     parts.append(_extract_svg_inner(natal_svg))
 
+    # Correction : le thème natal extrait est déjà décalé verticalement.
+    # On applique le même décalage aux éléments de transit.
+    parts.append('<g transform="translate(0, 18)">')
+
     # 2) Aspects transit
     transit_aspect_color = "#b567d6"
     transit_aspect_width = 1.0
@@ -554,7 +558,8 @@ def render_transits_svg(
         except Exception:
             pass
 
-    parts.append("</g>")
+    parts.append("</g>")  # ferme le groupe de correction verticale des transits
+    parts.append("</g>")  # ferme le groupe principal
 
     # 4) Titre transit
     age_text = None
