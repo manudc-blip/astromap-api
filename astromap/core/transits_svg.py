@@ -320,32 +320,32 @@ def render_transits_svg(
             p2 = a.get("p2")
             a_type = a.get("type")
 
-        if a_type == "CONJ":
-            if p1 in angles_transit and p2 in angles_transit:
-                a1 = angles_transit[p1]
-                a2 = angles_transit[p2]
+            if a_type == "CONJ":
+                if p1 in angles_transit and p2 in angles_transit:
+                    a1 = angles_transit[p1]
+                    a2 = angles_transit[p2]
 
-                pts = _build_visible_conj_arc(
-                    cx,
-                    cy,
-                    r_aspect,
-                    a1,
-                    a2,
-                    min_extent_deg=2.6,
-                    steps=24,
-                )
-
-                parts.append(
-                    _svg_polyline(
-                        pts,
-                        stroke=transit_aspect_color,
-                        width=1.2,
-                        fill="none",
-                        linecap="butt",
-                        linejoin="round",
+                    pts = _build_visible_conj_arc(
+                        cx,
+                        cy,
+                        r_aspect,
+                        a1,
+                        a2,
+                        min_extent_deg=2.6,
+                        steps=24,
                     )
-                )
-            continue
+
+                    parts.append(
+                        _svg_polyline(
+                            pts,
+                            stroke=transit_aspect_color,
+                            width=1.2,
+                            fill="none",
+                            linecap="butt",
+                            linejoin="round",
+                        )
+                    )
+                continue
 
             if p1 in transit_xy and p2 in transit_xy:
                 parts.append(
@@ -392,32 +392,32 @@ def render_transits_svg(
             p_n = a.get("p2")
             a_type = a.get("type")
 
-        if a_type == "CONJ":
-            if p_t in angles_transit and p_n in angles_natal:
-                a1 = angles_transit[p_t]
-                a2 = angles_natal[p_n]
+            if a_type == "CONJ":
+                if p_t in angles_transit and p_n in angles_natal:
+                    a1 = angles_transit[p_t]
+                    a2 = angles_natal[p_n]
 
-                pts = _build_visible_conj_arc(
-                    cx,
-                    cy,
-                    r_aspect,
-                    a1,
-                    a2,
-                    min_extent_deg=2.6,
-                    steps=24,
-                )
-
-                parts.append(
-                    _svg_polyline(
-                        pts,
-                        stroke=transit_aspect_color,
-                        width=1.2,
-                        fill="none",
-                        linecap="butt",
-                        linejoin="round",
+                    pts = _build_visible_conj_arc(
+                        cx,
+                        cy,
+                        r_aspect,
+                        a1,
+                        a2,
+                        min_extent_deg=2.6,
+                        steps=24,
                     )
-                )
-            continue
+
+                    parts.append(
+                        _svg_polyline(
+                            pts,
+                            stroke=transit_aspect_color,
+                            width=1.2,
+                            fill="none",
+                            linecap="butt",
+                            linejoin="round",
+                        )
+                    )
+                continue
 
             if p_t in transit_xy and p_n in natal_xy:
                 parts.append(
