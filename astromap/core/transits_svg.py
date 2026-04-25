@@ -189,7 +189,8 @@ def render_transits_svg(
     size0 = min(w, h) - 2 * margin
     scale_theme = 0.80
     size = int(size0 * scale_theme)
-    cx, cy = w / 2, h / 2
+    theme_dy = 18
+    cx, cy = w / 2, h / 2 + theme_dy
 
     r_outer = size * 0.36
     r_inner = size * 0.23
