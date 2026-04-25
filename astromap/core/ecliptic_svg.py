@@ -289,7 +289,7 @@ def render_ecliptic_svg(
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
     ]
 
-    title_dx = center_dx * 0.5
+    title_dx = 45.0
 
     if title:
         parts.append(
