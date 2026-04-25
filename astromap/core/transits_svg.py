@@ -442,7 +442,10 @@ def render_transits_svg(
             angles_transit[name] = ang
             transit_xy[name] = _pol_to_xy(cx, cy, r_aspect, ang)
 
-    if (aspect_mode or "TN").upper() == "TT":
+    mode = (aspect_mode or "TN").upper()
+    is_tt_mode = mode in ("TT", "ET", "ENTRE_TRANSITS", "TRANSIT_TRANSIT")
+
+    if is_tt_mode:
         aspects_list = _add_missing_tt_conjunctions(
             detect_aspects(transit_payload.get("planets", [])),
             transit_payload.get("planets", []),
@@ -479,6 +482,23 @@ def render_transits_svg(
                             linejoin="round",
                         )
                     )
+
+                    mid = (a1 + _short_arc_extent(a1, a2) / 2.0 + 360.0) % 360.0
+                    x1, y1 = _pol_to_xy(cx, cy, r_aspect - 28, mid)
+                    x2, y2 = _pol_to_xy(cx, cy, r_aspect + 8, mid)
+
+                    parts.append(
+                        _svg_line(
+                            x1,
+                            y1,
+                            x2,
+                            y2,
+                            stroke=transit_aspect_color,
+                            width=2.4,
+                            linecap="round",
+                        )
+                    )
+
                 continue
 
             if p1 in transit_xy and p2 in transit_xy:
@@ -497,20 +517,26 @@ def render_transits_svg(
             for a in aspects_list:
                 for name in (a.get("p1"), a.get("p2")):
                     ang = angles_transit.get(name)
+
                     if ang is None:
                         continue
 
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
                     x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
+
                     parts.append(
                         _svg_line(
-                            x1, y1, x2, y2,
+                            x1,
+                            y1,
+                            x2,
+                            y2,
                             stroke=transit_aspect_color,
                             width=1,
                             linecap="butt",
                         )
                     )
 
+    else:
         aspects_tn = _add_missing_tn_conjunctions(
             detect_aspects_between(
                 transit_payload.get("planets", []),
@@ -536,23 +562,40 @@ def render_transits_svg(
                     pts = _build_visible_conj_arc(
                         cx,
                         cy,
-                        r_aspect - 5,
+                        r_aspect - 14,
                         a1,
                         a2,
-                        min_extent_deg=8.0,
-                        steps=32,
+                        min_extent_deg=16.0,
+                        steps=40,
                     )
 
                     parts.append(
                         _svg_polyline(
                             pts,
                             stroke=transit_aspect_color,
-                            width=2.2,
+                            width=3.0,
                             fill="none",
                             linecap="round",
                             linejoin="round",
                         )
                     )
+
+                    mid = (a1 + _short_arc_extent(a1, a2) / 2.0 + 360.0) % 360.0
+                    x1, y1 = _pol_to_xy(cx, cy, r_aspect - 28, mid)
+                    x2, y2 = _pol_to_xy(cx, cy, r_aspect + 8, mid)
+
+                    parts.append(
+                        _svg_line(
+                            x1,
+                            y1,
+                            x2,
+                            y2,
+                            stroke=transit_aspect_color,
+                            width=2.4,
+                            linecap="round",
+                        )
+                    )
+
                 continue
 
             if p_t in transit_xy and p_n in natal_xy:
@@ -569,16 +612,24 @@ def render_transits_svg(
 
         if SHOW_ASPECT_CURSORS:
             for a in aspects_tn:
-                for name, angle_map in ((a.get("p1"), angles_transit), (a.get("p2"), angles_natal)):
+                for name, angle_map in (
+                    (a.get("p1"), angles_transit),
+                    (a.get("p2"), angles_natal),
+                ):
                     ang = angle_map.get(name)
+
                     if ang is None:
                         continue
 
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
                     x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
+
                     parts.append(
                         _svg_line(
-                            x1, y1, x2, y2,
+                            x1,
+                            y1,
+                            x2,
+                            y2,
                             stroke=transit_aspect_color,
                             width=1,
                             linecap="butt",
