@@ -146,27 +146,29 @@ def _short_angle_delta(a1: float, a2: float) -> float:
     return (a2 - a1 + 180.0) % 360.0 - 180.0
 
 
-def _svg_arc_polyline(
+def _svg_conjunction_link(
     cx: float,
     cy: float,
-    r: float,
+    radii: tuple[float, float],
     a1: float,
     a2: float,
     *,
     stroke: str = "#0077CC",
-    width: float = 1.4,
+    width: float = 1.3,
     steps: int = 28,
 ) -> str:
     delta = _short_angle_delta(a1, a2)
+    start = a1
+    extent = delta
     parts = []
 
-    for offset in (-1.8, 1.8):
+    for r in radii:
         pts = []
 
         for i in range(steps + 1):
             t = i / steps
-            a = a1 + delta * t
-            x, y = _pol_to_xy(cx, cy, r + offset, a)
+            a = start + extent * t
+            x, y = _pol_to_xy(cx, cy, r, a)
             pts.append(f"{_fmt(x)},{_fmt(y)}")
 
         parts.append(
@@ -243,7 +245,11 @@ def render_transits_svg(
     r_grid_out = r_outer - gap_out
     r_grid_in = r_grid_out - grid_band
     r_link_outer = (r_grid_in + r_grid_out) * 0.5
-    r_conj_outer = r_grid_out + 6.0
+    conj_radii = (
+        r_link_outer - 2.0,
+        r_link_outer + 2.0,
+    )
+    conj_width = 1.3
 
     outer_gap_min = int(size * 0.030)
     outer_gap_factor = 1.30
@@ -348,16 +354,17 @@ def render_transits_svg(
             p2 = a.get("p2")
 
             if p1 in transit_xy and p2 in transit_xy:
-                parts.append(
-                    _svg_line(
-                        *transit_xy[p1],
-                        *transit_xy[p2],
-                        stroke=transit_aspect_color,
-                        width=transit_aspect_width,
-                        dash=_transit_dash(a.get("type")),
-                        linecap="butt",
-                    )
+            parts.append(
+                _svg_conjunction_link(
+                    cx,
+                    cy,
+                    conj_radii,
+                    a1,
+                    a2,
+                    stroke="#0077CC",
+                    width=conj_width,
                 )
+            )
 
         if SHOW_ASPECT_CURSORS:
             for a in aspects_list:
@@ -401,14 +408,14 @@ def render_transits_svg(
                 continue
 
             parts.append(
-                _svg_arc_polyline(
+                _svg_conjunction_link(
                     cx,
                     cy,
-                    r_conj_outer,
+                    conj_radii,
                     a1,
                     a2,
                     stroke="#0077CC",
-                    width=1.4,
+                    width=conj_width,
                 )
             )
 
