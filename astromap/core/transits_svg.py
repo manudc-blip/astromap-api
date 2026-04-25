@@ -335,8 +335,8 @@ def render_transits_svg(
                     r_conj_outer,
                     a1,
                     a2,
-                    stroke="#0077CC",
-                    width=1.4,
+                    stroke=transit_aspect_color,
+                    width=transit_aspect_width,
                 )
             )
 
@@ -407,8 +407,8 @@ def render_transits_svg(
                     r_conj_outer,
                     a1,
                     a2,
-                    stroke="#0077CC",
-                    width=1.4,
+                    stroke=transit_aspect_color,
+                    width=transit_aspect_width,
                 )
             )
 
