@@ -563,12 +563,13 @@ def render_transits_svg(
     parts.append(
         _svg_text(
             w / 2,
-            10,
+            22,
             title_text,
-            size=18,
+            size=22,
             fill="#1f4fa3",
             weight="700",
             baseline="hanging",
+            family="Segoe UI, Arial, sans-serif",
         )
     )
 
