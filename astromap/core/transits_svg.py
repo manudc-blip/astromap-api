@@ -216,11 +216,7 @@ def render_transits_svg(
     outer_gap = max(outer_gap_min, int(px_planet_base * outer_gap_factor))
 
     r_planet_transit = r_outer + outer_gap + int(size * 0.13)
-
-    # départ du trait plus près du bord externe de la bande des 5°
-    # pour que le tiret aille presque jusqu’au bout de la bande
-    r_line_start = r_grid_out - 1.0
-
+    r_line_start = r_grid_in
     r_elbow = (r_line_start + r_planet_transit) / 2.0
     r_aspect = r_inner
 
