@@ -316,23 +316,23 @@ def _build_visible_conj_arc(cx: float, cy: float, r: float, a1: float, a2: float
 
     return _arc_points(cx, cy, r, start, extent, steps=steps)
 
-def _draw_outer_conjunction_marker(
+def _draw_outer_conjunction_link(
     parts: list[str],
     cx: float,
     cy: float,
-    r_base: float,
+    r_start: float,
+    r_end: float,
     a1: float,
     a2: float,
     *,
     stroke: str,
+    width: float = 2.0,
 ):
-    r1 = r_base + 10
-    r2 = r_base + 22
+    x1, y1 = _pol_to_xy(cx, cy, r_start, a1)
+    x2, y2 = _pol_to_xy(cx, cy, r_end, a1)
 
-    x1, y1 = _pol_to_xy(cx, cy, r1, a1)
-    x2, y2 = _pol_to_xy(cx, cy, r2, a1)
-    x3, y3 = _pol_to_xy(cx, cy, r1, a2)
-    x4, y4 = _pol_to_xy(cx, cy, r2, a2)
+    x3, y3 = _pol_to_xy(cx, cy, r_start, a2)
+    x4, y4 = _pol_to_xy(cx, cy, r_end, a2)
 
     parts.append(
         _svg_line(
@@ -341,7 +341,7 @@ def _draw_outer_conjunction_marker(
             x2,
             y2,
             stroke=stroke,
-            width=2.2,
+            width=width,
             linecap="round",
         )
     )
@@ -353,29 +353,20 @@ def _draw_outer_conjunction_marker(
             x4,
             y4,
             stroke=stroke,
-            width=2.2,
+            width=width,
             linecap="round",
         )
     )
 
-    pts = _build_visible_conj_arc(
-        cx,
-        cy,
-        r2,
-        a1,
-        a2,
-        min_extent_deg=8.0,
-        steps=32,
-    )
-
     parts.append(
-        _svg_polyline(
-            pts,
+        _svg_line(
+            x2,
+            y2,
+            x4,
+            y4,
             stroke=stroke,
-            width=2.2,
-            fill="none",
+            width=width,
             linecap="round",
-            linejoin="round",
         )
     )
 
@@ -522,14 +513,16 @@ def render_transits_svg(
 
             if a_type == "CONJ":
                 if p1 in angles_transit and p2 in angles_transit:
-                    _draw_outer_conjunction_marker(
+                    _draw_outer_conjunction_link(
                         parts,
                         cx,
                         cy,
-                        r_outer,
+                        r_grid_out + 4,
+                        r_planet_transit - 18,
                         angles_transit[p1],
                         angles_transit[p2],
                         stroke=transit_aspect_color,
+                        width=2.0,
                     )
                 continue
 
@@ -588,14 +581,16 @@ def render_transits_svg(
 
             if a_type == "CONJ":
                 if p_t in angles_transit and p_n in angles_natal:
-                    _draw_outer_conjunction_marker(
+                    _draw_outer_conjunction_link(
                         parts,
                         cx,
                         cy,
-                        r_outer,
+                        r_grid_out + 4,
+                        r_planet_transit - 18,
                         angles_transit[p_t],
                         angles_natal[p_n],
                         stroke=transit_aspect_color,
+                        width=2.0,
                     )
                 continue
 
