@@ -788,12 +788,12 @@ def render_domitude_svg(
         if pos_house is not None:
             try:
                 n = int(round(float(pos_house))) % 30
-                r_text = r_planet + int(size * 0.040)
+                r_text = r_planet + int(size * 0.046)
                 tx, ty = _pol_to_xy(cx, cy, r_text, ang_glyph)
                 parts.append(
                     _svg_text(
                         tx, ty, str(n),
-                        size=int(size * 0.012),
+                        size=max(11, int(size * 0.017)),
                         fill=STRUCT_GREY,
                     )
                 )
