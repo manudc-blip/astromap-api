@@ -146,29 +146,27 @@ def _short_angle_delta(a1: float, a2: float) -> float:
     return (a2 - a1 + 180.0) % 360.0 - 180.0
 
 
-def _svg_conjunction_link(
+def _svg_arc_polyline(
     cx: float,
     cy: float,
-    radii: tuple[float, float],
+    r: float,
     a1: float,
     a2: float,
     *,
     stroke: str = "#0077CC",
-    width: float = 1.3,
+    width: float = 1.4,
     steps: int = 28,
 ) -> str:
     delta = _short_angle_delta(a1, a2)
-    start = a1
-    extent = delta
     parts = []
 
-    for r in radii:
+    for offset in (-1.8, 1.8):
         pts = []
 
         for i in range(steps + 1):
             t = i / steps
-            a = start + extent * t
-            x, y = _pol_to_xy(cx, cy, r, a)
+            a = a1 + delta * t
+            x, y = _pol_to_xy(cx, cy, r + offset, a)
             pts.append(f"{_fmt(x)},{_fmt(y)}")
 
         parts.append(
@@ -245,11 +243,7 @@ def render_transits_svg(
     r_grid_out = r_outer - gap_out
     r_grid_in = r_grid_out - grid_band
     r_link_outer = (r_grid_in + r_grid_out) * 0.5
-    conj_radii = (
-        r_link_outer - 2.0,
-        r_link_outer + 2.0,
-    )
-    conj_width = 1.3
+    r_conj_outer = r_grid_out + 6.0
 
     outer_gap_min = int(size * 0.030)
     outer_gap_factor = 1.30
@@ -335,14 +329,14 @@ def render_transits_svg(
                 continue
 
             parts.append(
-                _svg_conjunction_link(
+                _svg_arc_polyline(
                     cx,
                     cy,
-                    conj_radii,
+                    r_conj_outer,
                     a1,
                     a2,
                     stroke="#0077CC",
-                    width=conj_width,
+                    width=1.4,
                 )
             )
 
@@ -407,14 +401,14 @@ def render_transits_svg(
                 continue
 
             parts.append(
-                _svg_conjunction_link(
+                _svg_arc_polyline(
                     cx,
                     cy,
-                    conj_radii,
+                    r_conj_outer,
                     a1,
                     a2,
                     stroke="#0077CC",
-                    width=conj_width,
+                    width=1.4,
                 )
             )
 
