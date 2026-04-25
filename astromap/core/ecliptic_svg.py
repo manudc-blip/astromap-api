@@ -242,6 +242,7 @@ def render_ecliptic_svg(
     show_aspects: bool = True,
     asset_base_url: str = "/glyphes",
     center_dx: float | None = None,
+    center_dy: float | None = None,
 ) -> str:
     """
     asset_base_url doit pointer vers le dossier statique qui contient :
@@ -278,8 +279,12 @@ def render_ecliptic_svg(
     cx = layout["meta"]["center"]["x"]
     cy = layout["meta"]["center"]["y"]
     title = layout["meta"]["title"]
+
     if center_dx is None:
         center_dx = 80.0 if show_title else 0.0
+
+    if center_dy is None:
+        center_dy = 18.0 if show_title else 0.0
 
     r_outer = layout["radii"]["outer"]
     r_inner = layout["radii"]["inner"]
@@ -305,7 +310,7 @@ def render_ecliptic_svg(
             )
         )
 
-    parts.append(f'<g transform="translate({_fmt(center_dx)},0)">')
+    parts.append(f'<g transform="translate({_fmt(center_dx)},{_fmt(center_dy)})">')
 
     if show_aspects:
         parts.extend(_build_aspect_lines(payload, layout))
