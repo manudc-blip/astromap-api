@@ -403,18 +403,6 @@ def render_ecliptic_svg(
         else:
             parts.append(_svg_text(s["x"], s["y"], s["name"], size=max(14, int(s["px"] * 0.55))))
 
-    for conj in layout["conjunction_links"]:
-        for r in conj["radii"]:
-            pts = _arc_points(cx, cy, r, conj["start"], conj["extent"], steps=28)
-            parts.append(
-                _svg_polyline(
-                    pts,
-                    stroke=conj["color"],
-                    width=conj["width"],
-                    fill="none",
-                )
-            )
-
     for label in ("AS", "DS", "MC", "FC"):
         ax = layout["axes"].get(label)
         if not ax:
@@ -463,6 +451,18 @@ def render_ecliptic_svg(
                     size=max(16, int(g["px"] * 0.55)),
                     fill="#1f4fa3",
                     weight="700",
+                )
+            )
+
+    for conj in layout["conjunction_links"]:
+        for r in conj["radii"]:
+            pts = _arc_points(cx, cy, r, conj["start"], conj["extent"], steps=28)
+            parts.append(
+                _svg_polyline(
+                    pts,
+                    stroke=conj["color"],
+                    width=conj["width"],
+                    fill="none",
                 )
             )
 
