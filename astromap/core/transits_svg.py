@@ -233,6 +233,7 @@ def render_transits_svg(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
     ]
+    parts.append('<g transform="translate(0, 18)">')
 
     # 1) Fond natal complet, identique à l’écliptique, sans titre
     natal_svg = render_ecliptic_svg(
@@ -538,6 +539,8 @@ def render_transits_svg(
                 )
         except Exception:
             pass
+
+    parts.append("</g>")
 
     # 4) Titre transit
     age_text = None
