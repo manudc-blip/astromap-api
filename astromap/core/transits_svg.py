@@ -216,7 +216,7 @@ def render_transits_svg(
     outer_gap = max(outer_gap_min, int(px_planet_base * outer_gap_factor))
 
     r_planet_transit = r_outer + outer_gap + int(size * 0.13)
-    r_line_start = r_grid_in + 1
+    r_line_start = r_grid_in
     r_elbow = (r_line_start + r_planet_transit) / 2.0
     r_aspect = r_inner
 
@@ -484,7 +484,14 @@ def render_transits_svg(
 
         xb0, yb0 = _pol_to_xy(cx, cy, r_line_start, ang_band)
         xb1, yb1 = _pol_to_xy(cx, cy, r_elbow, ang_band)
-        parts.append(_svg_line(xb0, yb0, xb1, yb1, stroke="#b567d6", width=1))
+        parts.append(
+            _svg_line(
+                xb0, yb0, xb1, yb1,
+                stroke="#b567d6",
+                width=1,
+                linecap="butt",
+            )
+        )
 
         half_px = 0.5 * d["px"]
         dx, dy = (gx - xb1), (gy - yb1)
