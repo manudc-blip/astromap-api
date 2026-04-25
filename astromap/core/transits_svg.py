@@ -304,8 +304,9 @@ def render_transits_svg(
                     if ang is None:
                         continue
 
+                    r_cursor_end = r2_grid_in + (r2_grid_out - r2_grid_in) * 0.38
                     x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
-                    x2, y2 = _pol_to_xy(cx, cy, r_link_inner, ang)
+                    x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
                     parts.append(
                         _svg_line(
                             x1, y1, x2, y2,
@@ -563,9 +564,9 @@ def render_transits_svg(
     parts.append(
         _svg_text(
             w / 2,
-            24,
+            22,
             title_text,
-            size=24,
+            size=22,
             fill="#1f4fa3",
             weight="700",
             baseline="hanging",
