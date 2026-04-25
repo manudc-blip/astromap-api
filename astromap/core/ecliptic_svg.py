@@ -281,10 +281,10 @@ def render_ecliptic_svg(
     title = layout["meta"]["title"]
 
     if center_dx is None:
-        center_dx = 100.0 if show_title else 0.0
+        center_dx = 150.0 if show_title else 0.0
 
     if center_dy is None:
-        center_dy = 15.0 if show_title else 0.0
+        center_dy = 12.0 if show_title else 0.0
 
     r_outer = layout["radii"]["outer"]
     r_inner = layout["radii"]["inner"]
