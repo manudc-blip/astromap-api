@@ -500,7 +500,14 @@ def render_transits_svg(
         if dist > 0 and stop_from_elbow > 0:
             t = stop_from_elbow / dist
             xo, yo = (xb1 + dx * t, yb1 + dy * t)
-            parts.append(_svg_line(xb1, yb1, xo, yo, stroke="#b567d6", width=1))
+            parts.append(
+                _svg_line(
+                    xb1, yb1, xo, yo,
+                    stroke="#b567d6",
+                    width=1,
+                    linecap="butt",
+                )
+            )
 
         # halo blanc si passe sur un axe
         for label in ("AS", "DS", "MC", "FC"):
