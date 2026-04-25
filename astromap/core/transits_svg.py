@@ -142,6 +142,15 @@ def _transit_dash(kind: str):
         return "1 3"
     return None
 
+def _aspect_type(a: dict) -> str:
+    raw = str(a.get("type", "")).upper().strip()
+    aliases = {
+        "CON": "CONJ",
+        "CONJONCTION": "CONJ",
+        "CONJUNCTION": "CONJ",
+        "☌": "CONJ",
+    }
+    return aliases.get(raw, raw)
 
 def _extract_svg_inner(svg: str) -> str:
     start = svg.find(">")
@@ -318,7 +327,7 @@ def render_transits_svg(
         for a in aspects_list:
             p1 = a.get("p1")
             p2 = a.get("p2")
-            a_type = a.get("type")
+            a_type = _aspect_type(a)
 
             if a_type == "CONJ":
                 if p1 in angles_transit and p2 in angles_transit:
@@ -328,20 +337,20 @@ def render_transits_svg(
                     pts = _build_visible_conj_arc(
                         cx,
                         cy,
-                        r_aspect,
+                        r_aspect - 5,
                         a1,
                         a2,
-                        min_extent_deg=2.6,
-                        steps=24,
+                        min_extent_deg=8.0,
+                        steps=32,
                     )
 
                     parts.append(
                         _svg_polyline(
                             pts,
                             stroke=transit_aspect_color,
-                            width=1.2,
+                            width=2.2,
                             fill="none",
-                            linecap="butt",
+                            linecap="round",
                             linejoin="round",
                         )
                     )
@@ -361,9 +370,6 @@ def render_transits_svg(
 
         if SHOW_ASPECT_CURSORS:
             for a in aspects_list:
-                if a.get("type") == "CONJ":
-                    continue
-
                 for name in (a.get("p1"), a.get("p2")):
                     ang = angles_transit.get(name)
                     if ang is None:
@@ -379,6 +385,7 @@ def render_transits_svg(
                             linecap="butt",
                         )
                     )
+
     else:
         aspects_tn = detect_aspects_between(
             transit_payload.get("planets", []),
@@ -390,7 +397,7 @@ def render_transits_svg(
         for a in aspects_tn:
             p_t = a.get("p1")
             p_n = a.get("p2")
-            a_type = a.get("type")
+            a_type = _aspect_type(a)
 
             if a_type == "CONJ":
                 if p_t in angles_transit and p_n in angles_natal:
@@ -400,20 +407,20 @@ def render_transits_svg(
                     pts = _build_visible_conj_arc(
                         cx,
                         cy,
-                        r_aspect,
+                        r_aspect - 5,
                         a1,
                         a2,
-                        min_extent_deg=2.6,
-                        steps=24,
+                        min_extent_deg=8.0,
+                        steps=32,
                     )
 
                     parts.append(
                         _svg_polyline(
                             pts,
                             stroke=transit_aspect_color,
-                            width=1.2,
+                            width=2.2,
                             fill="none",
-                            linecap="butt",
+                            linecap="round",
                             linejoin="round",
                         )
                     )
@@ -433,9 +440,6 @@ def render_transits_svg(
 
         if SHOW_ASPECT_CURSORS:
             for a in aspects_tn:
-                if a.get("type") == "CONJ":
-                    continue
-
                 for name, angle_map in ((a.get("p1"), angles_transit), (a.get("p2"), angles_natal)):
                     ang = angle_map.get(name)
                     if ang is None:
