@@ -419,10 +419,32 @@ def render_ecliptic_svg(
         if not ax:
             continue
 
+        # Coupe les barres AS/DS/MC/FC pour qu'elles ne passent pas sur la roue
+        axis_gap = ax["width"] / 2.0 + 0.5
+        r_axis_stop = r_outer + axis_gap
+
         for seg in ax["segments"]:
+            x1, y1 = seg["x1"], seg["y1"]
+            x2, y2 = seg["x2"], seg["y2"]
+
+            # distance des deux extrémités au centre
+            d1 = math.hypot(x1 - cx, y1 - cy)
+            d2 = math.hypot(x2 - cx, y2 - cy)
+
+            # Si une extrémité entre dans la roue, on la ramène juste au bord extérieur
+            if d1 < r_axis_stop:
+                a = math.atan2(cy - y1, x1 - cx)
+                x1 = cx + r_axis_stop * math.cos(a)
+                y1 = cy - r_axis_stop * math.sin(a)
+
+            if d2 < r_axis_stop:
+                a = math.atan2(cy - y2, x2 - cx)
+                x2 = cx + r_axis_stop * math.cos(a)
+                y2 = cy - r_axis_stop * math.sin(a)
+
             parts.append(
                 _svg_line(
-                    seg["x1"], seg["y1"], seg["x2"], seg["y2"],
+                    x1, y1, x2, y2,
                     stroke="#222222",
                     width=ax["width"],
                 )
