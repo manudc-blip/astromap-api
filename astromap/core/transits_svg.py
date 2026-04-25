@@ -250,6 +250,7 @@ def render_transits_svg(
         center_dx=theme_dx,
         center_dy=theme_dy,
     )
+    parts.append(_extract_svg_inner(natal_svg))
     parts.append('<g>')
 
     # 2) Aspects transit
