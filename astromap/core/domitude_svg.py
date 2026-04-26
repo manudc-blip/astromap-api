@@ -138,6 +138,7 @@ def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> s
         f'preserveAspectRatio="xMidYMid meet" />'
     )
 
+
 def _svg_image_with_white_outline(href: str, x_center: float, y_center: float, size_px: float) -> str:
     half = size_px / 2.0
     return (
@@ -147,6 +148,7 @@ def _svg_image_with_white_outline(href: str, x_center: float, y_center: float, s
         f'preserveAspectRatio="xMidYMid meet" '
         f'filter="url(#glyphWhiteOutline)" />'
     )
+
 
 def _arc_points(cx: float, cy: float, r: float, start_deg: float, extent_deg: float, steps: int = 24):
     pts = []
@@ -572,7 +574,7 @@ def render_domitude_svg(
     r_planet = r_planet_base
     LINE_W = 2
     ELBOW_OUT = int(size * 0.022)
-    MARGIN_OBLIQUE = 1.0
+    MARGIN_OBLIQUE = 4.0
 
     planets_info = []
     for item in dom_list:
@@ -588,12 +590,14 @@ def render_domitude_svg(
             "pos_house": item.get("pos_house"),
         })
 
+
     def _circ_mean(degs):
         sx = sum(math.cos(math.radians(d)) for d in degs)
         sy = sum(math.sin(math.radians(d)) for d in degs)
         if sx == 0 and sy == 0:
             return (degs[0] + 360.0) % 360.0
         return (math.degrees(math.atan2(sy, sx)) + 360.0) % 360.0
+
 
     def _unwrap_around(ref, degs):
         out = []
@@ -606,8 +610,10 @@ def render_domitude_svg(
             out.append(x)
         return out
 
+
     def _ang_short(a, b):
         return abs((b - a + 180.0) % 360.0 - 180.0)
+
 
     def _pair_orb_conj_deg(n1, n2):
         g1_n1 = n1 in G1_RAPIDES
@@ -618,8 +624,10 @@ def render_domitude_svg(
             return ORB_CONJ_G1G2
         return ORB_CONJ_G2G2
 
+
     def _pair_visual_min_deg(wi_px, wj_px):
         return _deg_from_px(1.00 * (wi_px + wj_px), r_planet)
+
 
     def _pair_dynamic_threshold(pL, pR):
         orb_deg = _pair_orb_conj_deg(pL["name"], pR["name"])
@@ -648,6 +656,7 @@ def render_domitude_svg(
             groups[0] = groups[-1] + groups[0]
             groups.pop()
 
+
     def _min_current_gap_deg(grp):
         if len(grp) < 2:
             return 360.0
@@ -662,6 +671,7 @@ def render_domitude_svg(
         gaps.append(_ang_short(a_last, a_first))
         return min(gaps) if gaps else 360.0
 
+
     def _max_needed_gap_deg(grp):
         need = 0.0
         for i in range(len(grp) - 1):
@@ -669,6 +679,7 @@ def render_domitude_svg(
             wj = grp[i + 1]["px"]
             need = max(need, _deg_from_px(0.85 * (wi + wj), r_planet))
         return need
+
 
     for grp in groups:
         if len(grp) == 1:
@@ -696,6 +707,7 @@ def render_domitude_svg(
         for j, d in enumerate(grp):
             d["adj"] = (start + j * spacing) % 360.0
             d["crowded"] = True
+
 
     for grp in groups:
         if len(grp) <= 1:
