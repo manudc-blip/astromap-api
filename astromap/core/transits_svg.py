@@ -721,18 +721,14 @@ def render_transits_svg(
                 width=1,
             )
         )
-        parts.append(
-            _svg_transit_connector_joint(
-                xb1, yb1,
-                stroke="#b567d6",
-                width=1,
-            )
-        )
+
+        joint_x, joint_y = xb1, yb1
 
         half_px = 0.5 * d["px"]
         dx, dy = (gx - xb1), (gy - yb1)
         dist = math.hypot(dx, dy)
         stop_from_elbow = max(dist - (half_px + margin_oblique), 0.0)
+
         if dist > 0 and stop_from_elbow > 0:
             t = stop_from_elbow / dist
             xo, yo = (xb1 + dx * t, yb1 + dy * t)
@@ -743,6 +739,13 @@ def render_transits_svg(
                     width=1,
                 )
             )
+        parts.append(
+            _svg_transit_connector_joint(
+                xb1, yb1,
+                stroke="#b567d6",
+                width=1,
+            )
+        )
 
         transit_draw_items.append((d, gx, gy))
 
