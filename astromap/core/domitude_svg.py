@@ -101,12 +101,62 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
     )
 
 
-def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none") -> str:
+def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none", opacity: float | None = None) -> str:
+    opacity_attr = f' opacity="{opacity:.2f}"' if opacity is not None else ""
     return (
         f'<circle cx="{_fmt(cx)}" cy="{_fmt(cy)}" r="{_fmt(r)}" '
-        f'stroke="{stroke}" stroke-width="{width}" fill="{fill}" />'
+        f'stroke="{stroke}" stroke-width="{width}" fill="{fill}"{opacity_attr} />'
     )
 
+def _svg_axis_line_with_gaps(
+    cx: float,
+    cy: float,
+    r_start: float,
+    r_end: float,
+    axis_angle: float,
+    gaps: list[tuple[float, float]],
+    *,
+    stroke="#222222",
+    width=4,
+) -> list[str]:
+    """
+    Trace une ligne radiale en laissant des coupures autour des glyphes.
+    gaps = [(r_center, half_gap_px), ...]
+    """
+    if r_end < r_start:
+        r_start, r_end = r_end, r_start
+
+    intervals = []
+    for r_center, half_gap in gaps:
+        a = max(r_start, r_center - half_gap)
+        b = min(r_end, r_center + half_gap)
+        if b > a:
+            intervals.append((a, b))
+
+    intervals.sort()
+
+    merged = []
+    for a, b in intervals:
+        if not merged or a > merged[-1][1]:
+            merged.append([a, b])
+        else:
+            merged[-1][1] = max(merged[-1][1], b)
+
+    segments = []
+    cur = r_start
+    for a, b in merged:
+        if a > cur:
+            x0, y0 = _pol_to_xy(cx, cy, cur, axis_angle)
+            x1, y1 = _pol_to_xy(cx, cy, a, axis_angle)
+            segments.append(_svg_line(x0, y0, x1, y1, stroke=stroke, width=width))
+        cur = max(cur, b)
+
+    if cur < r_end:
+        x0, y0 = _pol_to_xy(cx, cy, cur, axis_angle)
+        x1, y1 = _pol_to_xy(cx, cy, r_end, axis_angle)
+        segments.append(_svg_line(x0, y0, x1, y1, stroke=stroke, width=width))
+
+    return segments
 
 def _svg_text(
     x,
@@ -464,6 +514,17 @@ def render_domitude_svg(
                 )
             )
 
+
+    axis_gaps: dict[str, list[tuple[float, float]]] = {
+        "AS": [],
+        "DS": [],
+        "MC": [],
+        "FC": [],
+    }
+
+    AXIS_GLYPH_CLEARANCE = int(size * 0.008)
+
+
     # Axes
     def draw_axis(label: str, dom_deg: float):
         AXIS_LEN_AS_DS = 0.22
@@ -483,11 +544,21 @@ def render_domitude_svg(
         elif label in ("FC", "IC"):
             r_axis_end = r_axes - CAP_FC - AXIS_WIDTH / 2
 
-        # Démarre juste à l'extérieur du cercle pour ne pas recouvrir la roue
-        axis_start_gap = AXIS_WIDTH / 2.0 + 0.5
-        x0, y0 = _pol_to_xy(cx, cy, r_outer + axis_start_gap, a)
+        x0, y0 = _pol_to_xy(cx, cy, r_outer, a)
         x1, y1 = _pol_to_xy(cx, cy, r_axis_end, a)
-        parts.append(_svg_line(x0, y0, x1, y1, stroke="#222222", width=AXIS_WIDTH))
+
+        parts.extend(
+            _svg_axis_line_with_gaps(
+                cx,
+                cy,
+                r_outer,
+                r_axis_end,
+                a,
+                axis_gaps.get(label, []),
+                stroke="#222222",
+                width=AXIS_WIDTH,
+            )
+        )
 
         if label == "AS":
             arrow_len = int(size * 0.060)
@@ -535,15 +606,22 @@ def render_domitude_svg(
         if href:
             parts.append(_svg_image(href, gx, gy, PX_AXIS))
 
+    axis_gaps: dict[str, list[tuple[float, float]]] = {
+        "AS": [],
+        "DS": [],
+        "MC": [],
+        "FC": [],
+        "IC": [],
+    }
+
+    AXIS_GLYPH_CLEARANCE = int(size * 0.008)
+
     axis_MC = "MC"
     axis_AS = "AS"
     axis_DS = "DS"
     axis_FC = "IC" if language == "en" else "FC"
 
-    draw_axis(axis_MC, 0.0)
-    draw_axis(axis_AS, 90.0)
-    draw_axis(axis_FC, 180.0)
-    draw_axis(axis_DS, 270.0)
+
 
     # Planètes
     dom_list = _extract_domitudes(payload)
@@ -775,6 +853,28 @@ def render_domitude_svg(
         for i, d in enumerate(planets_info):
             d["adj"] = (lin_all[i] + 360.0) % 360.0
 
+
+    # ICI : construire les coupures d'axes
+    for d in planets_info:
+        ang_glyph = d["adj"]
+        for label, axis_ang in AXES_SCREEN.items():
+            gap_label = "IC" if label == "FC" and language == "en" else label
+
+            dist = abs((ang_glyph - axis_ang + 180.0) % 360.0 - 180.0)
+            glyph_half_deg = _deg_from_px(0.5 * d["px"], r_planet)
+
+            if dist < glyph_half_deg:
+                axis_gaps[gap_label].append(
+                    (r_planet, 0.5 * d["px"] + AXIS_GLYPH_CLEARANCE)
+                )
+
+    # ICI : dessiner les axes, maintenant qu'ils connaissent les coupures
+    draw_axis(axis_MC, 0.0)
+    draw_axis(axis_AS, 90.0)
+    draw_axis(axis_FC, 180.0)
+    draw_axis(axis_DS, 270.0)
+
+
     planets_info_sorted = sorted(planets_info, key=lambda d: d["real"])
 
     bg = "#FFFFFF"
@@ -831,15 +931,6 @@ def render_domitude_svg(
                 xo, yo = xb1 + dx * t, yb1 + dy * t
                 parts.append(_svg_line(xb1, yb1, xo, yo, stroke=STRUCT_GREY, width=LINE_W))
 
-        for label in ("AS", "DS", "MC", "FC"):
-            aA = AXES_SCREEN.get(label)
-            if aA is None:
-                continue
-            dist = abs((ang_glyph - aA + 180.0) % 360.0 - 180.0)
-            glyph_half_deg = _deg_from_px(half_px, r_planet)
-            if dist < glyph_half_deg:
-                halo_r = half_px + int(size * 0.006)
-                parts.append(_svg_circle(pxg, pyg, halo_r, stroke=bg, width=1, fill=bg))
 
         href = _planet_href(asset_base_url, name)
         if href:
