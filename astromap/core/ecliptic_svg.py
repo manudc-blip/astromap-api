@@ -70,6 +70,13 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
     )
 
 
+def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) -> str:
+    return (
+        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 2.0, dash=dash)
+        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash)
+    )
+
+
 def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none") -> str:
     return (
         f'<circle cx="{_fmt(cx)}" cy="{_fmt(cy)}" r="{_fmt(r)}" '
@@ -526,7 +533,7 @@ def render_ecliptic_svg(
     for p in layout["planets"]:
         for conn in p["connectors"]:
             parts.append(
-                _svg_line(
+                _svg_connector_line(
                     conn["x1"], conn["y1"], conn["x2"], conn["y2"],
                     stroke=conn["color"],
                     width=conn["width"],
