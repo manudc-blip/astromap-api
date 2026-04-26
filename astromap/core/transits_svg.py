@@ -62,7 +62,7 @@ def _svg_transit_connector_line(x1, y1, x2, y2, stroke="#b567d6", width=1, dash=
         _svg_line(
             x1, y1, x2, y2,
             stroke="#FFFFFF",
-            width=width + 2.2,
+            width=width + 2.4,
             dash=dash,
             linecap="round",
         ).replace("/>", ' opacity="0.72" />')
@@ -150,7 +150,7 @@ def _svg_transit_image(
     title: str | None = None,
 ) -> str:
     half = size_px / 2.0
-    halo_r = half + 1.8
+    halo_r = half + 3.0
 
     attrs = []
     if elem_id:
@@ -167,7 +167,7 @@ def _svg_transit_image(
         f"<g{attrs_str}>"
         f"{title_part}"
         f'<circle cx="{_fmt(x_center)}" cy="{_fmt(y_center)}" r="{_fmt(halo_r)}" '
-        f'fill="#FFFFFF" opacity="0.34" filter="url(#transitGlyphSoftHalo)" />'
+        f'fill="#FFFFFF" opacity="0.70" filter="url(#transitGlyphSoftHalo)" />'
         f'<image href="{escape(href)}" '
         f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
         f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
@@ -324,7 +324,7 @@ def render_transits_svg(
         '''
     <defs>
       <filter id="transitGlyphSoftHalo" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="1.2"/>
+        <feGaussianBlur stdDeviation="0.8"/>
       </filter>
     </defs>
     ''',
