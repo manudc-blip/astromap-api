@@ -75,17 +75,13 @@ def _svg_transit_connector_line(x1, y1, x2, y2, stroke="#b567d6", width=1, dash=
         )
     )
 
+
 def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) -> str:
     return (
         _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash, linecap="butt")
         + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash, linecap="butt")
     )
     
-def _svg_transit_connector_joint(x, y, stroke="#b567d6", width=1) -> str:
-    return (
-        _svg_circle(x, y, (width + 2.4) / 2.0, stroke="none", fill="#FFFFFF").replace("/>", ' opacity="0.72" />')
-        + _svg_circle(x, y, width / 2.0, stroke="none", fill=stroke)
-    )
 
 
 def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none") -> str:
@@ -714,9 +710,20 @@ def render_transits_svg(
 
         xb0, yb0 = _pol_to_xy(cx, cy, r_line_start, ang_band)
         xb1, yb1 = _pol_to_xy(cx, cy, r_elbow, ang_band)
+        joint_overlap = 2.2
+        ux1 = xb1 - xb0
+        uy1 = yb1 - yb0
+        d1 = math.hypot(ux1, uy1)
+
+        if d1 > 0:
+            xb1a = xb1 + (ux1 / d1) * joint_overlap
+            yb1a = yb1 + (uy1 / d1) * joint_overlap
+        else:
+            xb1a, yb1a = xb1, yb1
+
         parts.append(
             _svg_transit_connector_line(
-                xb0, yb0, xb1, yb1,
+                xb0, yb0, xb1a, yb1a,
                 stroke="#b567d6",
                 width=1,
             )
@@ -732,21 +739,18 @@ def render_transits_svg(
         if dist > 0 and stop_from_elbow > 0:
             t = stop_from_elbow / dist
             xo, yo = (xb1 + dx * t, yb1 + dy * t)
+
+            overlap = 2.0
+            xj = xb1 - (dx / dist) * overlap
+            yj = yb1 - (dy / dist) * overlap
+
             parts.append(
                 _svg_transit_connector_line(
-                    xb1, yb1, xo, yo,
+                    xj, yj, xo, yo,
                     stroke="#b567d6",
                     width=1,
                 )
             )
-        parts.append(
-            _svg_transit_connector_joint(
-                xb1, yb1,
-                stroke="#b567d6",
-                width=1,
-            )
-        )
-
         transit_draw_items.append((d, gx, gy))
 
     # Les connecteurs transit passent derrière les glyphes natals.
