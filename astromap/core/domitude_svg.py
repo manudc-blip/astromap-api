@@ -487,8 +487,6 @@ def render_domitude_svg(
                 )
             )
 
-
-
     # Axes
     def draw_axis(label: str, dom_deg: float):
         AXIS_LEN_AS_DS = 0.22
@@ -559,14 +557,10 @@ def render_domitude_svg(
         if href:
             parts.append(_svg_image(href, gx, gy, PX_AXIS))
 
-
-
     axis_MC = "MC"
     axis_AS = "AS"
     axis_DS = "DS"
     axis_FC = "IC" if language == "en" else "FC"
-
-
 
     # Planètes
     dom_list = _extract_domitudes(payload)
@@ -805,9 +799,7 @@ def render_domitude_svg(
     draw_axis(axis_FC, 180.0)
     draw_axis(axis_DS, 270.0)
 
-
     planets_info_sorted = sorted(planets_info, key=lambda d: d["real"])
-
 
     for d in planets_info_sorted:
         name = d["name"]
