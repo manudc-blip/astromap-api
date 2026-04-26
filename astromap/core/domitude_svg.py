@@ -841,6 +841,17 @@ def render_domitude_svg(
                 xo, yo = xb1 + dx * t, yb1 + dy * t
                 parts.append(_svg_line(xb1, yb1, xo, yo, stroke=STRUCT_GREY, width=LINE_W))
 
+            micro_halo_r = half_px + int(size * 0.004)
+
+            parts.append(
+                _svg_circle(
+                    pxg,
+                    pyg,
+                    micro_halo_r,
+                    stroke="none",
+                    fill="#FFFFFF"
+                )
+            )
 
         href = _planet_href(asset_base_url, name)
         if href:
