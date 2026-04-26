@@ -57,6 +57,13 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
     )
 
 
+def _svg_transit_connector_line(x1, y1, x2, y2, stroke="#b567d6", width=1, dash=None) -> str:
+    return (
+        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash, linecap="butt")
+        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash, linecap="butt")
+    )
+
+
 def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none") -> str:
     return (
         f'<circle cx="{_fmt(cx)}" cy="{_fmt(cy)}" r="{_fmt(r)}" '
@@ -260,10 +267,6 @@ def render_transits_svg(
     def to_screen(deg: float) -> float:
         asc = float(axes.get("AS", 0.0))
         return (float(deg) - asc + 180.0) % 360.0
-
-    def _axis_screen_angle(label: str):
-        v = axes.get(label, None)
-        return to_screen(float(v)) if v is not None else None
 
     parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
@@ -572,11 +575,10 @@ def render_transits_svg(
         xb0, yb0 = _pol_to_xy(cx, cy, r_line_start, ang_band)
         xb1, yb1 = _pol_to_xy(cx, cy, r_elbow, ang_band)
         parts.append(
-            _svg_line(
+            _svg_transit_connector_line(
                 xb0, yb0, xb1, yb1,
                 stroke="#b567d6",
                 width=1,
-                linecap="butt",
             )
         )
 
@@ -588,25 +590,12 @@ def render_transits_svg(
             t = stop_from_elbow / dist
             xo, yo = (xb1 + dx * t, yb1 + dy * t)
             parts.append(
-                _svg_line(
+                _svg_transit_connector_line(
                     xb1, yb1, xo, yo,
                     stroke="#b567d6",
                     width=1,
-                    linecap="butt",
                 )
             )
-
-        # halo blanc si passe sur un axe
-        for label in ("AS", "DS", "MC", "FC"):
-            a_a = _axis_screen_angle(label)
-            if a_a is None:
-                continue
-            dist_ax = abs((ang_glyph - a_a + 180.0) % 360.0 - 180.0)
-            w_deg = ((half_px + 2) / max(1.0, r_planet_transit)) * (180.0 / math.pi)
-            if dist_ax < w_deg:
-                halo_r = half_px - 1
-                parts.append(_svg_circle(gx, gy, halo_r, fill="#FFFFFF", stroke="#FFFFFF", width=0))
-                break
 
         href = _planet_transit_href(asset_base_url, name)
         if not href:
