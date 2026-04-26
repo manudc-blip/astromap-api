@@ -59,8 +59,20 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
 
 def _svg_transit_connector_line(x1, y1, x2, y2, stroke="#b567d6", width=1, dash=None) -> str:
     return (
-        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash, linecap="butt")
-        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash, linecap="butt")
+        _svg_line(
+            x1, y1, x2, y2,
+            stroke="#FFFFFF",
+            width=width + 2.2,
+            dash=dash,
+            linecap="round",
+        ).replace("/>", ' opacity="0.72" />')
+        + _svg_line(
+            x1, y1, x2, y2,
+            stroke=stroke,
+            width=width,
+            dash=dash,
+            linecap="butt",
+        )
     )
 
 
