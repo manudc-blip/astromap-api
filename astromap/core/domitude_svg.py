@@ -109,9 +109,12 @@ def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) ->
 
 
 def _svg_connector_joint(x, y, stroke="#4A4A4A", width=2) -> str:
+    r_white = width + 0.9
+    r_grey = width * 0.75
+
     return (
-        _svg_circle(x, y, (width + 0.9) / 2.0, stroke="none", fill="#FFFFFF")
-        + _svg_circle(x, y, width / 2.0, stroke="none", fill=stroke)
+        _svg_circle(x, y, r_white, stroke="none", fill="#FFFFFF")
+        + _svg_circle(x, y, r_grey, stroke="none", fill=stroke)
     )
 
 
