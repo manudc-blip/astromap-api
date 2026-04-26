@@ -116,6 +116,17 @@ def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> s
     )
 
 
+def _svg_image_with_white_outline(href: str, x_center: float, y_center: float, size_px: float) -> str:
+    half = size_px / 2.0
+    return (
+        f'<image href="{escape(href)}" '
+        f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+        f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+        f'preserveAspectRatio="xMidYMid meet" '
+        f'filter="url(#glyphWhiteOutline)" />'
+    )
+
+
 def _arc_points(cx: float, cy: float, r: float, start_deg: float, extent_deg: float, steps: int = 24):
     pts = []
     if steps < 2:
@@ -292,6 +303,19 @@ def render_ecliptic_svg(
     parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
+        '''
+<defs>
+  <filter id="glyphWhiteOutline" x="-30%" y="-30%" width="160%" height="160%">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="1.8" result="dilated"/>
+    <feFlood flood-color="#FFFFFF" result="white"/>
+    <feComposite in="white" in2="dilated" operator="in" result="outline"/>
+    <feMerge>
+      <feMergeNode in="outline"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+''',
     ]
 
     title_dx = 90.0
@@ -511,7 +535,7 @@ def render_ecliptic_svg(
 
         href = _planet_href(asset_base_url, p["name"])
         if href:
-            parts.append(_svg_image(href, p["x"], p["y"], p["px"]))
+            parts.append(_svg_image_with_white_outline(href, p["x"], p["y"], p["px"]))
         else:
             parts.append(
                 _svg_text(
