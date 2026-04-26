@@ -242,6 +242,21 @@ def _svg_arc_polyline(
 
     return "".join(parts)
 
+
+def _svg_transit_connector_polyline(points, stroke="#b567d6", width=1, dash=None) -> str:
+    pts = " ".join(f"{_fmt(x)},{_fmt(y)}" for x, y in points)
+    dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+
+    return (
+        f'<polyline points="{pts}" fill="none" stroke="#FFFFFF" '
+        f'stroke-width="{width + 2.4}" stroke-linecap="round" '
+        f'stroke-linejoin="round" opacity="0.72"{dash_attr} />'
+        f'<polyline points="{pts}" fill="none" stroke="{stroke}" '
+        f'stroke-width="{width}" stroke-linecap="round" '
+        f'stroke-linejoin="round"{dash_attr} />'
+    )
+
+
 def _extract_svg_inner(svg: str) -> str:
     start = svg.find(">")
     end = svg.rfind("</svg>")
@@ -710,26 +725,8 @@ def render_transits_svg(
 
         xb0, yb0 = _pol_to_xy(cx, cy, r_line_start, ang_band)
         xb1, yb1 = _pol_to_xy(cx, cy, r_elbow, ang_band)
-        joint_overlap = 2.2
-        ux1 = xb1 - xb0
-        uy1 = yb1 - yb0
-        d1 = math.hypot(ux1, uy1)
 
-        if d1 > 0:
-            xb1a = xb1 + (ux1 / d1) * joint_overlap
-            yb1a = yb1 + (uy1 / d1) * joint_overlap
-        else:
-            xb1a, yb1a = xb1, yb1
-
-        parts.append(
-            _svg_transit_connector_line(
-                xb0, yb0, xb1a, yb1a,
-                stroke="#b567d6",
-                width=1,
-            )
-        )
-
-        joint_x, joint_y = xb1, yb1
+        points = [(xb0, yb0), (xb1, yb1)]
 
         half_px = 0.5 * d["px"]
         dx, dy = (gx - xb1), (gy - yb1)
@@ -739,18 +736,16 @@ def render_transits_svg(
         if dist > 0 and stop_from_elbow > 0:
             t = stop_from_elbow / dist
             xo, yo = (xb1 + dx * t, yb1 + dy * t)
+            points.append((xo, yo))
 
-            overlap = 2.0
-            xj = xb1 - (dx / dist) * overlap
-            yj = yb1 - (dy / dist) * overlap
-
-            parts.append(
-                _svg_transit_connector_line(
-                    xj, yj, xo, yo,
-                    stroke="#b567d6",
-                    width=1,
-                )
+        parts.append(
+            _svg_transit_connector_polyline(
+                points,
+                stroke="#b567d6",
+                width=1,
             )
+        )
+
         transit_draw_items.append((d, gx, gy))
 
     # Les connecteurs transit passent derrière les glyphes natals.
