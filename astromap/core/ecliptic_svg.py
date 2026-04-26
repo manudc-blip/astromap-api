@@ -72,8 +72,8 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
 
 def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) -> str:
     return (
-        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash)
-        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash)
+        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash, linecap="butt")
+        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash, linecap="butt")
     )
 
 
