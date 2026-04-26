@@ -108,6 +108,13 @@ def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) ->
     )
 
 
+def _svg_connector_joint(x, y, stroke="#4A4A4A", width=2) -> str:
+    return (
+        _svg_circle(x, y, (width + 0.9) / 2.0, stroke="none", fill="#FFFFFF")
+        + _svg_circle(x, y, width / 2.0, stroke="none", fill=stroke)
+    )
+
+
 def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none", opacity: float | None = None) -> str:
     opacity_attr = f' opacity="{opacity:.2f}"' if opacity is not None else ""
     return (
@@ -850,6 +857,8 @@ def render_domitude_svg(
                 xb0, yb0 = _pol_to_xy(cx, cy, start_r, ang_band)
                 xb1, yb1 = _pol_to_xy(cx, cy, elbow_r, ang_band)
                 parts.append(_svg_connector_line(xb0, yb0, xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
+                      
+            parts.append(_svg_connector_joint(xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
 
             xb1, yb1 = _pol_to_xy(cx, cy, elbow_r, ang_band)
             dx, dy = pxg - xb1, pyg - yb1
@@ -863,6 +872,7 @@ def render_domitude_svg(
             xb0, yb0 = _pol_to_xy(cx, cy, r_link_outer, ang_band)
             xb1, yb1 = _pol_to_xy(cx, cy, r_outer + ELBOW_OUT, ang_band)
             parts.append(_svg_connector_line(xb0, yb0, xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
+            parts.append(_svg_connector_joint(xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
 
             dx, dy = pxg - xb1, pyg - yb1
             dist = math.hypot(dx, dy)
