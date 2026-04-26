@@ -75,6 +75,18 @@ def _svg_transit_connector_line(x1, y1, x2, y2, stroke="#b567d6", width=1, dash=
         )
     )
 
+def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) -> str:
+    return (
+        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash, linecap="butt")
+        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash, linecap="butt")
+    )
+    
+def _svg_transit_connector_joint(x, y, stroke="#b567d6", width=1) -> str:
+    return (
+        _svg_circle(x, y, (width + 2.4) / 2.0, stroke="none", fill="#FFFFFF").replace("/>", ' opacity="0.72" />')
+        + _svg_circle(x, y, width / 2.0, stroke="none", fill=stroke)
+    )
+
 
 def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none") -> str:
     return (
@@ -277,6 +289,15 @@ def _build_natal_planets_overlay(
     parts: list[str] = []
 
     for p in layout["planets"]:
+        for conn in p["connectors"]:
+            parts.append(
+                _svg_connector_line(
+                    conn["x1"], conn["y1"], conn["x2"], conn["y2"],
+                    stroke=conn["color"],
+                    width=conn["width"],
+                )
+            )
+
         href = _planet_href(asset_base_url, p["name"])
         if href:
             parts.append(_svg_image_with_white_outline(href, p["x"], p["y"], p["px"]))
@@ -700,6 +721,13 @@ def render_transits_svg(
                 width=1,
             )
         )
+        parts.append(
+            _svg_transit_connector_joint(
+                xb1, yb1,
+                stroke="#b567d6",
+                width=1,
+            )
+        )
 
         half_px = 0.5 * d["px"]
         dx, dy = (gx - xb1), (gy - yb1)
@@ -767,6 +795,8 @@ def render_transits_svg(
         except Exception:
             pass
 
+    parts.append("</g>")
+    
     # 4) Titre transit
     age_text = None
     try:
