@@ -7,7 +7,7 @@ from typing import Any
 
 from .aspects import detect_aspects, detect_aspects_between
 from .ecliptic_svg import render_ecliptic_svg
-
+from .ecliptic_layout import build_ecliptic_layout
 
 STRUCT_GREY = "#4A4A4A"
 SHOW_ASPECT_CURSORS = True
@@ -240,6 +240,66 @@ def _extract_svg_inner(svg: str) -> str:
     if start == -1 or end == -1 or end <= start:
         return svg
     return svg[start + 1:end]
+
+
+def _svg_image_with_white_outline(href: str, x_center: float, y_center: float, size_px: float) -> str:
+    half = size_px / 2.0
+    return (
+        f'<image href="{escape(href)}" '
+        f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+        f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+        f'preserveAspectRatio="xMidYMid meet" '
+        f'filter="url(#glyphWhiteOutline)" />'
+    )
+
+
+def _build_natal_planets_overlay(
+    natal_payload: dict[str, Any],
+    *,
+    width: int,
+    height: int,
+    language: str,
+    asset_base_url: str,
+) -> list[str]:
+    layout = build_ecliptic_layout(
+        natal_payload,
+        width,
+        height,
+        language=language,
+        show_title=False,
+        show_houses=True,
+        show_aspects=True,
+    )
+
+    if not layout.get("ok"):
+        return []
+
+    parts: list[str] = []
+
+    for p in layout["planets"]:
+        href = _planet_href(asset_base_url, p["name"])
+        if href:
+            parts.append(_svg_image_with_white_outline(href, p["x"], p["y"], p["px"]))
+
+        deg = p.get("degree_label")
+        if deg:
+            parts.append(
+                _svg_text(
+                    deg["x"], deg["y"], str(deg["value"]),
+                    size=11,
+                    fill="#000000",
+                )
+            )
+            if deg["retro"]:
+                parts.append(
+                    _svg_text(
+                        deg["retro_x"], deg["retro_y"], "R",
+                        size=9,
+                        fill="#000000",
+                    )
+                )
+
+    return parts
 
 
 def render_transits_svg(
@@ -622,6 +682,8 @@ def render_transits_svg(
     deg_out = int(size * 0.040)
     font_deg = max(10, int(size * 0.012))
 
+    transit_draw_items = []
+
     for d in trans_planets:
         name = d["name"]
         ang_band = d["real"]
@@ -654,6 +716,23 @@ def render_transits_svg(
                 )
             )
 
+        transit_draw_items.append((d, gx, gy))
+
+    # Les connecteurs transit passent derrière les glyphes natals.
+    parts.extend(
+        _build_natal_planets_overlay(
+            natal_payload,
+            width=width,
+            height=height,
+            language=language,
+            asset_base_url=asset_base_url,
+        )
+    )
+
+    # Les glyphes transit repassent devant tout.
+    for d, gx, gy in transit_draw_items:
+        name = d["name"]
+
         href = _planet_transit_href(asset_base_url, name)
         if not href:
             href = _planet_href(asset_base_url, name)
@@ -673,7 +752,7 @@ def render_transits_svg(
 
         try:
             n = int(round(float(d["deg_in_sign"]))) % 30
-            tx, ty = _pol_to_xy(cx, cy, r_planet_transit + deg_out, ang_glyph)
+            tx, ty = _pol_to_xy(cx, cy, r_planet_transit + deg_out, d["adj"])
             parts.append(_svg_text(tx, ty, str(n), size=font_deg, fill="#b567d6"))
             if d.get("is_retro"):
                 parts.append(
@@ -687,8 +766,6 @@ def render_transits_svg(
                 )
         except Exception:
             pass
-
-    parts.append("</g>")  # ferme le groupe principal
 
     # 4) Titre transit
     age_text = None
