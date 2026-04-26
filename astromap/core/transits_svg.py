@@ -137,6 +137,45 @@ def _svg_image(
         f"</g>"
     )
 
+
+def _svg_transit_image(
+    href: str,
+    x_center: float,
+    y_center: float,
+    size_px: float,
+    *,
+    halo_fill: str = "#FFFFFF",
+    halo_opacity: float = 0.70,
+    halo_extra: float = 5.0,
+    elem_id: str | None = None,
+    class_name: str | None = None,
+    data_planet: str | None = None,
+    title: str | None = None,
+) -> str:
+    halo_r = size_px / 2.0 + halo_extra
+
+    return (
+        _svg_circle(
+            x_center,
+            y_center,
+            halo_r,
+            stroke="none",
+            width=0,
+            fill=halo_fill,
+        ).replace("/>", f' opacity="{halo_opacity:.2f}" />')
+        + _svg_image(
+            href,
+            x_center,
+            y_center,
+            size_px,
+            elem_id=elem_id,
+            class_name=class_name,
+            data_planet=data_planet,
+            title=title,
+        )
+    )
+
+
 def _pol_to_xy(cx: float, cy: float, r: float, deg: float) -> tuple[float, float]:
     th = math.radians(deg)
     return (cx + r * math.cos(th), cy - r * math.sin(th))
@@ -614,11 +653,14 @@ def render_transits_svg(
             href = _planet_href(asset_base_url, name)
         if href:
             parts.append(
-                _svg_image(
+                _svg_transit_image(
                     href,
                     gx,
                     gy,
                     d["px"],
+                    halo_fill="#FFFFFF",
+                    halo_opacity=0.72,
+                    halo_extra=4.0,
                     elem_id=f"transit_planet_{name}",
                     class_name="transit_planet transit",
                     data_planet=name,
