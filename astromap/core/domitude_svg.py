@@ -365,7 +365,7 @@ def render_domitude_svg(
         '''
     <defs>
       <filter id="glyphWhiteOutline" x="-30%" y="-30%" width="160%" height="160%">
-        <feMorphology in="SourceAlpha" operator="dilate" radius="1.4" result="dilated"/>
+        <feMorphology in="SourceAlpha" operator="dilate" radius="1.8" result="dilated"/>
         <feFlood flood-color="#FFFFFF" result="white"/>
         <feComposite in="white" in2="dilated" operator="in" result="outline"/>
         <feMerge>
