@@ -144,37 +144,36 @@ def _svg_transit_image(
     y_center: float,
     size_px: float,
     *,
-    halo_fill: str = "#FFFFFF",
-    halo_opacity: float = 0.70,
-    halo_extra: float = 5.0,
     elem_id: str | None = None,
     class_name: str | None = None,
     data_planet: str | None = None,
     title: str | None = None,
 ) -> str:
-    halo_r = size_px / 2.0 + halo_extra
+    half = size_px / 2.0
+    halo_r = half + 1.8
+
+    attrs = []
+    if elem_id:
+        attrs.append(f'id="{escape(elem_id)}"')
+    if class_name:
+        attrs.append(f'class="{escape(class_name)}"')
+    if data_planet:
+        attrs.append(f'data-planet="{escape(data_planet)}"')
+
+    attrs_str = (" " + " ".join(attrs)) if attrs else ""
+    title_part = f"<title>{escape(title)}</title>" if title else ""
 
     return (
-        _svg_circle(
-            x_center,
-            y_center,
-            halo_r,
-            stroke="none",
-            width=0,
-            fill=halo_fill,
-        ).replace("/>", f' opacity="{halo_opacity:.2f}" />')
-        + _svg_image(
-            href,
-            x_center,
-            y_center,
-            size_px,
-            elem_id=elem_id,
-            class_name=class_name,
-            data_planet=data_planet,
-            title=title,
-        )
+        f"<g{attrs_str}>"
+        f"{title_part}"
+        f'<circle cx="{_fmt(x_center)}" cy="{_fmt(y_center)}" r="{_fmt(halo_r)}" '
+        f'fill="#FFFFFF" opacity="0.34" filter="url(#transitGlyphSoftHalo)" />'
+        f'<image href="{escape(href)}" '
+        f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+        f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+        f'preserveAspectRatio="xMidYMid meet" />'
+        f"</g>"
     )
-
 
 def _pol_to_xy(cx: float, cy: float, r: float, deg: float) -> tuple[float, float]:
     th = math.radians(deg)
@@ -322,6 +321,13 @@ def render_transits_svg(
     parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
+        '''
+    <defs>
+      <filter id="transitGlyphSoftHalo" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.2"/>
+      </filter>
+    </defs>
+    ''',
     ]
     parts.append('<g>')
 
@@ -658,9 +664,6 @@ def render_transits_svg(
                     gx,
                     gy,
                     d["px"],
-                    halo_fill="#FFFFFF",
-                    halo_opacity=0.72,
-                    halo_extra=4.0,
                     elem_id=f"transit_planet_{name}",
                     class_name="transit_planet transit",
                     data_planet=name,
