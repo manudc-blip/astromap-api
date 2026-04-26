@@ -101,6 +101,13 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
     )
 
 
+def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) -> str:
+    return (
+        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash)
+        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash)
+    )
+
+
 def _svg_circle(cx, cy, r, stroke="#000", width=1, fill="none", opacity: float | None = None) -> str:
     opacity_attr = f' opacity="{opacity:.2f}"' if opacity is not None else ""
     return (
@@ -842,7 +849,7 @@ def render_domitude_svg(
             for start_r in (r_grid_out, r_link_outer):
                 xb0, yb0 = _pol_to_xy(cx, cy, start_r, ang_band)
                 xb1, yb1 = _pol_to_xy(cx, cy, elbow_r, ang_band)
-                parts.append(_svg_line(xb0, yb0, xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
+                parts.append(_svg_connector_line(xb0, yb0, xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
 
             xb1, yb1 = _pol_to_xy(cx, cy, elbow_r, ang_band)
             dx, dy = pxg - xb1, pyg - yb1
@@ -851,11 +858,11 @@ def render_domitude_svg(
             if dist > 0 and stop_from_elbow > 0:
                 t = stop_from_elbow / dist
                 xo, yo = xb1 + dx * t, yb1 + dy * t
-                parts.append(_svg_line(xb1, yb1, xo, yo, stroke=STRUCT_GREY, width=LINE_W))
+                parts.append(_svg_connector_line(xb1, yb1, xo, yo, stroke=STRUCT_GREY, width=LINE_W))
         else:
             xb0, yb0 = _pol_to_xy(cx, cy, r_link_outer, ang_band)
             xb1, yb1 = _pol_to_xy(cx, cy, r_outer + ELBOW_OUT, ang_band)
-            parts.append(_svg_line(xb0, yb0, xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
+            parts.append(_svg_connector_line(xb0, yb0, xb1, yb1, stroke=STRUCT_GREY, width=LINE_W))
 
             dx, dy = pxg - xb1, pyg - yb1
             dist = math.hypot(dx, dy)
@@ -863,7 +870,7 @@ def render_domitude_svg(
             if dist > 0 and stop_from_elbow > 0:
                 t = stop_from_elbow / dist
                 xo, yo = xb1 + dx * t, yb1 + dy * t
-                parts.append(_svg_line(xb1, yb1, xo, yo, stroke=STRUCT_GREY, width=LINE_W))
+                parts.append(_svg_connector_line(xb1, yb1, xo, yo, stroke=STRUCT_GREY, width=LINE_W))
 
 
         href = _planet_href(asset_base_url, name)
