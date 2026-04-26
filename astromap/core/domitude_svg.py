@@ -574,7 +574,7 @@ def render_domitude_svg(
     r_planet = r_planet_base
     LINE_W = 2
     ELBOW_OUT = int(size * 0.022)
-    MARGIN_OBLIQUE = 4.0
+    MARGIN_OBLIQUE = 1.0
 
     planets_info = []
     for item in dom_list:
