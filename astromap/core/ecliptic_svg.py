@@ -531,14 +531,25 @@ def render_ecliptic_svg(
             )
 
     for p in layout["planets"]:
-        for conn in p["connectors"]:
-            parts.append(
-                _svg_connector_line(
-                    conn["x1"], conn["y1"], conn["x2"], conn["y2"],
-                    stroke=conn["color"],
-                    width=conn["width"],
+        for idx_conn, conn in enumerate(p["connectors"]):
+            is_last = idx_conn == len(p["connectors"]) - 1
+
+            if is_last:
+                parts.append(
+                    _svg_connector_line(
+                        conn["x1"], conn["y1"], conn["x2"], conn["y2"],
+                        stroke=conn["color"],
+                        width=conn["width"],
+                    )
                 )
-            )
+            else:
+                parts.append(
+                    _svg_line(
+                        conn["x1"], conn["y1"], conn["x2"], conn["y2"],
+                        stroke=conn["color"],
+                        width=conn["width"],
+                    )
+                )
 
         href = _planet_href(asset_base_url, p["name"])
         if href:
