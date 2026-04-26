@@ -1,29 +1,18 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime
 from html import escape
 from typing import Any
 
-from .aspects import detect_aspects, detect_aspects_between
-from .ecliptic_svg import render_ecliptic_svg
+from .ecliptic_layout import build_ecliptic_layout
 
 
 STRUCT_GREY = "#4A4A4A"
-SHOW_ASPECT_CURSORS = True
-
-PERCEPTION_COEFFS = {
-    "Soleil": 1.00,
-    "Lune": 1.00,
-    "Mercure": 1.20,
-    "Vénus": 1.10,
-    "Mars": 1.05,
-    "Jupiter": 1.05,
-    "Saturne": 1.15,
-    "Uranus": 1.15,
-    "Neptune": 1.05,
-    "Pluton": 1.10,
-}
+TITLE_COLOR = "#1f4fa3"
+HOUSE_MARK_COLOR = "#0b3d91"
+ASPECT_BLUE = "#0077CC"
+ASPECT_RED = "#D62828"
+ASPECT_VIOLET = "#A855F7"
 
 PLANET_FILES = {
     "Soleil": "Soleil.svg",
@@ -38,9 +27,33 @@ PLANET_FILES = {
     "Pluton": "Pluton.svg",
 }
 
-PLANET_TRANSIT_FILES = {
-    name: filename.replace(".svg", "_transit.svg")
-    for name, filename in PLANET_FILES.items()
+SIGN_FILES = {
+    "Bélier": "Bélier.svg",
+    "Taureau": "Taureau.svg",
+    "Gémeaux": "Gémeaux.svg",
+    "Cancer": "Cancer.svg",
+    "Lion": "Lion.svg",
+    "Vierge": "Vierge.svg",
+    "Balance": "Balance.svg",
+    "Scorpion": "Scorpion.svg",
+    "Sagittaire": "Sagittaire.svg",
+    "Capricorne": "Capricorne.svg",
+    "Verseau": "Verseau.svg",
+    "Poissons": "Poissons.svg",
+}
+
+AXIS_FILES_FR = {
+    "AS": "AS.svg",
+    "DS": "DS.svg",
+    "MC": "MC.svg",
+    "FC": "FC.svg",
+}
+
+AXIS_FILES_EN = {
+    "AS": "AS.svg",
+    "DS": "DS.svg",
+    "MC": "MC.svg",
+    "FC": "IC.svg",  # important : fond du ciel -> IC en anglais
 }
 
 
@@ -57,7 +70,7 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
     )
 
 
-def _svg_transit_connector_line(x1, y1, x2, y2, stroke="#b567d6", width=1, dash=None) -> str:
+def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) -> str:
     return (
         _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash, linecap="butt")
         + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash, linecap="butt")
@@ -91,581 +104,472 @@ def _svg_text(
     )
 
 
-def _svg_image(
-    href: str,
-    x_center: float,
-    y_center: float,
-    size_px: float,
-    *,
-    elem_id: str | None = None,
-    class_name: str | None = None,
-    data_planet: str | None = None,
-    title: str | None = None,
-) -> str:
-    half = size_px / 2.0
-
-    attrs = []
-    if elem_id:
-        attrs.append(f'id="{escape(elem_id)}"')
-    if class_name:
-        attrs.append(f'class="{escape(class_name)}"')
-    if data_planet:
-        attrs.append(f'data-planet="{escape(data_planet)}"')
-
-    attrs_str = (" " + " ".join(attrs)) if attrs else ""
-    title_part = f"<title>{escape(title)}</title>" if title else ""
-
+def _svg_polyline(points, stroke="#000", width=1, fill="none", dash=None, linecap="round", linejoin="round") -> str:
+    pts = " ".join(f"{_fmt(x)},{_fmt(y)}" for x, y in points)
+    dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
     return (
-        f"<g{attrs_str}>"
-        f"{title_part}"
+        f'<polyline points="{pts}" fill="{fill}" stroke="{stroke}" '
+        f'stroke-width="{width}" stroke-linecap="{linecap}" stroke-linejoin="{linejoin}"{dash_attr} />'
+    )
+
+
+def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
+    half = size_px / 2.0
+    return (
         f'<image href="{escape(href)}" '
         f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
         f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
         f'preserveAspectRatio="xMidYMid meet" />'
-        f"</g>"
     )
 
-def _pol_to_xy(cx: float, cy: float, r: float, deg: float) -> tuple[float, float]:
-    th = math.radians(deg)
-    return (cx + r * math.cos(th), cy - r * math.sin(th))
+
+def _svg_image_with_white_outline(href: str, x_center: float, y_center: float, size_px: float) -> str:
+    half = size_px / 2.0
+    return (
+        f'<image href="{escape(href)}" '
+        f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+        f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+        f'preserveAspectRatio="xMidYMid meet" '
+        f'filter="url(#glyphWhiteOutline)" />'
+    )
+
+
+def _arc_points(cx: float, cy: float, r: float, start_deg: float, extent_deg: float, steps: int = 24):
+    pts = []
+    if steps < 2:
+        steps = 2
+    for i in range(steps + 1):
+        t = i / steps
+        a = start_deg + extent_deg * t
+        th = math.radians(a)
+        x = cx + r * math.cos(th)
+        y = cy - r * math.sin(th)
+        pts.append((x, y))
+    return pts
+
+
+def _aspect_style(aspect_type: str) -> tuple[str, str | None, float]:
+    a = (aspect_type or "").upper()
+
+    if a in {"TRI", "TRINE", "SEX", "SEXTILE"}:
+        return ASPECT_BLUE, None, 1.8
+
+    if a in {"OPP", "OPPOSITION", "SQR", "SQUARE"}:
+        return ASPECT_RED, "6 4", 1.8
+
+    if a in {"QUINCUNX", "QNX", "INC", "INCONJ"}:
+        return ASPECT_VIOLET, "4 4", 1.5
+
+    if a == "CONJ":
+        return ASPECT_BLUE, None, 2.0
+
+    return "#888888", "3 4", 1.3
 
 
 def _planet_href(asset_base_url: str, planet_name: str) -> str | None:
-    fn = PLANET_FILES.get(planet_name)
-    return f"{asset_base_url}/Planetes/{fn}" if fn else None
+    filename = PLANET_FILES.get(planet_name)
+    if not filename:
+        return None
+    return f"{asset_base_url}/Planetes/{filename}"
 
 
-def _planet_transit_href(asset_base_url: str, planet_name: str) -> str | None:
-    fn = PLANET_TRANSIT_FILES.get(planet_name)
-    return f"{asset_base_url}/Planetes/{fn}" if fn else None
+def _sign_href(asset_base_url: str, sign_name: str) -> str | None:
+    filename = SIGN_FILES.get(sign_name)
+    if not filename:
+        return None
+    return f"{asset_base_url}/Signes/{filename}"
 
 
-def _deg_from_px(px: float, r: float) -> float:
-    return (px / max(r, 1.0)) * (180.0 / math.pi)
+def _axis_href(asset_base_url: str, axis_label: str, language: str) -> str | None:
+    files = AXIS_FILES_EN if language == "en" else AXIS_FILES_FR
+    filename = files.get(axis_label)
+    if not filename:
+        return None
+    return f"{asset_base_url}/Axes/{filename}"
 
 
-def _transit_dash(kind: str):
-    if kind in ("SQR", "OPP"):
-        return "1 3"
-    return None
+def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list[str]:
+    if not layout.get("ok"):
+        return []
 
-def _short_angle_delta(a1: float, a2: float) -> float:
-    return (a2 - a1 + 180.0) % 360.0 - 180.0
+    cx = layout["meta"]["center"]["x"]
+    cy = layout["meta"]["center"]["y"]
+    r_aspect = layout["radii"]["aspect"]
+    r_inner = layout["radii"]["inner"]
+    r_outer = layout["radii"]["outer"]
 
-
-def _svg_arc_polyline(
-    cx: float,
-    cy: float,
-    r: float,
-    a1: float,
-    a2: float,
-    *,
-    stroke: str = "#0077CC",
-    width: float = 1.4,
-    steps: int = 28,
-) -> str:
-    delta = _short_angle_delta(a1, a2)
-    parts = []
-
-    for offset in (-1.8, 1.8):
-        pts = []
-
-        for i in range(steps + 1):
-            t = i / steps
-            a = a1 + delta * t
-            x, y = _pol_to_xy(cx, cy, r + offset, a)
-            pts.append(f"{_fmt(x)},{_fmt(y)}")
-
-        parts.append(
-            f'<polyline points="{" ".join(pts)}" '
-            f'stroke="{stroke}" stroke-width="{width}" '
-            f'fill="none" stroke-linecap="round" stroke-linejoin="round" />'
-        )
-
-    return "".join(parts)
-
-def _extract_svg_inner(svg: str) -> str:
-    start = svg.find(">")
-    end = svg.rfind("</svg>")
-    if start == -1 or end == -1 or end <= start:
-        return svg
-    return svg[start + 1:end]
-
-
-def render_transits_svg(
-    natal_payload: dict[str, Any],
-    transit_payload: dict[str, Any],
-    width: int = 1400,
-    height: int = 900,
-    *,
-    language: str = "fr",
-    aspect_mode: str = "TN",
-    asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
-) -> str:
-    if not natal_payload or not natal_payload.get("planets"):
-        return (
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-            f'viewBox="0 0 {width} {height}">'
-            f'<rect width="100%" height="100%" fill="#FFFFFF" />'
-            f'{_svg_text(width/2, height/2, "Payload natal indisponible", size=18, fill="#666")}'
-            f'</svg>'
-        )
-
-    if not transit_payload or not transit_payload.get("planets"):
-        return render_ecliptic_svg(
-            natal_payload,
-            width=width,
-            height=height,
-            language=language,
-            show_title=True,
-            show_houses=True,
-            show_aspects=True,
-            asset_base_url=asset_base_url,
-        )
-
-    w = width
-    h = height
-    margin = 24
-
-    size0 = min(w, h) - 2 * margin
-    scale_theme = 0.80
-    size = int(size0 * scale_theme)
-    cx = w / 2
-    cy = h / 2
-
-    r_outer = size * 0.36
-    r_inner = size * 0.23
-    px_planet_base = int(size * 0.050)
-
-    grid_band = size * 0.020
+    grid_band = (r_outer / 0.36) * 0.020
     circ_in_w = 2.0
     gap_in = circ_in_w / 2.0
 
     r2_grid_in = r_inner + gap_in
     r2_grid_out = r2_grid_in + grid_band
-    r_cursor_end = r2_grid_in + (r2_grid_out - r2_grid_in) * 0.38
+    r_cursor_end = (r2_grid_in + r2_grid_out) * 0.5
 
-    circ_out_w = 3.0
-    gap_out = circ_out_w / 2.0
+    planets = {p["name"]: p for p in layout["planets"]}
+    items = []
 
-    r_grid_out = r_outer - gap_out
-    r_grid_in = r_grid_out - grid_band
-    r_link_outer = (r_grid_in + r_grid_out) * 0.5
-    r_conj_outer = r_grid_out + 6.0
+    for aspect in payload.get("aspects", []) or []:
+        a_type = (aspect.get("type") or "").upper()
+        if a_type == "CONJ":
+            continue
 
-    outer_gap_min = int(size * 0.030)
-    outer_gap_factor = 1.30
-    outer_gap = max(outer_gap_min, int(px_planet_base * outer_gap_factor))
+        p1 = planets.get(aspect.get("p1"))
+        p2 = planets.get(aspect.get("p2"))
+        if not p1 or not p2:
+            continue
 
-    r_planet_transit = r_outer + outer_gap + int(size * 0.13)
-    r_line_start = r_grid_in + 3.0
-    r_elbow = (r_line_start + r_planet_transit) / 2.0
-    r_aspect = r_inner
+        a1 = p1["real_angle"]
+        a2 = p2["real_angle"]
 
-    axes = natal_payload.get("axes", {})
+        th1 = math.radians(a1)
+        th2 = math.radians(a2)
 
-    def to_screen(deg: float) -> float:
-        asc = float(axes.get("AS", 0.0))
-        return (float(deg) - asc + 180.0) % 360.0
+        x1 = cx + r_aspect * math.cos(th1)
+        y1 = cy - r_aspect * math.sin(th1)
+        x2 = cx + r_aspect * math.cos(th2)
+        y2 = cy - r_aspect * math.sin(th2)
+
+        color, dash, width = _aspect_style(a_type)
+        items.append(_svg_line(x1, y1, x2, y2, stroke=color, width=width, dash=dash))
+
+        c1x1 = cx + r2_grid_in * math.cos(th1)
+        c1y1 = cy - r2_grid_in * math.sin(th1)
+        c1x2 = cx + r_cursor_end * math.cos(th1)
+        c1y2 = cy - r_cursor_end * math.sin(th1)
+
+        c2x1 = cx + r2_grid_in * math.cos(th2)
+        c2y1 = cy - r2_grid_in * math.sin(th2)
+        c2x2 = cx + r_cursor_end * math.cos(th2)
+        c2y2 = cy - r_cursor_end * math.sin(th2)
+
+        items.append(_svg_line(c1x1, c1y1, c1x2, c1y2, stroke=color, width=1.3, linecap="butt"))
+        items.append(_svg_line(c2x1, c2y1, c2x2, c2y2, stroke=color, width=1.3, linecap="butt"))
+
+    return items
+
+def render_ecliptic_svg(
+    payload: dict[str, Any],
+    width: int = 1200,
+    height: int = 900,
+    *,
+    language: str = "fr",
+    title_suffix: str = "",
+    show_title: bool = True,
+    show_houses: bool = True,
+    show_aspects: bool = True,
+    asset_base_url: str = "/glyphes",
+    center_dx: float | None = None,
+    center_dy: float | None = None,
+) -> str:
+    """
+    asset_base_url doit pointer vers le dossier statique qui contient :
+      /Planetes
+      /Signes
+      /Axes
+
+    Exemple final probable :
+      /glyphes/Glyphes_SVG
+    ou
+      /static/Glyphes_SVG
+    selon ton site.
+    """
+    layout = build_ecliptic_layout(
+        payload,
+        width,
+        height,
+        language=language,
+        title_suffix=title_suffix,
+        show_title=show_title,
+        show_houses=show_houses,
+        show_aspects=show_aspects,
+    )
+
+    if not layout.get("ok"):
+        return (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+            f'viewBox="0 0 {width} {height}">'
+            f'<rect width="100%" height="100%" fill="#FFFFFF" />'
+            f'{_svg_text(width/2, height/2, "Layout indisponible", size=18, fill="#666")}'
+            f'</svg>'
+        )
+
+    cx = layout["meta"]["center"]["x"]
+    cy = layout["meta"]["center"]["y"]
+    title = layout["meta"]["title"]
+
+    if center_dx is None:
+        center_dx = 100.0 if show_title else 0.0
+
+    if center_dy is None:
+        center_dy = 12.0 if show_title else 0.0
+
+    r_outer = layout["radii"]["outer"]
+    r_inner = layout["radii"]["inner"]
 
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
+        '''
+<defs>
+  <filter id="glyphWhiteOutline" x="-30%" y="-30%" width="160%" height="160%">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="1.8" result="dilated"/>
+    <feFlood flood-color="#FFFFFF" result="white"/>
+    <feComposite in="white" in2="dilated" operator="in" result="outline"/>
+    <feMerge>
+      <feMergeNode in="outline"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+''',
     ]
-    parts.append('<g>')
 
-    # 1) Fond natal complet, identique à l’écliptique, sans titre
-    natal_svg = render_ecliptic_svg(
-        natal_payload,
-        width=width,
-        height=height,
-        language=language,
-        show_title=False,
-        show_houses=True,
-        show_aspects=True,
-        asset_base_url=asset_base_url,
-        center_dx=0,
-        center_dy=0,
-    )
-    parts.append(_extract_svg_inner(natal_svg))
+    title_dx = 90.0
 
-    # 2) Aspects transit
-    transit_aspect_color = "#b567d6"
-    transit_aspect_width = 1.0
-
-    natal_xy = {}
-    transit_xy = {}
-    angles_natal = {}
-    angles_transit = {}
-
-    for p in natal_payload.get("planets", []):
-        name = p.get("name")
-        lon = p.get("lon")
-        if name and lon is not None:
-            ang = to_screen(float(lon))
-            angles_natal[name] = ang
-            natal_xy[name] = _pol_to_xy(cx, cy, r_aspect, ang)
-
-    for p in transit_payload.get("planets", []):
-        name = p.get("name")
-        lon = p.get("lon")
-        if name and lon is not None:
-            ang = to_screen(float(lon))
-            angles_transit[name] = ang
-            transit_xy[name] = _pol_to_xy(cx, cy, r_aspect, ang)
-
-    if (aspect_mode or "TN").upper() == "TT":
-        aspects_list = detect_aspects(transit_payload.get("planets", []))
-
-        for a in aspects_list:
-            if a.get("type") != "CONJ":
-                continue
-
-            p1 = a.get("p1")
-            p2 = a.get("p2")
-
-            a1 = angles_transit.get(p1)
-            a2 = angles_transit.get(p2)
-
-            if a1 is None or a2 is None:
-                continue
-
-            parts.append(
-                _svg_arc_polyline(
-                    cx,
-                    cy,
-                    r_conj_outer,
-                    a1,
-                    a2,
-                    stroke=transit_aspect_color,
-                    width=transit_aspect_width,
-                )
-            )
-
-        for a in aspects_list:
-            if a.get("type") == "CONJ":
-                continue
-
-            p1 = a.get("p1")
-            p2 = a.get("p2")
-
-            if p1 in transit_xy and p2 in transit_xy:
-                parts.append(
-                    _svg_line(
-                        *transit_xy[p1],
-                        *transit_xy[p2],
-                        stroke=transit_aspect_color,
-                        width=transit_aspect_width,
-                        dash=_transit_dash(a.get("type")),
-                        linecap="butt",
-                    )
-                )
-
-        if SHOW_ASPECT_CURSORS:
-            for a in aspects_list:
-                if a.get("type") == "CONJ":
-                    continue
-
-                for name in (a.get("p1"), a.get("p2")):
-                    ang = angles_transit.get(name)
-                    if ang is None:
-                        continue
-
-                    x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
-                    x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
-                    parts.append(
-                        _svg_line(
-                            x1, y1, x2, y2,
-                            stroke=transit_aspect_color,
-                            width=1,
-                            linecap="butt",
-                        )
-                    )
-    else:
-        aspects_tn = detect_aspects_between(
-            transit_payload.get("planets", []),
-            natal_payload.get("planets", []),
-            side_a="T",
-            side_b="N",
-        )
-
-        for a in aspects_tn:
-            if a.get("type") != "CONJ":
-                continue
-
-            p_t = a.get("p1")
-            p_n = a.get("p2")
-
-            a1 = angles_transit.get(p_t)
-            a2 = angles_natal.get(p_n)
-
-            if a1 is None or a2 is None:
-                continue
-
-            parts.append(
-                _svg_arc_polyline(
-                    cx,
-                    cy,
-                    r_conj_outer,
-                    a1,
-                    a2,
-                    stroke=transit_aspect_color,
-                    width=transit_aspect_width,
-                )
-            )
-
-        for a in aspects_tn:
-            if a.get("type") == "CONJ":
-                continue
-
-            p_t = a.get("p1")
-            p_n = a.get("p2")
-
-            if p_t in transit_xy and p_n in natal_xy:
-                parts.append(
-                    _svg_line(
-                        *transit_xy[p_t],
-                        *natal_xy[p_n],
-                        stroke=transit_aspect_color,
-                        width=transit_aspect_width,
-                        dash=_transit_dash(a.get("type")),
-                        linecap="butt",
-                    )
-                )
-
-        if SHOW_ASPECT_CURSORS:
-            for a in aspects_tn:
-                if a.get("type") == "CONJ":
-                    continue
-
-                for name, angle_map in ((a.get("p1"), angles_transit), (a.get("p2"), angles_natal)):
-                    ang = angle_map.get(name)
-                    if ang is None:
-                        continue
-
-                    x1, y1 = _pol_to_xy(cx, cy, r2_grid_in, ang)
-                    x2, y2 = _pol_to_xy(cx, cy, r_cursor_end, ang)
-                    parts.append(
-                        _svg_line(
-                            x1, y1, x2, y2,
-                            stroke=transit_aspect_color,
-                            width=1,
-                            linecap="butt",
-                        )
-                    )
-
-    # 3) Planètes de transit
-    transit_planet_scale = 0.90
-    trans_planets = []
-
-    for p in transit_payload.get("planets", []):
-        name = p.get("name", "?")
-        try:
-            lon = float(p.get("lon", 0.0))
-        except Exception:
-            lon = 0.0
-
-        ang_real = to_screen(lon)
-        deg_in_sign = lon % 30.0
-
-        is_retro = False
-        for key in ("retro", "retrograde", "rflag"):
-            if key in p:
-                val = p.get(key)
-                if isinstance(val, bool):
-                    is_retro = val
-                else:
-                    try:
-                        is_retro = bool(int(val))
-                    except Exception:
-                        if isinstance(val, str) and val.upper().startswith("R"):
-                            is_retro = True
-                break
-
-        if not is_retro:
-            dm = p.get("daily_motion")
-            try:
-                if dm is not None and float(dm) < 0:
-                    is_retro = True
-            except Exception:
-                pass
-
-        px_target = int(px_planet_base * PERCEPTION_COEFFS.get(name, 1.0) * transit_planet_scale)
-
-        trans_planets.append(
-            {
-                "name": name,
-                "lon": lon,
-                "real": ang_real,
-                "adj": ang_real,
-                "px": px_target,
-                "deg_in_sign": deg_in_sign,
-                "is_retro": is_retro,
-            }
-        )
-
-    if trans_planets:
-        def _circ_mean(degs):
-            sx = sum(math.cos(math.radians(d)) for d in degs)
-            sy = sum(math.sin(math.radians(d)) for d in degs)
-            if sx == 0 and sy == 0:
-                return (degs[0] + 360.0) % 360.0
-            return (math.degrees(math.atan2(sy, sx)) + 360.0) % 360.0
-
-        def _unwrap_around(ref, degs):
-            out = []
-            for d in degs:
-                x = d
-                while x - ref >= 180.0:
-                    x -= 360.0
-                while x - ref < -180.0:
-                    x += 360.0
-                out.append(x)
-            return out
-
-        angles_real = [d["real"] for d in trans_planets]
-        ref = _circ_mean(angles_real)
-        lin = _unwrap_around(ref, angles_real)
-        order = sorted(range(len(trans_planets)), key=lambda idx: lin[idx])
-
-        max_px = max(d["px"] for d in trans_planets)
-        min_gap = _deg_from_px(0.85 * (2 * max_px), r_planet_transit)
-
-        adj_lin = lin[:]
-        for _ in range(2):
-            for k in range(1, len(order)):
-                i_prev = order[k - 1]
-                i_cur = order[k]
-                gap = adj_lin[i_cur] - adj_lin[i_prev]
-                if gap < min_gap:
-                    shift = min_gap - gap
-                    adj_lin[i_prev] -= 0.5 * shift
-                    adj_lin[i_cur] += 0.5 * shift
-
-            for k in range(len(order) - 2, -1, -1):
-                i_cur = order[k]
-                i_next = order[k + 1]
-                gap = adj_lin[i_next] - adj_lin[i_cur]
-                if gap < min_gap:
-                    shift = min_gap - gap
-                    adj_lin[i_cur] -= 0.5 * shift
-                    adj_lin[i_next] += 0.5 * shift
-
-        mean0 = sum(lin) / max(1, len(lin))
-        mean1 = sum(adj_lin) / max(1, len(adj_lin))
-        drift = mean1 - mean0
-        if abs(drift) > 1e-9:
-            for i in range(len(adj_lin)):
-                adj_lin[i] -= drift
-
-        for i, d in enumerate(trans_planets):
-            d["adj"] = (adj_lin[i] + 360.0) % 360.0
-
-    margin_oblique = 1.0
-    deg_out = int(size * 0.040)
-    font_deg = max(10, int(size * 0.012))
-
-    for d in trans_planets:
-        name = d["name"]
-        ang_band = d["real"]
-        ang_glyph = d["adj"]
-
-        gx, gy = _pol_to_xy(cx, cy, r_planet_transit, ang_glyph)
-
-        xb0, yb0 = _pol_to_xy(cx, cy, r_line_start, ang_band)
-        xb1, yb1 = _pol_to_xy(cx, cy, r_elbow, ang_band)
+    if title:
         parts.append(
-            _svg_transit_connector_line(
-                xb0, yb0, xb1, yb1,
-                stroke="#b567d6",
-                width=1,
+            _svg_text(
+                width / 2 + title_dx,
+                22,
+                title,
+                size=24,
+                fill=TITLE_COLOR,
+                weight="700",
+                baseline="hanging",
+                family="Segoe UI, Arial, sans-serif",
             )
         )
 
-        half_px = 0.5 * d["px"]
-        dx, dy = (gx - xb1), (gy - yb1)
-        dist = math.hypot(dx, dy)
-        stop_from_elbow = max(dist - (half_px + margin_oblique), 0.0)
-        if dist > 0 and stop_from_elbow > 0:
-            t = stop_from_elbow / dist
-            xo, yo = (xb1 + dx * t, yb1 + dy * t)
-            parts.append(
-                _svg_transit_connector_line(
-                    xb1, yb1, xo, yo,
-                    stroke="#b567d6",
-                    width=1,
-                )
-            )
+    parts.append(f'<g transform="translate({_fmt(center_dx)},{_fmt(center_dy)})">')
 
-        href = _planet_transit_href(asset_base_url, name)
-        if not href:
-            href = _planet_href(asset_base_url, name)
+    if show_aspects:
+        parts.extend(_build_aspect_lines(payload, layout))
+
+    parts.append(_svg_circle(cx, cy, r_outer, stroke=STRUCT_GREY, width=3))
+    parts.append(_svg_circle(cx, cy, r_inner, stroke=STRUCT_GREY, width=3))
+
+    # Quadrillage AstroAriana : identique à la logique Tkinter / domitude
+    GRID_STEP = 5
+    GRID_BAND = min(width, height) * 0.80 * 0.020
+    CIRC_OUT_W = 3
+    CIRC_IN_W = 2
+
+    GAP_OUT = CIRC_OUT_W / 2.0
+    GAP_IN = CIRC_IN_W / 2.0
+
+    # bande extérieure (près du grand cercle)
+    r_grid_out = r_outer - GAP_OUT
+    r_grid_in = r_grid_out - GRID_BAND
+    r_link_outer = (r_grid_in + r_grid_out) * 0.5
+
+    # bande intérieure (près du petit cercle)
+    r2_grid_in = r_inner + GAP_IN
+    r2_grid_out = r2_grid_in + GRID_BAND
+    r_link_inner = (r2_grid_in + r2_grid_out) * 0.5
+
+    def _angle_from_point(x: float, y: float) -> float:
+        # même convention écran que le reste du SVG : 0° à droite, sens anti-horaire
+        return (math.degrees(math.atan2(cy - y, x - cx)) + 360.0) % 360.0
+
+    def _forward_extent(a1: float, a2: float) -> float:
+        ext = a2 - a1
+        if ext < 0:
+            ext += 360.0
+        return ext
+
+    def _arc_5deg_svg(R: float, a1: float, a2: float):
+        extent = _forward_extent(a1, a2)
+        pts = _arc_points(cx, cy, R, a1, extent, steps=8)
+        return _svg_polyline(pts, stroke="#cfcfcf", width=1, fill="none")
+
+    # angles des 12 frontières de signes, déjà orientés correctement par le layout
+    boundary_angles = []
+    for z in layout["zodiac_boundaries"]:
+        ox, oy = z["outer"]
+        boundary_angles.append(_angle_from_point(ox, oy))
+
+    # graduations + arcs, signe par signe
+    for i in range(12):
+        a_start = boundary_angles[i]
+        a_end = boundary_angles[(i + 1) % 12]
+        extent30 = _forward_extent(a_start, a_end)
+
+        for k in range(6):
+            a1 = (a_start + extent30 * (k / 6.0)) % 360.0
+            a2 = (a_start + extent30 * ((k + 1) / 6.0)) % 360.0
+
+            # petits traits 5° externes
+            if k != 0:
+                x1, y1 = cx + r_grid_out * math.cos(math.radians(a1)), cy - r_grid_out * math.sin(math.radians(a1))
+                x2, y2 = cx + r_link_outer * math.cos(math.radians(a1)), cy - r_link_outer * math.sin(math.radians(a1))
+                parts.append(_svg_line(x1, y1, x2, y2, stroke="#d0d0d0", width=1, linecap="butt"))
+
+            # petits traits 5° internes
+            if k != 0:
+                x1, y1 = cx + r2_grid_in * math.cos(math.radians(a1)), cy - r2_grid_in * math.sin(math.radians(a1))
+                x2, y2 = cx + r_link_inner * math.cos(math.radians(a1)), cy - r_link_inner * math.sin(math.radians(a1))
+                parts.append(_svg_line(x1, y1, x2, y2, stroke="#d0d0d0", width=1, linecap="butt"))
+
+            # arcs de liaison 5°
+            parts.append(_arc_5deg_svg(r_link_outer, a1, a2))
+            parts.append(_arc_5deg_svg(r_link_inner, a1, a2))
+
+    for z in layout["zodiac_boundaries"]:
+        (x1, y1) = z["inner"]
+        (x2, y2) = z["outer"]
+        parts.append(_svg_line(x1, y1, x2, y2, stroke=STRUCT_GREY, width=3))
+
+    for hm in layout["house_marks"]:
+        mk = hm["mark"]
+        parts.append(
+            _svg_line(
+                mk["x1"], mk["y1"], mk["x2"], mk["y2"],
+                stroke=HOUSE_MARK_COLOR,
+                width=mk["width"],
+            )
+        )
+        lbl = hm["label"]
+        parts.append(
+            _svg_text(
+                lbl["x"], lbl["y"], hm["roman"],
+                size=12,
+                fill=HOUSE_MARK_COLOR,
+            )
+        )
+
+    for s in layout["signs"]:
+        href = _sign_href(asset_base_url, s["name"])
         if href:
+            parts.append(_svg_image(href, s["x"], s["y"], s["px"]))
+        else:
+            parts.append(_svg_text(s["x"], s["y"], s["name"], size=max(14, int(s["px"] * 0.55))))
+
+    for label in ("AS", "DS", "MC", "FC"):
+        ax = layout["axes"].get(label)
+        if not ax:
+            continue
+
+        # Coupe les barres AS/DS/MC/FC pour qu'elles ne passent pas sur la roue
+        axis_gap = ax["width"] / 2.0 + 0.5
+        r_axis_stop = r_outer + axis_gap
+
+        for seg in ax["segments"]:
+            x1, y1 = seg["x1"], seg["y1"]
+            x2, y2 = seg["x2"], seg["y2"]
+
+            # distance des deux extrémités au centre
+            d1 = math.hypot(x1 - cx, y1 - cy)
+            d2 = math.hypot(x2 - cx, y2 - cy)
+
+            # Si une extrémité entre dans la roue, on la ramène juste au bord extérieur
+            if d1 < r_axis_stop:
+                a = math.atan2(cy - y1, x1 - cx)
+                x1 = cx + r_axis_stop * math.cos(a)
+                y1 = cy - r_axis_stop * math.sin(a)
+
+            if d2 < r_axis_stop:
+                a = math.atan2(cy - y2, x2 - cx)
+                x2 = cx + r_axis_stop * math.cos(a)
+                y2 = cy - r_axis_stop * math.sin(a)
+
             parts.append(
-                _svg_image(
-                    href,
-                    gx,
-                    gy,
-                    d["px"],
-                    elem_id=f"transit_planet_{name}",
-                    class_name="transit_planet transit",
-                    data_planet=name,
-                    title=name,
+                _svg_line(
+                    x1, y1, x2, y2,
+                    stroke="#222222",
+                    width=ax["width"],
                 )
             )
 
-        try:
-            n = int(round(float(d["deg_in_sign"]))) % 30
-            tx, ty = _pol_to_xy(cx, cy, r_planet_transit + deg_out, ang_glyph)
-            parts.append(_svg_text(tx, ty, str(n), size=font_deg, fill="#b567d6"))
-            if d.get("is_retro"):
+        deco = ax["decoration"]
+        if deco["type"] == "arrow":
+            tip = deco["tip"]
+            left = deco["left"]
+            right = deco["right"]
+            parts.append(_svg_line(tip["x"], tip["y"], left["x"], left["y"], stroke="#222222", width=ax["width"]))
+            parts.append(_svg_line(tip["x"], tip["y"], right["x"], right["y"], stroke="#222222", width=ax["width"]))
+
+        elif deco["type"] == "crossbar":
+            left = deco["left"]
+            right = deco["right"]
+            parts.append(_svg_line(left["x"], left["y"], right["x"], right["y"], stroke="#222222", width=ax["width"]))
+
+        elif deco["type"] == "circle":
+            parts.append(_svg_circle(deco["cx"], deco["cy"], deco["r"], stroke="#222222", width=ax["width"]))
+
+        elif deco["type"] == "half_circle":
+            pts = _arc_points(
+                deco["cx"], deco["cy"], deco["r"],
+                deco["start"], deco["extent"], steps=24
+            )
+            parts.append(_svg_polyline(pts, stroke="#222222", width=ax["width"], fill="none"))
+
+        href = _axis_href(asset_base_url, label, language)
+        g = ax["glyph"]
+        if href:
+            parts.append(_svg_image(href, g["x"], g["y"], g["px"]))
+        else:
+            parts.append(
+                _svg_text(
+                    g["x"], g["y"], g["language_label"],
+                    size=max(16, int(g["px"] * 0.55)),
+                    fill="#1f4fa3",
+                    weight="700",
+                )
+            )
+
+    for conj in layout["conjunction_links"]:
+        for r in conj["radii"]:
+            pts = _arc_points(cx, cy, r, conj["start"], conj["extent"], steps=28)
+            parts.append(
+                _svg_polyline(
+                    pts,
+                    stroke=conj["color"],
+                    width=conj["width"],
+                    fill="none",
+                )
+            )
+
+    for p in layout["planets"]:
+        for conn in p["connectors"]:
+            parts.append(
+                _svg_connector_line(
+                    conn["x1"], conn["y1"], conn["x2"], conn["y2"],
+                    stroke=conn["color"],
+                    width=conn["width"],
+                )
+            )
+
+        href = _planet_href(asset_base_url, p["name"])
+        if href:
+            parts.append(_svg_image_with_white_outline(href, p["x"], p["y"], p["px"]))
+        else:
+            parts.append(
+                _svg_text(
+                    p["x"], p["y"], p["name"],
+                    size=max(12, int(p["px"] * 0.45)),
+                    fill="#000000",
+                )
+            )
+
+        deg = p.get("degree_label")
+        if deg:
+            parts.append(
+                _svg_text(
+                    deg["x"], deg["y"], str(deg["value"]),
+                    size=11,
+                    fill="#000000",
+                )
+            )
+            if deg["retro"]:
                 parts.append(
                     _svg_text(
-                        tx + int(d["px"] * 0.35),
-                        ty,
-                        "R",
-                        size=max(9, int(size * 0.010)),
-                        fill="#b567d6",
+                        deg["retro_x"], deg["retro_y"], "R",
+                        size=9,
+                        fill="#000000",
                     )
                 )
-        except Exception:
-            pass
 
-    parts.append("</g>")  # ferme le groupe principal
-
-    # 4) Titre transit
-    age_text = None
-    try:
-        meta_natal = natal_payload.get("meta", {})
-        meta_transit = transit_payload.get("meta", {})
-        dt_natal = datetime.fromisoformat(meta_natal.get("datetime_utc"))
-        dt_transit = datetime.fromisoformat(meta_transit.get("datetime_utc"))
-        delta_days = (dt_transit - dt_natal).total_seconds() / 86400.0
-        age_years = delta_days / 365.2425
-        if language == "fr":
-            age_text = f"{age_years:.2f}".replace(".", ",") + " ans"
-        else:
-            age_text = f"{age_years:.2f} years"
-    except Exception:
-        age_text = None
-
-    if language == "fr":
-        title_text = f"Thème de transit ({age_text})" if age_text else "Thème de transit"
-    else:
-        title_text = f"Transit chart ({age_text})" if age_text else "Transit chart"
-
-    parts.append(
-        _svg_text(
-            w / 2,
-            22,
-            title_text,
-            size=22,
-            fill="#1f4fa3",
-            weight="700",
-            baseline="hanging",
-            family="Segoe UI, Arial, sans-serif",
-        )
-    )
-
+    parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
