@@ -518,7 +518,8 @@ body,
   }
 }
 
-/* ===== panneau détails : rendu 1:1 proche Tkinter ===== */
+/* ===== panneau détails : rendu Tkinter ===== */
+
 
 .gm-details-overlay {
   position: absolute;
@@ -528,19 +529,21 @@ body,
 }
 
 .gm-details-card {
-  width: 185px;
+  width: 200px;
   margin: 0;
   padding: 6px;
-  border: 1px solid #c8c8c8;
-  background: #f5f5f0;
+  border: 1px solid #cfcfcf;
+  background: #fafaf7;
   box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .gm-details-legend {
   padding: 0 4px;
-  color: #1f4e79;
+  color: #0b3d91;
+  background: #fafaf7;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
 }
@@ -550,17 +553,18 @@ body,
   align-items: flex-start;
   justify-content: space-between;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .gm-details-current {
   flex: 1;
-  min-height: 18px;
+  min-width: 0;
   color: #1f4e79;
+  background: #fafaf7;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 14px;   /* proche de Segoe UI 10 bold Tkinter */
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.2;
   white-space: pre-line;
 }
 
@@ -571,17 +575,22 @@ body,
 .gm-details-copy {
   width: 58px;
   min-width: 58px;
-  height: 24px;
-  padding: 0 6px;
+  height: 22px;
+  padding: 0 4px;
   border: 1px solid #adadad;
-  background: #f0f0f0;
-  color: #222;
+  background: #fafaf7;
+  color: #222222;
   box-sizing: border-box;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-size: 12px;
   font-weight: 400;
   line-height: 1;
   cursor: pointer;
+  border-radius: 0;
+}
+
+.gm-details-copy:hover:not(:disabled) {
+  background: #e5e7eb;
 }
 
 .gm-details-copy:disabled {
@@ -593,27 +602,29 @@ body,
   display: block;
 }
 
-.gm-details-section {
-  margin: 6px 0 2px 0;
-  color: #1f4e79;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 12px;   /* proche du 9 bold Tkinter */
-  font-weight: 700;
-  line-height: 1.1;
-}
-
 .gm-details-text {
-  margin: 0 0 4px 0;
-  color: #111;
+  margin: 0;
+  color: #111111;
+  background: #fafaf7;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-size: 12px;
   font-weight: 400;
-  line-height: 1.22;
+  line-height: 1.18;
   white-space: pre-line;
 }
 
 .gm-details-position {
   margin-bottom: 6px;
+}
+
+.gm-details-section {
+  margin: 6px 0 2px 0;
+  color: #0b3d91;
+  background: #fafaf7;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
 }
 
 .gm-svg-panel [data-clickable-planet="1"] {
