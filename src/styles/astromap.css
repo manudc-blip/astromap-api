@@ -520,6 +520,10 @@ body,
 
 /* ===== panneau détails : rendu 1:1 proche Tkinter ===== */
 
+.gm-details-card {
+  background: red !important;
+}
+
 .gm-details-overlay {
   position: absolute;
   top: 15px;
