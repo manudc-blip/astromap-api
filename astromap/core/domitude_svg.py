@@ -577,7 +577,6 @@ def render_domitude_svg(
         parts.append("</svg>")
         return "".join(parts)
 
-    PX_PLANET = int(size * 0.050)
     r_planet = r_planet_base
     LINE_W = 2
     ELBOW_OUT = int(size * 0.022)
