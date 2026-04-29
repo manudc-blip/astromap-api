@@ -377,7 +377,7 @@ def render_transits_svg(
 
     r_outer = size * 0.36
     r_inner = size * 0.23
-    px_planet_base = int(size * 0.050)
+    px_planet_base = int(size * 0.055)
 
     grid_band = size * 0.020
     circ_in_w = 2.0
