@@ -843,7 +843,7 @@ def build_ecliptic_layout(
         if pos_sign is not None:
             try:
                 n = int(round(float(pos_sign))) % 30
-                r_text = r_planet + int(size * 0.040)
+                r_text = r_planet + int(size * 0.046)
                 tx, ty = _pol_to_xy(cx, cy, r_text, ang_glyph)
                 degree_label = {
                     "value": n,
