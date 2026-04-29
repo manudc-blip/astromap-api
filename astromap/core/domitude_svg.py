@@ -331,7 +331,7 @@ def render_domitude_svg(
     r_inner = size * 0.23
     r_outer_houses = size * 0.33
 
-    PX_PLANET = int(size * 0.050)
+    PX_PLANET = int(size * 0.055)
     PX_AXIS = int(size * 0.050)
     PX_HOUSE = int(size * 0.090)
 
