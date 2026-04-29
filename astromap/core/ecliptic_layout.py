@@ -218,7 +218,7 @@ def build_ecliptic_layout(
     r_aspect = r_inner - aspect_gap
 
     px_sign = int(size * 0.048)
-    px_planet_base = int(size * 0.050)
+    px_planet_base = int(size * 0.055)
     px_axis = int(size * 0.050)
 
     outer_gap_min = int(size * 0.030)
