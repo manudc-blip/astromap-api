@@ -874,7 +874,19 @@ def render_domitude_svg(
 
         href = _planet_href(asset_base_url, name)
         if href:
-            parts.append(_svg_image_with_white_outline(href, pxg, pyg, d["px"]))
+            parts.append(
+                _svg_image_with_white_outline(
+                    href,
+                    pxg,
+                    pyg,
+                    d["px"],
+                    elem_id=f"domitude_planet_{name}",
+                    class_name="planet natal_planet domitude_planet",
+                    data_planet=name,
+                    title=name,
+                )
+            )
+
         else:
             parts.append(
                 _svg_text(
