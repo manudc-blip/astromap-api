@@ -145,15 +145,39 @@ def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> s
         f'preserveAspectRatio="xMidYMid meet" />'
     )
 
-
-def _svg_image_with_white_outline(href: str, x_center: float, y_center: float, size_px: float) -> str:
+def _svg_image_with_white_outline(
+    href: str,
+    x_center: float,
+    y_center: float,
+    size_px: float,
+    *,
+    elem_id: str | None = None,
+    class_name: str | None = None,
+    data_planet: str | None = None,
+    title: str | None = None,
+) -> str:
     half = size_px / 2.0
+
+    attrs = []
+    if elem_id:
+        attrs.append(f'id="{escape(elem_id)}"')
+    if class_name:
+        attrs.append(f'class="{escape(class_name)}"')
+    if data_planet:
+        attrs.append(f'data-planet="{escape(data_planet)}"')
+
+    attrs_str = (" " + " ".join(attrs)) if attrs else ""
+    title_part = f"<title>{escape(title)}</title>" if title else ""
+
     return (
+        f"<g{attrs_str}>"
+        f"{title_part}"
         f'<image href="{escape(href)}" '
         f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
         f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
         f'preserveAspectRatio="xMidYMid meet" '
         f'filter="url(#glyphWhiteOutline)" />'
+        f"</g>"
     )
 
 
