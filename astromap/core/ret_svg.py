@@ -164,7 +164,7 @@ RIGHT_RANK_SIZE = 16
 RIGHT_CODE_SIZE = 19
 RIGHT_LABEL_SIZE = 14
 BOTTOM_LABEL_SIZE = 15
-GLYPH_NEUTRAL_OPACITY = 0.71
+GLYPH_NEUTRAL_OPACITY = 0.72
 
 def _fmt(v: float) -> str:
     return f"{v:.2f}"
@@ -595,11 +595,18 @@ def render_ret_svg(
     base_y = top + 10 * line_h + 80
 
     dominant_planets = [p for p in ordered_planets if box_colors.get(p) == "black"]
+    if language.lower().startswith("en"):
+        dominant_planets_label = "Dominant planets:"
+        dominant_signs_label = "Dominant signs:"
+    else:
+        dominant_planets_label = "Planètes dominantes :"
+        dominant_signs_label = "Signes dominants :"
+
     parts.append(
         _svg_text(
             left_margin,
             base_y,
-            "Planètes dominantes :",
+            dominant_planets_label,
             size=BOTTOM_LABEL_SIZE,
             weight="700",
             anchor="start",
@@ -618,7 +625,7 @@ def render_ret_svg(
         _svg_text(
             left_margin,
             base_y + 40,
-            "Signes dominants :",
+            dominant_signs_label,
             size=BOTTOM_LABEL_SIZE,
             weight="700",
             anchor="start",
