@@ -70,10 +70,40 @@ def _svg_line(x1, y1, x2, y2, stroke="#000", width=1, dash=None, linecap="round"
     )
 
 
-def _svg_connector_line(x1, y1, x2, y2, stroke="#4A4A4A", width=2, dash=None) -> str:
+def _svg_connector_line(
+    x1,
+    y1,
+    x2,
+    y2,
+    stroke="#4A4A4A",
+    width=2,
+    dash=None,
+    data_planet: str | None = None,
+) -> str:
+    data_attr = f' data-planet="{escape(data_planet)}"' if data_planet else ""
+    class_attr = ' class="planet-connector"' if data_planet else ""
+
     return (
-        _svg_line(x1, y1, x2, y2, stroke="#FFFFFF", width=width + 0.9, dash=dash, linecap="butt")
-        + _svg_line(x1, y1, x2, y2, stroke=stroke, width=width, dash=dash, linecap="butt")
+        _svg_line(
+            x1,
+            y1,
+            x2,
+            y2,
+            stroke="#FFFFFF",
+            width=width + 0.9,
+            dash=dash,
+            linecap="butt",
+        ).replace(" />", f"{class_attr}{data_attr} />")
+        + _svg_line(
+            x1,
+            y1,
+            x2,
+            y2,
+            stroke=stroke,
+            width=width,
+            dash=dash,
+            linecap="butt",
+        ).replace(" />", f"{class_attr}{data_attr} />")
     )
 
 
@@ -562,6 +592,7 @@ def render_ecliptic_svg(
                     conn["x1"], conn["y1"], conn["x2"], conn["y2"],
                     stroke=conn["color"],
                     width=conn["width"],
+                    data_planet=p["name"],
                 )
             )
 
