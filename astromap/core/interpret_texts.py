@@ -4,7 +4,7 @@
 INTRO_TEXTS = {
     "FR": {
         "intro": """Les interprétations proposées ici décrivent des tendances psychologiques et comportementales issues du thème de naissance. Pour une lecture pleinement personnalisée, il serait nécessaire de prendre en compte l’ensemble des facteurs extra-astrologiques — éducation, environnement socioculturel, histoire personnelle, hérédité, etc.""",
-        "planets": """Chaque planète se définit par un niveau source ...
+        "planets": """Chaque planète se définit par un niveau source...
 Dans l’analyse astrologique, les planètes constituent généralement l’élément le plus influent du thème, devant les signes zodiacaux puis les maisons astrologiques.""",
         "ret": """En fonction du niveau source (R, E, T) ou du niveau but (r, e, t) des planètes, six familles de trios peuvent être distinguées. Les familles fondées sur un même niveau source sont dites extensives, celles fondées sur un même niveau but sont dites intensives. S’y ajoutent les familles Pouvoir : Extensif (Soleil, Mars, Pluton) et intensif (Lune).
 Selon la configuration du thème astrologique, chacune de ces familles peut être dominante, sous-dominante ou non dominante.""",
@@ -13,7 +13,7 @@ Les signes jouent un rôle propre et distinct de celui des planètes dans les te
     },
     "EN": {
         "intro": """The interpretations presented here describe psychological and behavioral tendencies derived from the natal chart. For a fully personalized reading, it would be necessary to take into account the full range of extra-astrological factors—education, sociocultural environment, personal history, heredity, and so on.""",
-        "planets": """Each planet is defined by a source level ...
+        "planets": """Each planet is defined by a source level...
 In astrological analysis, planets generally constitute the most influential component of the chart, taking precedence over zodiac signs and then over astrological houses.""",
         "ret": """Depending on the planets’ source level (R, E, T) or goal level (r, e, t), six families of triads can be distinguished. Families based on the same source level are referred to as extensive, while those based on the same goal level are referred to as intensive. Added to these are the Power families: extensive (Sun, Mars, Pluto) and intensive (Moon).
 According to the configuration of the natal chart, each of these families may be dominant, sub-dominant, or non-dominant.""",
