@@ -286,7 +286,12 @@ def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list
         y2 = cy - r_aspect * math.sin(th2)
 
         color, dash, width = _aspect_style(a_type)
-        items.append(_svg_line(x1, y1, x2, y2, stroke=color, width=width, dash=dash))
+        items.append(
+            _svg_line(x1, y1, x2, y2, stroke=color, width=width, dash=dash).replace(
+                " />",
+                ' class="aspect-line" />'
+            )
+        )
 
         c1x1 = cx + r2_grid_in * math.cos(th1)
         c1y1 = cy - r2_grid_in * math.sin(th1)
@@ -298,8 +303,22 @@ def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list
         c2x2 = cx + r_cursor_end * math.cos(th2)
         c2y2 = cy - r_cursor_end * math.sin(th2)
 
-        items.append(_svg_line(c1x1, c1y1, c1x2, c1y2, stroke=color, width=1.3, linecap="butt"))
-        items.append(_svg_line(c2x1, c2y1, c2x2, c2y2, stroke=color, width=1.3, linecap="butt"))
+        items.append(
+            _svg_line(
+                c1x1, c1y1, c1x2, c1y2,
+                stroke=color,
+                width=1.3,
+                linecap="butt"
+            ).replace(" />", ' class="aspect-line" />')
+        )
+        items.append(
+            _svg_line(
+                c2x1, c2y1, c2x2, c2y2,
+                stroke=color,
+                width=1.3,
+                linecap="butt"
+            ).replace(" />", ' class="aspect-line" />')
+        )
 
     return items
 
