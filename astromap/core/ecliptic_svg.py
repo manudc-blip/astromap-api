@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 from html import escape
 from typing import Any
 
@@ -321,6 +322,84 @@ def _build_aspect_lines(payload: dict[str, Any], layout: dict[str, Any]) -> list
         )
 
     return items
+
+def build_ecliptic_render_layout(
+    payload: dict[str, Any],
+    width: int = 1200,
+    height: int = 900,
+    *,
+    language: str = "fr",
+    title_suffix: str = "",
+    show_title: bool = True,
+    show_houses: bool = True,
+    show_aspects: bool = True,
+    asset_base_url: str = "/glyphes",
+    center_dx: float | None = None,
+    center_dy: float | None = None,
+) -> dict[str, Any]:
+    """
+    Version JSON du layout écliptique.
+
+    Cette fonction ne remplace pas render_ecliptic_svg().
+    Elle expose les mêmes coordonnées sous forme de données numériques,
+    pour permettre au frontend React de garder un SVG stable et d'animer
+    les objets au lieu de remplacer tout le SVG.
+    """
+    layout = build_ecliptic_layout(
+        payload,
+        width,
+        height,
+        language=language,
+        title_suffix=title_suffix,
+        show_title=show_title,
+        show_houses=show_houses,
+        show_aspects=show_aspects,
+    )
+
+    if not layout.get("ok"):
+        return {
+            "ok": False,
+            "width": width,
+            "height": height,
+            "viewBox": f"0 0 {width} {height}",
+            "error": "Layout indisponible",
+        }
+
+    data = deepcopy(layout)
+
+    if center_dx is None:
+        center_dx = 100.0 if show_title else 0.0
+
+    if center_dy is None:
+        center_dy = 12.0 if show_title else 0.0
+
+    data["ok"] = True
+    data["width"] = width
+    data["height"] = height
+    data["viewBox"] = f"0 0 {width} {height}"
+    data["asset_base_url"] = asset_base_url
+    data["language"] = language
+    data["transform"] = {
+        "center_dx": center_dx,
+        "center_dy": center_dy,
+    }
+
+    for planet in data.get("planets", []):
+        name = planet.get("name")
+        planet["href"] = _planet_href(asset_base_url, name) if name else None
+        planet["element_id"] = f"natal_planet_{name}" if name else None
+        planet["class_name"] = "planet natal_planet"
+
+    for sign in data.get("signs", []):
+        name = sign.get("name")
+        sign["href"] = _sign_href(asset_base_url, name) if name else None
+
+    for label, axis in (data.get("axes") or {}).items():
+        axis["href"] = _axis_href(asset_base_url, label, language)
+
+    data["aspect_lines_svg"] = _build_aspect_lines(payload, layout) if show_aspects else []
+
+    return data
 
 def render_ecliptic_svg(
     payload: dict[str, Any],
