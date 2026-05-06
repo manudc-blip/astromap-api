@@ -457,7 +457,7 @@ def render_transits_svg(
     </defs>
     ''',
     ]
-    parts.append('<g transform="translate(0, 24)">')
+    parts.append('<g transform="translate(0, 22)">')
 
     # 1) Fond natal complet, identique à l’écliptique, sans titre
     natal_svg = render_ecliptic_svg(
