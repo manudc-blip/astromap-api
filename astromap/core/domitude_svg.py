@@ -377,7 +377,7 @@ def render_domitude_svg(
     cy = h / 2
 
     size0 = min(w, h) - 2 * margin
-    SCALE_THEME = 0.80
+    SCALE_THEME = 0.785
     size = int(size0 * SCALE_THEME)
 
     r_outer = size * 0.36
