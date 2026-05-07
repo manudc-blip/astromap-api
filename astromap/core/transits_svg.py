@@ -812,7 +812,7 @@ def render_transits_svg(
                     elem_id=f"transit_planet_{name}",
                     class_name="transit_planet transit",
                     data_planet=name,
-                    title=name,
+                    title=f"{name} (Transit)",
                 )
             )
 
