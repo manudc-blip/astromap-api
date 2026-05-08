@@ -45,7 +45,7 @@ PLANET_FILES = {
 PLANET_PERCEPTION_COEFFS = {
     "Soleil": 1.00,
     "Lune": 1.00,
-    "Mercure": 1.20,
+    "Mercure": 1.70,
     "Vénus": 1.10,
     "Mars": 1.05,
     "Jupiter": 1.05,
