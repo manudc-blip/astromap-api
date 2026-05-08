@@ -42,6 +42,25 @@ PLANET_FILES = {
     "Pluto": "Pluton.svg",
 }
 
+PLANET_PERCEPTION_COEFFS = {
+    "Soleil": 1.00,
+    "Lune": 1.00,
+    "Mercure": 1.20,
+    "Vénus": 1.10,
+    "Mars": 1.05,
+    "Jupiter": 1.05,
+    "Saturne": 1.15,
+    "Uranus": 1.15,
+    "Neptune": 1.05,
+    "Pluton": 1.10,
+    "Sun": 1.00,
+    "Moon": 1.00,
+    "Mercury": 1.20,
+    "Venus": 1.10,
+    "Saturn": 1.15,
+    "Pluto": 1.10,
+}
+
 ASPECT_FILES = {
     "CONJ": "Conjonction.svg",
     "OPP": "Opposition.svg",
