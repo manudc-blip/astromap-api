@@ -84,11 +84,23 @@ def _asc_sign_from_payload(payload: dict[str, Any]) -> str:
     return ""
 
 
+def _extract_angular_set(payload: dict[str, Any]) -> set[str]:
+    angular: set[str] = set()
+
+    for d in payload.get("domitudes", []) or []:
+        if d.get("est_angulaire"):
+            p = d.get("planete") or d.get("planet") or d.get("name")
+            if p:
+                angular.add(str(p))
+
+    return angular
+
+
 def _compute_ret_state(payload: dict[str, Any]) -> dict[str, Any]:
     ranks, ordered_planets, _info = compute_planet_hierarchy(payload, payload)
     ret_order, _ret_details = compute_ret_ranking(ranks)
     sign_ranking = rank_signs(payload.get("planets", []) or [], ranks)
-    angular_set = set()
+    angular_set = _extract_angular_set(payload)
     box_colors = compute_ret_box_colors(ordered_planets, angular_set, payload.get("aspects", []) or [])
     planet_signs = _planet_sign_map(payload)
 
