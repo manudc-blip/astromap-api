@@ -258,9 +258,12 @@ def render_aspects_svg(
         col = idx + 1
         row = idx + 1
 
+        href = _planet_href(asset_base_url, name)
+        glyph_size = base_glyph_size * PLANET_PERCEPTION_COEFFS.get(name, 1.0)
+
         cx = x0 + col * cell + cell / 2
         cy = y0 + cell / 2
-        glyph_size = base_glyph_size * PLANET_PERCEPTION_COEFFS.get(name, 1.0)
+
         if href:
             parts.append(_svg_image(href, cx, cy, glyph_size))
         else:
