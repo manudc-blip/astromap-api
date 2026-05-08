@@ -251,7 +251,7 @@ def render_aspects_svg(
         parts.append(_svg_line(x_line, y0, x_line, y_bottom, stroke=color, width=line_w))
 
     # Entêtes planètes
-    base_glyph_size = cell * 0.50
+    base_glyph_size = cell * 0.45
     fallback_size = max(8, int(cell * 0.30))
 
     for idx, name in enumerate(planet_names):
