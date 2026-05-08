@@ -45,7 +45,7 @@ PLANET_FILES = {
 PLANET_PERCEPTION_COEFFS = {
     "Soleil": 1.00,
     "Lune": 1.00,
-    "Mercure": 1.70,
+    "Mercure": 1.20,
     "Vénus": 1.10,
     "Mars": 1.05,
     "Jupiter": 1.05,
@@ -57,7 +57,11 @@ PLANET_PERCEPTION_COEFFS = {
     "Moon": 1.00,
     "Mercury": 1.20,
     "Venus": 1.10,
+    "Mars": 1.05,
+    "Jupiter": 1.05,
     "Saturn": 1.15,
+    "Uranus": 1.15,
+    "Neptune": 1.05,
     "Pluto": 1.10,
 }
 
@@ -247,7 +251,7 @@ def render_aspects_svg(
         parts.append(_svg_line(x_line, y0, x_line, y_bottom, stroke=color, width=line_w))
 
     # Entêtes planètes
-    glyph_size = cell * 0.50
+    base_glyph_size = cell * 0.50
     fallback_size = max(8, int(cell * 0.30))
 
     for idx, name in enumerate(planet_names):
@@ -256,7 +260,7 @@ def render_aspects_svg(
 
         cx = x0 + col * cell + cell / 2
         cy = y0 + cell / 2
-        href = _planet_href(asset_base_url, name)
+        glyph_size = base_glyph_size * PLANET_PERCEPTION_COEFFS.get(name, 1.0)
         if href:
             parts.append(_svg_image(href, cx, cy, glyph_size))
         else:
