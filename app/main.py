@@ -26,6 +26,8 @@ app.add_middleware(
     allow_origins=[
         "https://geoastro.org",
         "https://www.geoastro.org",
+        "https://astromap-web.vercel.app",
+        "https://astromap-web-git-main-manuel-dcs-projects.vercel.app",
         "http://localhost:3000",
         "http://localhost:5173",
     ],
