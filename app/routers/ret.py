@@ -1,14 +1,19 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from app.schemas import ThemeRequest
 from app.services.ret_service import compute_ret_svg
+from app.security import get_access_mode, require_trial_einstein
 
 router = APIRouter(prefix="/ret", tags=["ret"])
 
 
 @router.post("/svg")
-def compute_ret_svg_route(payload: ThemeRequest) -> Response:
+def compute_ret_svg_route(
+    payload: ThemeRequest,
+    mode: str = Depends(get_access_mode),
+) -> Response:
     try:
+        require_trial_einstein(payload, mode)
         svg = compute_ret_svg(
             name=payload.name or "",
             datetime_local=payload.datetime_local,
