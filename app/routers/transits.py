@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
+from app.security import get_access_mode, require_trial_einstein
 
 from app.schemas import ThemeRequest
 from app.services.transits_service import compute_transits_payload
@@ -14,8 +15,12 @@ class TransitsRequest(ThemeRequest):
     aspect_mode: str = "TN"
 
 @router.post("/svg")
-def compute_transits_svg(payload: TransitsRequest) -> Response:
+def compute_transits_svg(
+    payload: TransitsRequest,
+    mode: str = Depends(get_access_mode),
+) -> Response:
     try:
+        require_trial_einstein(payload, mode)
         data = compute_transits_payload(
             name=payload.name or "",
             natal_datetime_local=payload.datetime_local,
@@ -53,8 +58,12 @@ def compute_transits_svg(payload: TransitsRequest) -> Response:
         ) from exc
 
 @router.post("")
-def compute_transits(payload: TransitsRequest):
+def compute_transits(
+    payload: TransitsRequest,
+    mode: str = Depends(get_access_mode),
+):
     try:
+        require_trial_einstein(payload, mode)
         data = compute_transits_payload(
             name=payload.name or "",
             natal_datetime_local=payload.datetime_local,
