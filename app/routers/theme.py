@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Depends
+from app.security import get_access_mode, require_trial_einstein
 
 from app.schemas import ThemeRequest, ThemeResponse
 from app.services.theme_service import compute_theme_payload
@@ -12,7 +13,8 @@ router = APIRouter(prefix="/theme", tags=["theme"])
 
 
 @router.post("", response_model=ThemeResponse)
-def compute_theme(payload: ThemeRequest) -> ThemeResponse:
+def compute_theme(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> ThemeResponse:
+    require_trial_einstein(payload, mode)
     try:
         data = compute_theme_payload(
             name=payload.name or "",
@@ -34,7 +36,8 @@ def compute_theme(payload: ThemeRequest) -> ThemeResponse:
 
 
 @router.post("/svg")
-def compute_theme_svg(payload: ThemeRequest) -> Response:
+def compute_theme_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> Response:
+    require_trial_einstein(payload, mode)
     try:
         data = compute_theme_payload(
             name=payload.name or "",
@@ -73,7 +76,8 @@ def compute_theme_svg(payload: ThemeRequest) -> Response:
 
 
 @router.post("/ecliptic-layout")
-def compute_theme_ecliptic_layout(payload: ThemeRequest):
+def compute_theme_ecliptic_layout(payload: ThemeRequest, mode: str = Depends(get_access_mode)):
+    require_trial_einstein(payload, mode)
     try:
         data = compute_theme_payload(
             name=payload.name or "",
@@ -112,7 +116,8 @@ def compute_theme_ecliptic_layout(payload: ThemeRequest):
 
 
 @router.post("/domitude-svg")
-def compute_theme_domitude_svg(payload: ThemeRequest) -> Response:
+def compute_theme_domitude_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> Response:
+    require_trial_einstein(payload, mode)
     try:
         data = compute_theme_payload(
             name=payload.name or "",
