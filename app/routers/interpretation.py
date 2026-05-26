@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
+from app.security import get_access_mode, require_trial_einstein
 
 from app.schemas import ThemeRequest
 from app.services.interpretation_service import (
@@ -11,8 +12,12 @@ router = APIRouter(prefix="/interpretation", tags=["interpretation"])
 
 
 @router.post("")
-def compute_interpretation(payload: ThemeRequest):
+def compute_interpretation(
+    payload: ThemeRequest,
+    mode: str = Depends(get_access_mode),
+):
     try:
+        require_trial_einstein(payload, mode)
         data = compute_interpretation_payload(
             name=payload.name or "",
             datetime_local=payload.datetime_local,
@@ -32,8 +37,12 @@ def compute_interpretation(payload: ThemeRequest):
 
 
 @router.post("/html", response_class=HTMLResponse)
-def compute_interpretation_html_route(payload: ThemeRequest):
+def compute_interpretation_html_route(
+    payload: ThemeRequest,
+    mode: str = Depends(get_access_mode),
+):
     try:
+        require_trial_einstein(payload, mode)
         return compute_interpretation_html(
             name=payload.name or "",
             datetime_local=payload.datetime_local,
