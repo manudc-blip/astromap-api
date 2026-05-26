@@ -1,14 +1,19 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from app.schemas import ThemeRequest, ThemeResponse
 from app.services.aspects_service import compute_aspects_payload, compute_aspects_svg
+from app.security import get_access_mode, require_trial_einstein
 
 router = APIRouter(prefix="/aspects", tags=["aspects"])
 
 
 @router.post("", response_model=ThemeResponse)
-def compute_aspects(payload: ThemeRequest) -> ThemeResponse:
+def compute_aspects(
+    payload: ThemeRequest,
+    mode: str = Depends(get_access_mode),
+) -> ThemeResponse:
     try:
+        require_trial_einstein(payload, mode)
         data = compute_aspects_payload(
             name=payload.name or "",
             datetime_local=payload.datetime_local,
@@ -29,8 +34,12 @@ def compute_aspects(payload: ThemeRequest) -> ThemeResponse:
 
 
 @router.post("/svg")
-def compute_aspects_svg_route(payload: ThemeRequest) -> Response:
+def compute_aspects_svg_route(
+    payload: ThemeRequest,
+    mode: str = Depends(get_access_mode),
+) -> Response:
     try:
+        require_trial_einstein(payload, mode)
         data = compute_aspects_payload(
             name=payload.name or "",
             datetime_local=payload.datetime_local,
