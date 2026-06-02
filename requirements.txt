@@ -8,3 +8,4 @@ pillow
 reportlab
 pyswisseph
 psycopg[binary]==3.2.13
+python-jose[cryptography]
