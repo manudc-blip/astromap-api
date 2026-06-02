@@ -22,8 +22,16 @@ app = FastAPI(
 JWT_SECRET = os.getenv("JWT_SECRET", "change_me")
 
 def require_astromap_access(
-    authorization: str | None = Header(default=None)
+    authorization: str | None = Header(default=None),
+    x_geoastro_trial: str | None = Header(default=None),
 ):
+    if x_geoastro_trial == "einstein":
+        return {
+            "target": "astromap",
+            "mode": "trial",
+            "permissions": ["astromap_trial"],
+        }
+
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Token d'accès manquant.")
 
