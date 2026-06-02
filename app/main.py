@@ -80,23 +80,8 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(cities_router)
-app.include_router(
-    theme_router,
-    dependencies=[Depends(require_astromap_access)]
-)
-app.include_router(
-    ret_router,
-    dependencies=[Depends(require_astromap_access)]
-)
-app.include_router(
-    transits_router,
-    dependencies=[Depends(require_astromap_access)]
-)
-app.include_router(
-    aspects_router,
-    dependencies=[Depends(require_astromap_access)]
-)
-app.include_router(
-    interpretation_router,
-    dependencies=[Depends(require_astromap_access)]
-)
+app.include_router(theme_router)
+app.include_router(ret_router)
+app.include_router(transits_router)
+app.include_router(aspects_router)
+app.include_router(interpretation_router)
