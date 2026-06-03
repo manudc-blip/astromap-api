@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel
+from functools import lru_cache
+import json
+
 from app.security import get_access_mode, require_trial_einstein
 
 from app.schemas import ThemeRequest
@@ -8,6 +10,41 @@ from astromap.core.transits_svg import render_transits_svg
 
 
 router = APIRouter(prefix="/transits", tags=["transits"])
+
+def _transits_cache_key(payload: "TransitsRequest") -> str:
+    return json.dumps(
+        {
+            "name": payload.name or "",
+            "natal_datetime_local": payload.datetime_local,
+            "transit_datetime_local": payload.transit_datetime_local,
+            "latitude": payload.latitude,
+            "longitude": payload.longitude,
+            "tz": payload.tz,
+            "settings": payload.settings.model_dump(),
+            "aspect_mode": payload.aspect_mode,
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+
+@lru_cache(maxsize=256)
+def _compute_transits_payload_cached(cache_key: str):
+    data = json.loads(cache_key)
+
+    return compute_transits_payload(
+        name=data["name"],
+        natal_datetime_local=data["natal_datetime_local"],
+        transit_datetime_local=data["transit_datetime_local"],
+        latitude=data["latitude"],
+        longitude=data["longitude"],
+        tz=data["tz"],
+        settings=data["settings"],
+        aspect_mode=data["aspect_mode"],
+    )
+
+
+def get_cached_transits_payload(payload: "TransitsRequest"):
+    return _compute_transits_payload_cached(_transits_cache_key(payload))
 
 
 class TransitsRequest(ThemeRequest):
@@ -21,16 +58,7 @@ def compute_transits_svg(
 ) -> Response:
     try:
         require_trial_einstein(payload, mode)
-        data = compute_transits_payload(
-            name=payload.name or "",
-            natal_datetime_local=payload.datetime_local,
-            transit_datetime_local=payload.transit_datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=payload.settings.model_dump(),
-            aspect_mode=payload.aspect_mode,
-        )
+        data = get_cached_transits_payload(payload)
 
         lang = "fr"
         settings_dict = payload.settings.model_dump()
@@ -64,16 +92,7 @@ def compute_transits(
 ):
     try:
         require_trial_einstein(payload, mode)
-        data = compute_transits_payload(
-            name=payload.name or "",
-            natal_datetime_local=payload.datetime_local,
-            transit_datetime_local=payload.transit_datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=payload.settings.model_dump(),
-            aspect_mode=payload.aspect_mode,
-        )
+        data = get_cached_transits_payload(payload)
         return data
 
     except ValueError as exc:
