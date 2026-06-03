@@ -45,6 +45,23 @@ def _compute_theme_payload_cached(cache_key: str):
 def get_cached_theme_payload(payload: ThemeRequest):
     return _compute_theme_payload_cached(_payload_cache_key(payload))
 
+@lru_cache(maxsize=256)
+def _render_domitude_svg_cached(cache_key: str, lang: str) -> str:
+    data = _compute_theme_payload_cached(cache_key)
+
+    return render_domitude_svg(
+        data,
+        width=1400,
+        height=900,
+        language=lang,
+        show_title=True,
+        asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+    )
+
+
+def get_cached_domitude_svg(payload: ThemeRequest, lang: str) -> str:
+    return _render_domitude_svg_cached(_payload_cache_key(payload), lang)
+
 @router.post("", response_model=ThemeResponse)
 def compute_theme(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> ThemeResponse:
     require_trial_einstein(payload, mode)
@@ -138,14 +155,7 @@ def compute_theme_domitude_svg(payload: ThemeRequest, mode: str = Depends(get_ac
         if str(settings_dict.get("language", "fr")).lower().startswith("en"):
             lang = "en"
 
-        svg = render_domitude_svg(
-            data,
-            width=1400,
-            height=900,
-            language=lang,
-            show_title=True,
-            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-        )
+        svg = get_cached_domitude_svg(payload, lang)
 
         return Response(content=svg, media_type="image/svg+xml")
 
