@@ -8,22 +8,48 @@ from astromap.core.ecliptic_svg import (
     build_ecliptic_render_layout,
 )
 from astromap.core.domitude_svg import render_domitude_svg
+from functools import lru_cache
+import json
 
 router = APIRouter(prefix="/theme", tags=["theme"])
 
+def _payload_cache_key(payload: ThemeRequest) -> str:
+    return json.dumps(
+        {
+            "name": payload.name or "",
+            "datetime_local": payload.datetime_local,
+            "latitude": payload.latitude,
+            "longitude": payload.longitude,
+            "tz": payload.tz,
+            "settings": payload.settings.model_dump(),
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+
+
+@lru_cache(maxsize=256)
+def _compute_theme_payload_cached(cache_key: str):
+    data = json.loads(cache_key)
+
+    return compute_theme_payload(
+        name=data["name"],
+        datetime_local=data["datetime_local"],
+        latitude=data["latitude"],
+        longitude=data["longitude"],
+        tz=data["tz"],
+        settings=data["settings"],
+    )
+
+
+def get_cached_theme_payload(payload: ThemeRequest):
+    return _compute_theme_payload_cached(_payload_cache_key(payload))
 
 @router.post("", response_model=ThemeResponse)
 def compute_theme(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> ThemeResponse:
     require_trial_einstein(payload, mode)
     try:
-        data = compute_theme_payload(
-            name=payload.name or "",
-            datetime_local=payload.datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=payload.settings.model_dump(),
-        )
+        data = get_cached_theme_payload(payload)
         return ThemeResponse(data=data)
 
     except ValueError as exc:
@@ -39,14 +65,7 @@ def compute_theme(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -
 def compute_theme_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> Response:
     require_trial_einstein(payload, mode)
     try:
-        data = compute_theme_payload(
-            name=payload.name or "",
-            datetime_local=payload.datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=payload.settings.model_dump(),
-        )
+        data = get_cached_theme_payload(payload)
 
         lang = "fr"
         settings_dict = payload.settings.model_dump()
@@ -79,14 +98,7 @@ def compute_theme_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode
 def compute_theme_ecliptic_layout(payload: ThemeRequest, mode: str = Depends(get_access_mode)):
     require_trial_einstein(payload, mode)
     try:
-        data = compute_theme_payload(
-            name=payload.name or "",
-            datetime_local=payload.datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=payload.settings.model_dump(),
-        )
+        data = get_cached_theme_payload(payload)
 
         lang = "fr"
         settings_dict = payload.settings.model_dump()
@@ -119,14 +131,7 @@ def compute_theme_ecliptic_layout(payload: ThemeRequest, mode: str = Depends(get
 def compute_theme_domitude_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> Response:
     require_trial_einstein(payload, mode)
     try:
-        data = compute_theme_payload(
-            name=payload.name or "",
-            datetime_local=payload.datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=payload.settings.model_dump(),
-        )
+        data = get_cached_theme_payload(payload)
 
         lang = "fr"
         settings_dict = payload.settings.model_dump()
