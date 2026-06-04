@@ -1,5 +1,9 @@
 from fastapi import APIRouter, HTTPException, Response, Depends
 from app.security import get_access_mode, require_trial_einstein
+from app.routers.ret import get_cached_ret_svg
+from app.routers.aspects import get_cached_aspects_payload
+from app.services.aspects_service import compute_aspects_svg
+from app.services.interpretation_service import compute_interpretation_html
 
 from app.schemas import ThemeRequest, ThemeResponse
 from app.services.theme_service import compute_theme_payload
@@ -61,6 +65,75 @@ def _render_domitude_svg_cached(cache_key: str, lang: str) -> str:
 
 def get_cached_domitude_svg(payload: ThemeRequest, lang: str) -> str:
     return _render_domitude_svg_cached(_payload_cache_key(payload), lang)
+
+def _get_lang_from_payload(payload: ThemeRequest) -> str:
+    settings_dict = payload.settings.model_dump()
+    if str(settings_dict.get("language", "fr")).lower().startswith("en"):
+        return "en"
+    return "fr"
+
+@router.post("/full")
+def compute_theme_full(
+    payload: ThemeRequest,
+    mode: str = Depends(get_access_mode),
+):
+    require_trial_einstein(payload, mode)
+
+    try:
+        lang = _get_lang_from_payload(payload)
+
+        theme_data = get_cached_theme_payload(payload)
+
+        ecliptic_layout = build_ecliptic_render_layout(
+            theme_data,
+            width=1200,
+            height=900,
+            language=lang,
+            show_title=True,
+            show_houses=True,
+            show_aspects=True,
+            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+        )
+
+        domitude_svg = get_cached_domitude_svg(payload, lang)
+
+        ret_svg = get_cached_ret_svg(payload)
+
+        aspects_data = get_cached_aspects_payload(payload)
+
+        aspects_svg = compute_aspects_svg(
+            aspects_data,
+            width=1400,
+            height=900,
+            language=lang,
+            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+        )
+
+        interpretation_html = compute_interpretation_html(
+            name=payload.name or "",
+            datetime_local=payload.datetime_local,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            tz=payload.tz,
+            settings=payload.settings.model_dump(),
+        )
+
+        return {
+            "data": theme_data,
+            "ecliptic_layout": ecliptic_layout,
+            "domitude_svg": domitude_svg,
+            "ret_svg": ret_svg,
+            "aspects_svg": aspects_svg,
+            "interpretation_html": interpretation_html,
+        }
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur interne lors du calcul complet du thème: {exc}",
+        ) from exc
 
 @router.post("", response_model=ThemeResponse)
 def compute_theme(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> ThemeResponse:
