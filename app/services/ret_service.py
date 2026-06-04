@@ -1,6 +1,6 @@
 from astromap.core.ret_svg import render_ret_svg
 from app.services.theme_service import compute_theme_payload
-
+from astromap.core.ret_svg import render_ret_svg
 
 def compute_ret_svg(
     *,
@@ -20,6 +20,24 @@ def compute_ret_svg(
         settings=settings,
     )
 
+    lang = "fr"
+    if str(settings.get("language", "fr")).lower().startswith("en"):
+        lang = "en"
+
+    return render_ret_svg(
+        data,
+        dom_payload=data,
+        width=1400,
+        height=900,
+        language=lang,
+        asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+    )
+
+def render_ret_svg_from_payload(
+    data: dict,
+    *,
+    settings: dict,
+) -> str:
     lang = "fr"
     if str(settings.get("language", "fr")).lower().startswith("en"):
         lang = "en"
