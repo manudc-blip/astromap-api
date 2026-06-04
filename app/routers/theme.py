@@ -80,6 +80,7 @@ def compute_theme_full(
 
     try:
         lang = _get_lang_from_payload(payload)
+        settings_dict = payload.settings.model_dump()
 
         theme_data = get_cached_theme_payload(payload)
 
@@ -96,25 +97,23 @@ def compute_theme_full(
 
         domitude_svg = get_cached_domitude_svg(payload, lang)
 
-settings_dict = payload.settings.model_dump()
+        ret_svg = render_ret_svg_from_payload(
+            theme_data,
+            settings=settings_dict,
+        )
 
-ret_svg = render_ret_svg_from_payload(
-    theme_data,
-    settings=settings_dict,
-)
-
-aspects_svg = compute_aspects_svg(
-    theme_data,
+        aspects_svg = compute_aspects_svg(
+            theme_data,
             width=1400,
             height=900,
             language=lang,
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
         )
 
-interpretation_html = compute_interpretation_html_from_theme_payload(
-    theme_data,
-    settings=settings_dict,
-)
+        interpretation_html = compute_interpretation_html_from_theme_payload(
+            theme_data,
+            settings=settings_dict,
+        )
 
         return {
             "data": theme_data,
@@ -132,7 +131,7 @@ interpretation_html = compute_interpretation_html_from_theme_payload(
             status_code=500,
             detail=f"Erreur interne lors du calcul complet du thème: {exc}",
         ) from exc
-
+        
 @router.post("", response_model=ThemeResponse)
 def compute_theme(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> ThemeResponse:
     require_trial_einstein(payload, mode)
