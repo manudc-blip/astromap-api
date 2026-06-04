@@ -85,43 +85,47 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
     lst_deg = (lst_hours * 15.0 + longitude) % 360.0
 
     for name, ipl in mapping.items():
-        # --- 1) Écliptique avec vitesse (pas journalier) ---
         daily_motion = None
+
         try:
-            vals, _ = swe.calc_ut(jd, ipl, swe.FLG_SWIEPH | swe.FLG_SPEED)
-            lon = float(vals[0])
-            lat = float(vals[1])
-            # vals[3] = vitesse en longitude (°/jour)
-            daily_motion = float(vals[3])
+            vals, _ = swe.calc_ut(
+                jd,
+                ipl,
+                swe.FLG_SWIEPH | swe.FLG_SPEED | swe.FLG_EQUATORIAL,
+            )
+
+            ra = float(vals[0]) % 360.0
+            decl = float(vals[1])
+            daily_motion = float(vals[3]) if len(vals) > 3 else None
+
+            vals_ecl, _ = swe.calc_ut(
+                jd,
+                ipl,
+                swe.FLG_SWIEPH | swe.FLG_SPEED,
+            )
+            lon = float(vals_ecl[0])
+            lat = float(vals_ecl[1])
+            if len(vals_ecl) > 3:
+                daily_motion = float(vals_ecl[3])
+
         except Exception:
             lon, lat, _dist = _swe_calc_ut_safe(swe, jd, ipl)
+            ra = None
+            decl = None
 
         lon = float(fmod(lon, 360.0))
         lat = float(lat)
 
-        # --- 2) Coordonnées équatoriales (RA, déclinaison) ---
-        try:
-            vals_eq, _ = swe.calc_ut(jd, ipl, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
-            ra = float(vals_eq[0]) % 360.0
-            decl = float(vals_eq[1])
-        except Exception:
-            ra = None
-            decl = None
-
-        # --- 3) Hauteur / azimut à partir de RA/dec ---
         height = None
         azimut = None
         try:
             if ra is not None and decl is not None:
                 phi = math.radians(latitude)
-                ra_rad = math.radians(ra)
                 dec_rad = math.radians(decl)
 
-                # angle horaire H = LST - RA
                 H_deg = (lst_deg - ra) % 360.0
                 H_rad = math.radians(H_deg)
 
-                # altitude
                 sin_alt = (
                     math.sin(phi) * math.sin(dec_rad)
                     + math.cos(phi) * math.cos(dec_rad) * math.cos(H_rad)
@@ -130,7 +134,6 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
                 alt_rad = math.asin(sin_alt)
                 height = math.degrees(alt_rad)
 
-                # azimut (origine nord, sens horaire)
                 y = -math.sin(H_rad) * math.cos(dec_rad)
                 x = (
                     math.sin(dec_rad) - math.sin(phi) * math.sin(alt_rad)
@@ -141,14 +144,14 @@ def compute_positions(dt_utc: datetime, latitude: float, longitude: float, altit
             pass
 
         results.append({
-            "name":         name,
-            "lon":          lon,
-            "lat":          lat,
+            "name": name,
+            "lon": lon,
+            "lat": lat,
             "daily_motion": daily_motion,
-            "ra":           ra,
-            "decl":         decl,
-            "height":       height,
-            "azimut":       azimut,
+            "ra": ra,
+            "decl": decl,
+            "height": height,
+            "azimut": azimut,
         })
 
     return results
