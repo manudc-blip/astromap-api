@@ -26,6 +26,16 @@ def compute_interpretation_payload(
     return build_interpretation_payload(theme_payload, language=language)
 
 
+def compute_interpretation_html_from_theme_payload(
+    theme_payload: dict,
+    *,
+    settings: dict,
+) -> str:
+    language = settings.get("language", "fr")
+    data = build_interpretation_payload(theme_payload, language=language)
+    return render_interpretation_html(data)
+    
+
 def compute_interpretation_html(
     *,
     name: str,
