@@ -1,4 +1,7 @@
 from __future__ import annotations
+from copy import deepcopy
+from functools import lru_cache
+import json
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -16,6 +19,49 @@ class TransitResult:
     def to_json(self):
         return self.payload
 
+def _settings_cache_key(settings: dict) -> str:
+    return json.dumps(settings or {}, sort_keys=True, ensure_ascii=False)
+
+
+@lru_cache(maxsize=256)
+def _cached_natal_theme(
+    name: str,
+    natal_datetime_local: str,
+    latitude: float,
+    longitude: float,
+    tz: str,
+    settings_key: str,
+) -> dict:
+    settings = json.loads(settings_key)
+
+    return Theme.compute(
+        name=name,
+        datetime_local=natal_datetime_local,
+        latitude=latitude,
+        longitude=longitude,
+        tz=tz,
+        settings=settings,
+    ).to_json()
+
+
+def _get_cached_natal_theme(
+    name: str,
+    natal_datetime_local: str,
+    latitude: float,
+    longitude: float,
+    tz: str,
+    settings: dict,
+) -> dict:
+    return deepcopy(
+        _cached_natal_theme(
+            name,
+            natal_datetime_local,
+            latitude,
+            longitude,
+            tz,
+            _settings_cache_key(settings),
+        )
+    )
 
 class Transits:
     @staticmethod
@@ -29,14 +75,14 @@ class Transits:
         settings: dict,
         aspect_mode: str = "TN",
     ):
-        natal = Theme.compute(
+        natal = _get_cached_natal_theme(
             name=name,
-            datetime_local=natal_datetime_local,
+            natal_datetime_local=natal_datetime_local,
             latitude=latitude,
             longitude=longitude,
             tz=tz,
             settings=settings,
-        ).to_json()
+        )
 
         tzinfo = _parse_tz(tz)
         dt_local = tzinfo.localize(datetime.strptime(transit_datetime_local, "%Y-%m-%d %H:%M"))
