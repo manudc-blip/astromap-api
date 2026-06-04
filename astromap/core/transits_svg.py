@@ -784,16 +784,9 @@ def render_transits_svg(
 
         transit_draw_items.append((d, gx, gy))
 
-    # Les connecteurs transit passent derrière les glyphes natals.
-    parts.extend(
-        _build_natal_planets_overlay(
-            natal_payload,
-            width=width,
-            height=height,
-            language=language,
-            asset_base_url=asset_base_url,
-        )
-    )
+    # Optimisation vitesse :
+    # le fond natal complet est déjà rendu par render_ecliptic_svg(...).
+    # On évite donc de reconstruire une deuxième fois les planètes natales.
 
     # Les glyphes transit repassent devant tout.
     for d, gx, gy in transit_draw_items:
