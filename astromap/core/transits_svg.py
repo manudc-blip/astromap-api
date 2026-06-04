@@ -7,7 +7,6 @@ from typing import Any
 
 from .aspects import detect_aspects, detect_aspects_between
 from .ecliptic_svg import render_ecliptic_svg
-from .ecliptic_layout import build_ecliptic_layout
 
 STRUCT_GREY = "#4A4A4A"
 SHOW_ASPECT_CURSORS = True
@@ -299,75 +298,6 @@ def _svg_image_with_white_outline(
         f'filter="url(#glyphWhiteOutline)" />'
         f"</g>"
     )
-
-
-def _build_natal_planets_overlay(
-    natal_payload: dict[str, Any],
-    *,
-    width: int,
-    height: int,
-    language: str,
-    asset_base_url: str,
-) -> list[str]:
-    layout = build_ecliptic_layout(
-        natal_payload,
-        width,
-        height,
-        language=language,
-        show_title=False,
-        show_houses=True,
-        show_aspects=True,
-    )
-
-    if not layout.get("ok"):
-        return []
-
-    parts: list[str] = []
-
-    for p in layout["planets"]:
-        for conn in p["connectors"]:
-            parts.append(
-                _svg_connector_line(
-                    conn["x1"], conn["y1"], conn["x2"], conn["y2"],
-                    stroke=conn["color"],
-                    width=conn["width"],
-                )
-            )
-
-        href = _planet_href(asset_base_url, p["name"])
-        if href:
-            parts.append(
-                _svg_image_with_white_outline(
-                    href,
-                    p["x"],
-                    p["y"],
-                    p["px"],
-                    elem_id=f"natal_planet_{p['name']}",
-                    class_name="planet natal_planet",
-                    data_planet=p["name"],
-                    title=p["name"],
-                )
-            )
-
-        deg = p.get("degree_label")
-        if deg:
-            parts.append(
-                _svg_text(
-                    deg["x"], deg["y"], str(deg["value"]),
-                    size=11,
-                    fill="#000000",
-                )
-            )
-            if deg["retro"]:
-                parts.append(
-                    _svg_text(
-                        deg["retro_x"], deg["retro_y"], "R",
-                        size=9,
-                        fill="#000000",
-                    )
-                )
-
-    return parts
 
 
 def render_transits_svg(
