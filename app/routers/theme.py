@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Response, Depends
 from app.security import get_access_mode, require_trial_einstein
-from app.routers.ret import get_cached_ret_svg
-from app.routers.aspects import get_cached_aspects_payload
+from app.services.ret_service import render_ret_svg_from_payload
 from app.services.aspects_service import compute_aspects_svg
-from app.services.interpretation_service import compute_interpretation_html
+from app.services.aspects_service import compute_aspects_svg
+from app.services.interpretation_service import compute_interpretation_html_from_theme_payload
 
 from app.schemas import ThemeRequest, ThemeResponse
 from app.services.theme_service import compute_theme_payload
@@ -97,26 +97,25 @@ def compute_theme_full(
 
         domitude_svg = get_cached_domitude_svg(payload, lang)
 
-        ret_svg = get_cached_ret_svg(payload)
+settings_dict = payload.settings.model_dump()
 
-        aspects_data = get_cached_aspects_payload(payload)
+ret_svg = render_ret_svg_from_payload(
+    theme_data,
+    settings=settings_dict,
+)
 
-        aspects_svg = compute_aspects_svg(
-            aspects_data,
+aspects_svg = compute_aspects_svg(
+    theme_data,
             width=1400,
             height=900,
             language=lang,
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
         )
 
-        interpretation_html = compute_interpretation_html(
-            name=payload.name or "",
-            datetime_local=payload.datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=payload.settings.model_dump(),
-        )
+interpretation_html = compute_interpretation_html_from_theme_payload(
+    theme_data,
+    settings=settings_dict,
+)
 
         return {
             "data": theme_data,
