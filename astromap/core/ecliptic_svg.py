@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from copy import deepcopy
 from html import escape
 from typing import Any
 
@@ -365,7 +364,7 @@ def build_ecliptic_render_layout(
             "error": "Layout indisponible",
         }
 
-    data = deepcopy(layout)
+    data = layout
 
     if center_dx is None:
         center_dx = 100.0 if show_title else 0.0
