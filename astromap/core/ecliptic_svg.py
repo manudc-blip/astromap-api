@@ -1,3 +1,7 @@
+from pathlib import Path
+import re
+from urllib.parse import unquote
+
 from __future__ import annotations
 
 import math
@@ -143,7 +147,12 @@ def _svg_polyline(points, stroke="#000", width=1, fill="none", dash=None, lineca
     )
 
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
+def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, inline: bool = False) -> str:
+    if inline:
+        inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
+        if inlined:
+            return inlined
+
     half = size_px / 2.0
     return (
         f'<image href="{escape(href)}" '
@@ -152,6 +161,40 @@ def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> s
         f'preserveAspectRatio="xMidYMid meet" />'
     )
 
+GLYPHES_DIR = Path(__file__).resolve().parents[2] / "app" / "static" / "Glyphes_SVG"
+
+def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float, filter_attr: str = "") -> str | None:
+    try:
+        href = unquote(href)
+        parts = href.split("/glyphes/")
+        if len(parts) < 2:
+            return None
+
+        rel = parts[-1]
+        path = GLYPHES_DIR / rel
+
+        if not path.exists():
+            return None
+
+        raw = path.read_text(encoding="utf-8")
+
+        viewbox_match = re.search(r'viewBox="([^"]+)"', raw)
+        viewbox = viewbox_match.group(1) if viewbox_match else "0 0 100 100"
+
+        inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
+        inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
+
+        half = size_px / 2.0
+
+        return (
+            f'<svg x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+            f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet" {filter_attr}>'
+            f'{inner}</svg>'
+        )
+
+    except Exception:
+        return None
 
 def _svg_image_with_white_outline(
     href: str,
@@ -163,9 +206,8 @@ def _svg_image_with_white_outline(
     class_name: str | None = None,
     data_planet: str | None = None,
     title: str | None = None,
+    inline: bool = False,
 ) -> str:
-    half = size_px / 2.0
-
     attrs = []
     if elem_id:
         attrs.append(f'id="{escape(elem_id)}"')
@@ -177,6 +219,18 @@ def _svg_image_with_white_outline(
     attrs_str = (" " + " ".join(attrs)) if attrs else ""
     title_part = f"<title>{escape(title)}</title>" if title else ""
 
+    if inline:
+        inlined = _inline_svg_from_href(
+            href,
+            x_center,
+            y_center,
+            size_px,
+            filter_attr='filter="url(#glyphWhiteOutline)"',
+        )
+        if inlined:
+            return f"<g{attrs_str}>{title_part}{inlined}</g>"
+
+    half = size_px / 2.0
     return (
         f"<g{attrs_str}>"
         f"{title_part}"
@@ -413,6 +467,7 @@ def render_ecliptic_svg(
     asset_base_url: str = "/glyphes",
     center_dx: float | None = None,
     center_dy: float | None = None,
+    inline_glyphs: bool = False,
 ) -> str:
     """
     asset_base_url doit pointer vers le dossier statique qui contient :
@@ -593,7 +648,7 @@ def render_ecliptic_svg(
     for s in layout["signs"]:
         href = _sign_href(asset_base_url, s["name"])
         if href:
-            parts.append(_svg_image(href, s["x"], s["y"], s["px"]))
+            parts.append(_svg_image(href, s["x"], s["y"], s["px"], inline=inline_glyphs))
         else:
             parts.append(_svg_text(s["x"], s["y"], s["name"], size=max(14, int(s["px"] * 0.55))))
 
@@ -659,7 +714,7 @@ def render_ecliptic_svg(
         href = _axis_href(asset_base_url, label, language)
         g = ax["glyph"]
         if href:
-            parts.append(_svg_image(href, g["x"], g["y"], g["px"]))
+            parts.append(_svg_image(href, g["x"], g["y"], g["px"], inline=inline_glyphs))
         else:
             parts.append(
                 _svg_text(
@@ -695,18 +750,19 @@ def render_ecliptic_svg(
 
         href = _planet_href(asset_base_url, p["name"])
         if href:
-            parts.append(
-                _svg_image_with_white_outline(
-                    href,
-                    p["x"],
-                    p["y"],
-                    p["px"],
-                    elem_id=f"natal_planet_{p['name']}",
-                    class_name="planet natal_planet",
-                    data_planet=p["name"],
-                    title=p["name"],
-                )
-            )
+parts.append(
+    _svg_image_with_white_outline(
+        href,
+        p["x"],
+        p["y"],
+        p["px"],
+        elem_id=f"natal_planet_{p['name']}",
+        class_name="planet natal_planet",
+        data_planet=p["name"],
+        title=p["name"],
+        inline=inline_glyphs,
+    )
+)
 
         else:
             parts.append(
