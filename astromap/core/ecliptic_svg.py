@@ -160,7 +160,7 @@ def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, i
         f'preserveAspectRatio="xMidYMid meet" />'
     )
 
-GLYPHES_DIR = Path(__file__).resolve().parents[2] / "app" / "static" / "Glyphes_SVG"
+GLYPHES_DIR = Path("/app/app/static/Glyphes_SVG")
 
 def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float, filter_attr: str = "") -> str | None:
     try:
