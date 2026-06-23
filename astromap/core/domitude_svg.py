@@ -3,7 +3,9 @@ from __future__ import annotations
 import math
 from html import escape
 from typing import Any
-
+import re
+from pathlib import Path
+from urllib.parse import unquote
 
 ROMANS = ["I", "II", "III", "IV", "V", "VI",
           "VII", "VIII", "IX", "X", "XI", "XII"]
@@ -165,7 +167,57 @@ def _svg_text(
     )
 
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
+GLYPHES_DIR = Path("/app/app/static/Glyphes_SVG")
+
+def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float, filter_attr: str = "") -> str | None:
+    try:
+        href = unquote(href)
+        parts = href.split("/glyphes/")
+        if len(parts) < 2:
+            return None
+
+        rel = parts[-1]
+        path = GLYPHES_DIR / rel
+
+        if not path.exists():
+            return None
+
+        raw = path.read_text(encoding="utf-8")
+
+        viewbox_match = re.search(r'viewBox="([^"]+)"', raw)
+        viewbox = viewbox_match.group(1) if viewbox_match else "0 0 100 100"
+
+        inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
+        inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
+
+        inner = re.sub(r'<\?xml[^>]*\?>', '', inner, flags=re.S)
+        inner = re.sub(r'<!DOCTYPE[^>]*>', '', inner, flags=re.S)
+        inner = re.sub(r'<metadata[\s\S]*?</metadata>', '', inner, flags=re.I)
+        inner = re.sub(r'<defs[\s\S]*?</defs>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[\s\S]*?</sodipodi:namedview>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
+        inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
+        inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
+
+        half = size_px / 2.0
+        filter_part = f" {filter_attr}" if filter_attr else ""
+
+        return (
+            f'<svg x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+            f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet"{filter_part}>'
+            f'{inner}</svg>'
+        )
+
+    except Exception:
+        return None
+
+def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, inline: bool = True) -> str:
+    if inline:
+        inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
+        if inlined:
+            return inlined
+
     half = size_px / 2.0
     return (
         f'<image href="{escape(href)}" '
@@ -197,6 +249,15 @@ def _svg_image_with_white_outline(
 
     attrs_str = (" " + " ".join(attrs)) if attrs else ""
     title_part = f"<title>{escape(title)}</title>" if title else ""
+    inlined = _inline_svg_from_href(
+        href,
+        x_center,
+        y_center,
+        size_px,
+        filter_attr='filter="url(#glyphWhiteOutline)"',
+    )
+    if inlined:
+        return f"<g{attrs_str}>{title_part}{inlined}</g>"
 
     return (
         f"<g{attrs_str}>"
@@ -989,6 +1050,18 @@ def render_domitude_svg(
                 )
             )
 
+    parts.append(
+        _svg_text(
+            w / 2,
+            h - 14,
+            "© 2025 GéoAstro – AstroMap v1.0",
+            size=8,
+            fill="#777777",
+            baseline="middle",
+            family="Segoe UI, Arial, sans-serif",
+        )
+    )
+          
     parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
