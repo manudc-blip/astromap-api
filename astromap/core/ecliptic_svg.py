@@ -183,18 +183,29 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
         inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
         inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
 
+        # Nettoyage des métadonnées Inkscape/Sodipodi incompatibles avec l'inlining
+        inner = re.sub(r'<\?xml[^>]*\?>', '', inner, flags=re.S)
+        inner = re.sub(r'<!DOCTYPE[^>]*>', '', inner, flags=re.S)
+        inner = re.sub(r'<metadata[\s\S]*?</metadata>', '', inner, flags=re.I)
+        inner = re.sub(r'<defs[\s\S]*?</defs>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[\s\S]*?</sodipodi:namedview>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
+        inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
+        inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
+
         half = size_px / 2.0
+        filter_part = f" {filter_attr}" if filter_attr else ""
 
         return (
             f'<svg x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
             f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
-            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet" {filter_attr}>'
+            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet"{filter_part}>'
             f'{inner}</svg>'
         )
 
     except Exception:
         return None
-
+        
 def _svg_image_with_white_outline(
     href: str,
     x_center: float,
