@@ -192,7 +192,6 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
         inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
         inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
         inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
-        inner = re.sub(r'\sxlink:href="[^"]*"', '', inner)
 
         half = size_px / 2.0
         filter_part = f" {filter_attr}" if filter_attr else ""
