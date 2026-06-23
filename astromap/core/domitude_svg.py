@@ -178,7 +178,9 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
 
         rel = parts[-1]
         path = GLYPHES_DIR / rel
-
+        print("PATH =", path)
+        print("EXISTS =", path.exists())
+              
         if not path.exists():
             return None
 
