@@ -198,6 +198,7 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
         inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
         inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
         inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
+        inner = re.sub(r'\sxlink:href="[^"]*"', '', inner)
 
         half = size_px / 2.0
         filter_part = f" {filter_attr}" if filter_attr else ""
@@ -483,7 +484,7 @@ def render_domitude_svg(
     }
 
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
         '''
     <defs>
