@@ -7,6 +7,10 @@ from .ret_hp import compute_planet_hierarchy, compute_ret_box_colors
 from .signs_hierarchy import rank_signs
 from .ret_families import compute_ret_ranking
 
+import re
+from pathlib import Path
+from urllib.parse import unquote
+
 TITLE_COLOR = "#1f4fa3"
 TEXT_COLOR = "#111111"
 BLACK = "#000000"
@@ -193,6 +197,50 @@ def _svg_text(
         f"{escape(str(text))}</text>"
     )
 
+GLYPHES_DIR = Path("/app/app/static/Glyphes_SVG")
+
+def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float, filter_attr: str = "") -> str | None:
+    try:
+        href = unquote(href)
+        parts = href.split("/glyphes/")
+        if len(parts) < 2:
+            return None
+
+        rel = parts[-1]
+        path = GLYPHES_DIR / rel
+        if not path.exists():
+            return None
+
+        raw = path.read_text(encoding="utf-8")
+
+        viewbox_match = re.search(r'viewBox="([^"]+)"', raw)
+        viewbox = viewbox_match.group(1) if viewbox_match else "0 0 100 100"
+
+        inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
+        inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
+        inner = re.sub(r'<\?xml[^>]*\?>', '', inner, flags=re.S)
+        inner = re.sub(r'<!DOCTYPE[^>]*>', '', inner, flags=re.S)
+        inner = re.sub(r'<metadata[\s\S]*?</metadata>', '', inner, flags=re.I)
+        inner = re.sub(r'<defs[\s\S]*?</defs>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[\s\S]*?</sodipodi:namedview>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
+        inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
+        inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
+
+        half = size_px / 2.0
+        filter_part = f" {filter_attr}" if filter_attr else ""
+
+        return (
+            f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+            f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+            f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet"{filter_part}>'
+            f'{inner}</svg>'
+        )
+
+    except Exception:
+        return None
+
 def _svg_circle(cx: float, cy: float, r: float, *, fill="#fff", stroke="#000", width=1) -> str:
     return (
         f'<circle cx="{_fmt(cx)}" cy="{_fmt(cy)}" r="{_fmt(r)}" '
@@ -218,7 +266,16 @@ def _svg_image(
     size_px: float,
     *,
     opacity: float | None = None,
+    inline: bool = False,
 ) -> str:
+    if inline:
+        filter_attr = ""
+        if opacity is not None:
+            filter_attr = f'opacity="{opacity}"'
+        inlined = _inline_svg_from_href(href, x_center, y_center, size_px, filter_attr=filter_attr)
+        if inlined:
+            return inlined
+
     half = size_px / 2.0
     opacity_attr = f' opacity="{opacity}"' if opacity is not None else ""
     return (
@@ -356,7 +413,7 @@ def _draw_center_cell(planet_name: str, box_code: str, cx: float, cy: float, cel
     glyph_px = 36.0 * scale
 
     if href:
-        parts.append(_svg_image(href, cx, cy, glyph_px))
+        parts.append(_svg_image(href, cx, cy, glyph_px, inline=inline_glyphs))
     else:
         parts.append(
             _svg_text(
@@ -391,6 +448,20 @@ def render_ret_svg(
     parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
+
+    if show_title:
+        parts.append(
+            _svg_text(
+                width / 2.0,
+                22,
+                title,
+                size=22,
+                fill=TITLE_COLOR,
+                weight="700",
+                baseline="hanging",
+                family="Segoe UI, Arial, sans-serif",
+            )
+        )
 
         _svg_text(
             width / 2.0,
@@ -618,7 +689,7 @@ def render_ret_svg(
         href = _planet_href_for_box(asset_base_url, p, "white")
         if href:
             scale = LEFT_PLANET_SCALE.get(p, 1.0)
-            parts.append(_svg_image(href, x_cursor, base_y, 34 * scale, opacity=GLYPH_NEUTRAL_OPACITY))
+            parts.append(_svg_image(href, x_cursor, base_y, 34 * scale, opacity=GLYPH_NEUTRAL_OPACITY, inline=inline_glyphs))
             x_cursor += 34
 
     parts.append(
@@ -638,8 +709,21 @@ def render_ret_svg(
             href = _sign_href(asset_base_url, sign_name)
             if href:
                 coeff = PERCEPTION_COEFFS_SIGNS.get(sign_name, 1.0)
-                parts.append(_svg_image(href, x_cursor, base_y + 40, 28 * coeff))
+                parts.append(_svg_image(href, x_cursor, base_y + 40, 28 * coeff, inline=inline_glyphs))
                 x_cursor += 36
 
+if show_footer:
+    parts.append(
+        _svg_text(
+            width / 2,
+            height - 34,
+            "© 2025 GéoAstro – AstroMap v1.0",
+            size=8,
+            fill="#777777",
+            baseline="middle",
+            family="Segoe UI, Arial, sans-serif",
+        )
+    )
+    
     parts.append("</svg>")
     return "".join(parts)
