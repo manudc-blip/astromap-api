@@ -213,6 +213,18 @@ def _svg_transit_image(
     attrs_str = (" " + " ".join(attrs)) if attrs else ""
     title_part = f"<title>{escape(title)}</title>" if title else ""
 
+
+    inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
+    if inlined:
+        return (
+            f"<g{attrs_str}>"
+            f"{title_part}"
+            f'<circle cx="{_fmt(x_center)}" cy="{_fmt(y_center)}" r="{_fmt(halo_r)}" '
+            f'fill="#FFFFFF" opacity="0.70" filter="url(#transitGlyphSoftHalo)" />'
+            f"{inlined}"
+            f"</g>"
+        )
+
     return (
         f"<g{attrs_str}>"
         f"{title_part}"
