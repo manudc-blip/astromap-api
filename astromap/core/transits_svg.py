@@ -8,6 +8,10 @@ from typing import Any
 from .aspects import detect_aspects, detect_aspects_between
 from .ecliptic_svg import render_ecliptic_svg
 
+import re
+from pathlib import Path
+from urllib.parse import unquote
+
 STRUCT_GREY = "#4A4A4A"
 SHOW_ASPECT_CURSORS = True
 
@@ -109,6 +113,45 @@ def _svg_text(
         f'{escape(str(text))}</text>'
     )
 
+GLYPHES_DIR = Path("/app/app/static/Glyphes_SVG")
+
+def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float) -> str | None:
+    try:
+        href = unquote(href)
+        parts = href.split("/glyphes/")
+        if len(parts) < 2:
+            return None
+
+        rel = parts[-1]
+        path = GLYPHES_DIR / rel
+        if not path.exists():
+            return None
+
+        raw = path.read_text(encoding="utf-8")
+
+        viewbox_match = re.search(r'viewBox="([^"]+)"', raw)
+        viewbox = viewbox_match.group(1) if viewbox_match else "0 0 100 100"
+
+        inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
+        inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
+        inner = re.sub(r'<\?xml[^>]*\?>', '', inner, flags=re.S)
+        inner = re.sub(r'<!DOCTYPE[^>]*>', '', inner, flags=re.S)
+        inner = re.sub(r'<metadata[\s\S]*?</metadata>', '', inner, flags=re.I)
+        inner = re.sub(r'<defs[\s\S]*?</defs>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[\s\S]*?</sodipodi:namedview>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
+        inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
+        inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
+
+        half = size_px / 2.0
+        return (
+            f'<svg x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+            f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet">'
+            f'{inner}</svg>'
+        )
+    except Exception:
+        return None
 
 def _svg_image(
     href: str,
@@ -309,6 +352,9 @@ def render_transits_svg(
     language: str = "fr",
     aspect_mode: str = "TN",
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
+    inline_glyphs: bool = False,
+    show_footer: bool = False,
+    show_title: bool = True,
 ) -> str:
     if not natal_payload or not natal_payload.get("planets"):
         return (
