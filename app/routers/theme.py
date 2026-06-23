@@ -193,16 +193,19 @@ def compute_theme_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode
         if str(settings_dict.get("language", "fr")).lower().startswith("en"):
             lang = "en"
 
-        svg = render_ecliptic_svg(
-            data,
-            width=1200,
-            height=900,
-            language=lang,
-            show_title=True,
-            show_houses=True,
-            show_aspects=True,
-            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-        )
+svg = render_ecliptic_svg(
+    data,
+    width=650,
+    height=650,
+    language=lang,
+    show_title=False,
+    show_houses=True,
+    show_aspects=True,
+    asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+    center_dx=0,
+    center_dy=0,
+    inline_glyphs=True,
+)
 
         return Response(content=svg, media_type="image/svg+xml")
 
@@ -226,16 +229,16 @@ def compute_theme_ecliptic_layout(payload: ThemeRequest, mode: str = Depends(get
         if str(settings_dict.get("language", "fr")).lower().startswith("en"):
             lang = "en"
 
-        layout = build_ecliptic_render_layout(
-            data,
-            width=1200,
-            height=900,
-            language=lang,
-            show_title=True,
-            show_houses=True,
-            show_aspects=True,
-            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-        )
+layout = build_ecliptic_render_layout(
+    data,
+    width=650,
+    height=650,
+    language=lang,
+    show_title=False,
+    show_houses=True,
+    show_aspects=True,
+    asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+)
 
         return layout
 
