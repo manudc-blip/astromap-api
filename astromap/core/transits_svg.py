@@ -445,6 +445,7 @@ def render_transits_svg(
         show_houses=True,
         show_aspects=True,
         asset_base_url=asset_base_url,
+        inline_glyphs=inline_glyphs,
         center_dx=0,
         center_dy=0,
     )
@@ -825,6 +826,7 @@ def render_transits_svg(
     else:
         title_text = f"Transit chart ({age_text})" if age_text else "Transit chart"
 
+if show_title:
     parts.append(
         _svg_text(
             w / 2,
@@ -834,6 +836,19 @@ def render_transits_svg(
             fill="#1f4fa3",
             weight="700",
             baseline="hanging",
+            family="Segoe UI, Arial, sans-serif",
+        )
+    )
+
+if show_footer:
+    parts.append(
+        _svg_text(
+            w / 2,
+            h - 28,
+            "© 2025 GéoAstro – AstroMap v1.0",
+            size=8,
+            fill="#777777",
+            baseline="middle",
             family="Segoe UI, Arial, sans-serif",
         )
     )
