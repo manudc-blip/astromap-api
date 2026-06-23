@@ -467,18 +467,6 @@ def render_ret_svg(
             )
         )
 
-        _svg_text(
-            width / 2.0,
-            22,
-            title,
-            size=22,
-            fill=TITLE_COLOR,
-            weight="700",
-            baseline="hanging",
-            family="Segoe UI, Arial, sans-serif",
-        ),
-    ]
-
     left_margin = 110
     top = 120
     line_h = 48
