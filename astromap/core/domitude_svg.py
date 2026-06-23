@@ -1055,18 +1055,19 @@ def render_domitude_svg(
                 )
             )
 
-    parts.append(
-        _svg_text(
-            w / 2,
-            h - 14,
-            "© 2025 GéoAstro – AstroMap v1.0",
-            size=8,
-            fill="#777777",
-            baseline="middle",
-            family="Segoe UI, Arial, sans-serif",
+    if show_footer:
+        parts.append(
+            _svg_text(
+                w / 2,
+                h - 34,
+                "© 2025 GéoAstro – AstroMap v1.0",
+                size=8,
+                fill="#777777",
+                baseline="middle",
+                family="Segoe UI, Arial, sans-serif",
+            )
         )
-    )
-          
+  
     parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
