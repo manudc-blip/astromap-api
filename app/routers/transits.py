@@ -125,7 +125,7 @@ def compute_transits_svg_publication(
             language=lang,
             aspect_mode=payload.aspect_mode,
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-            inline_glyphs=True,
+            inline_glyphs=False,
             show_footer=True,
             show_title=False,
         )
