@@ -193,19 +193,19 @@ def compute_theme_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode
         if str(settings_dict.get("language", "fr")).lower().startswith("en"):
             lang = "en"
 
-svg = render_ecliptic_svg(
-    data,
-    width=650,
-    height=650,
-    language=lang,
-    show_title=False,
-    show_houses=True,
-    show_aspects=True,
-    asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-    center_dx=0,
-    center_dy=0,
-    inline_glyphs=True,
-)
+        svg = render_ecliptic_svg(
+            data,
+            width=650,
+            height=650,
+            language=lang,
+            show_title=False,
+            show_houses=True,
+            show_aspects=True,
+            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+            center_dx=0,
+            center_dy=0,
+            inline_glyphs=True,
+        )
 
         return Response(content=svg, media_type="image/svg+xml")
 
