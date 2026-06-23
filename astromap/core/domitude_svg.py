@@ -178,8 +178,6 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
 
         rel = parts[-1]
         path = GLYPHES_DIR / rel
-        print("PATH =", path)
-        print("EXISTS =", path.exists())
               
         if not path.exists():
             return None
@@ -200,7 +198,6 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
         inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
         inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
         inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
-        inner = re.sub(r'\sxlink:href="[^"]*"', '', inner)
 
         half = size_px / 2.0
         filter_part = f" {filter_attr}" if filter_attr else ""
@@ -216,7 +213,12 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
     except Exception:
         return None
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
+def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, inline: bool = False) -> str:
+    if inline:
+        inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
+        if inlined:
+            return inlined
+
     half = size_px / 2.0
     return (
         f'<image href="{escape(href)}" '
@@ -235,9 +237,8 @@ def _svg_image_with_white_outline(
     class_name: str | None = None,
     data_planet: str | None = None,
     title: str | None = None,
+    inline: bool = False,
 ) -> str:
-    half = size_px / 2.0
-
     attrs = []
     if elem_id:
         attrs.append(f'id="{escape(elem_id)}"')
@@ -249,6 +250,18 @@ def _svg_image_with_white_outline(
     attrs_str = (" " + " ".join(attrs)) if attrs else ""
     title_part = f"<title>{escape(title)}</title>" if title else ""
 
+    if inline:
+        inlined = _inline_svg_from_href(
+            href,
+            x_center,
+            y_center,
+            size_px,
+            filter_attr='filter="url(#glyphWhiteOutline)"',
+        )
+        if inlined:
+            return f"<g{attrs_str}>{title_part}{inlined}</g>"
+
+    half = size_px / 2.0
     return (
         f"<g{attrs_str}>"
         f"{title_part}"
@@ -417,7 +430,8 @@ def render_domitude_svg(
     language: str = "fr",
     show_title: bool = True,
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
-) -> str:
+    inline_glyphs: bool = False,
+    ) -> str:
     title = "Thème de domitude" if language != "en" else "Domitude chart"
 
     w = width
@@ -575,7 +589,7 @@ def render_domitude_svg(
             tx, ty = _pol_to_xy(cx, cy, r_outer + LABEL_OFFSET_SIGN, a)
             href = _sign_domitude_href(asset_base_url, name)
             if href:
-                parts.append(_svg_image(href, tx, ty, PX_SIGN))
+                parts.append(_svg_image(href, tx, ty, PX_SIGN, inline=inline_glyphs))
 
     # Glyphes des maisons
     for idx, house_num in enumerate([10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]):
@@ -588,7 +602,7 @@ def render_domitude_svg(
 
         href = _house_href(asset_base_url, house_num)
         if href:
-            parts.append(_svg_image(href, tx, ty, PX_HOUSE))
+            parts.append(_svg_image(href, tx, ty, PX_HOUSE, inline=inline_glyphs))
         else:
             roman = ROMANS[(house_num - 1) % 12]
             parts.append(
@@ -668,7 +682,7 @@ def render_domitude_svg(
 
         href = _axis_href(asset_base_url, label, language)
         if href:
-            parts.append(_svg_image(href, gx, gy, PX_AXIS))
+            parts.append(_svg_image(href, gx, gy, PX_AXIS, inline=inline_glyphs))
 
     axis_MC = "MC"
     axis_AS = "AS"
@@ -1027,6 +1041,7 @@ def render_domitude_svg(
                     class_name="planet natal_planet domitude_planet",
                     data_planet=name,
                     title=name,
+                    inline=inline_glyphs,
                 )
             )
 
