@@ -83,7 +83,7 @@ def compute_theme_svg_publication(payload: ThemeRequest, mode: str = Depends(get
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
             center_dx=0,
             center_dy=0,
-            inline_glyphs=True,
+            inline_glyphs=False,
         )
 
         return Response(content=svg, media_type="image/svg+xml")
