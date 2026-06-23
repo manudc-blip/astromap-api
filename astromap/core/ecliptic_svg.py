@@ -1,12 +1,11 @@
-from pathlib import Path
-import re
-from urllib.parse import unquote
-
 from __future__ import annotations
 
 import math
+import re
 from html import escape
+from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 from .ecliptic_layout import build_ecliptic_layout
 
@@ -750,19 +749,19 @@ def render_ecliptic_svg(
 
         href = _planet_href(asset_base_url, p["name"])
         if href:
-parts.append(
-    _svg_image_with_white_outline(
-        href,
-        p["x"],
-        p["y"],
-        p["px"],
-        elem_id=f"natal_planet_{p['name']}",
-        class_name="planet natal_planet",
-        data_planet=p["name"],
-        title=p["name"],
-        inline=inline_glyphs,
-    )
-)
+            parts.append(
+                _svg_image_with_white_outline(
+                    href,
+                    p["x"],
+                    p["y"],
+                    p["px"],
+                    elem_id=f"natal_planet_{p['name']}",
+                    class_name="planet natal_planet",
+                    data_planet=p["name"],
+                    title=p["name"],
+                    inline=inline_glyphs,
+                )
+            )
 
         else:
             parts.append(
