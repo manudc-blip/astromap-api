@@ -864,6 +864,6 @@ def render_transits_svg(
                 family="Segoe UI, Arial, sans-serif",
             )
         )
-
-        parts.append("</svg>")
-        return "".join(parts)
+        
+    parts.append("</svg>")
+    return "".join(parts)
