@@ -287,12 +287,13 @@ def compute_theme_domitude_svg_publication(payload: ThemeRequest, mode: str = De
 
         svg = render_domitude_svg(
             data,
-            width=1400,
-            height=900,
+            width=650,
+            height=650,
             language=lang,
             show_title=False,
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
             inline_glyphs=True,
+            show_footer=True,
         )
 
         return Response(content=svg, media_type="image/svg+xml")
