@@ -801,6 +801,19 @@ def render_ecliptic_svg(
                     )
                 )
 
+    # Footer export publication
+    parts.append(
+        _svg_text(
+            width / 2,
+            height - 14,
+            "© 2025 GéoAstro – AstroMap v1.0",
+            size=8,
+            fill="#777777",
+            baseline="middle",
+            family="Segoe UI, Arial, sans-serif",
+        )
+    )
+    
     parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
