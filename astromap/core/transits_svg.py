@@ -459,7 +459,6 @@ def render_transits_svg(
         show_houses=True,
         show_aspects=True,
         asset_base_url=asset_base_url,
-        inline_glyphs=inline_glyphs,
         center_dx=0,
         center_dy=0,
         inline_glyphs=inline_glyphs,
