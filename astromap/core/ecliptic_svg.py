@@ -493,7 +493,7 @@ def render_ecliptic_svg(
 
     if not layout.get("ok"):
         return (
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+            f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}" height="{height}" '
             f'viewBox="0 0 {width} {height}">'
             f'<rect width="100%" height="100%" fill="#FFFFFF" />'
             f'{_svg_text(width/2, height/2, "Layout indisponible", size=18, fill="#666")}'
@@ -514,7 +514,7 @@ def render_ecliptic_svg(
     r_inner = layout["radii"]["inner"]
 
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
         '''
 <defs>
