@@ -431,6 +431,7 @@ def render_domitude_svg(
     show_title: bool = True,
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
     inline_glyphs: bool = False,
+    show_footer: bool = False,
     ) -> str:
     title = "Thème de domitude" if language != "en" else "Domitude chart"
 
@@ -487,7 +488,7 @@ def render_domitude_svg(
     }
 
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
         '''
     <defs>
