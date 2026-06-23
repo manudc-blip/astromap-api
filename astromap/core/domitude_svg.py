@@ -248,15 +248,6 @@ def _svg_image_with_white_outline(
 
     attrs_str = (" " + " ".join(attrs)) if attrs else ""
     title_part = f"<title>{escape(title)}</title>" if title else ""
-    inlined = _inline_svg_from_href(
-        href,
-        x_center,
-        y_center,
-        size_px,
-        filter_attr='filter="url(#glyphWhiteOutline)"',
-    )
-    if inlined:
-        return f"<g{attrs_str}>{title_part}{inlined}</g>"
 
     return (
         f"<g{attrs_str}>"
