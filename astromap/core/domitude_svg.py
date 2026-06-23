@@ -206,7 +206,8 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
         filter_part = f" {filter_attr}" if filter_attr else ""
 
         return (
-            f'<svg x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+            f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+            f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
             f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
             f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet"{filter_part}>'
             f'{inner}</svg>'
