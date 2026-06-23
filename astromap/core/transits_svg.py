@@ -462,7 +462,6 @@ def render_transits_svg(
         center_dx=0,
         center_dy=0,
         inline_glyphs=inline_glyphs,
-        show_footer=False,
     )
     parts.append(_extract_svg_inner(natal_svg))
 
