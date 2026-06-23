@@ -396,7 +396,7 @@ def _draw_left_planet_code(planet_name: str, cx: float, cy: float, size: float =
     return "".join(parts)
 
 
-def _draw_center_cell(planet_name: str, box_code: str, cx: float, cy: float, cell_size: float, asset_base_url: str) -> str:
+def _draw_center_cell(planet_name: str, box_code: str, cx: float, cy: float, cell_size: float, asset_base_url: str, inline_glyphs: bool = False) -> str:
     if box_code == "black":
         fill = "#000000"
     elif box_code in ("gray", "grey"):
@@ -555,7 +555,7 @@ def render_ret_svg(
             continue
         cx = diamond_cx + dx * step
         cy = diamond_cy + dy * step
-        parts.append(_draw_center_cell(planet_name, box_code, cx, cy, cell_size, asset_base_url))
+        parts.append(_draw_center_cell(planet_name, box_code, cx, cy, cell_size, asset_base_url, inline_glyphs=inline_glyphs))
 
     letters = {
         "R": (-0.75, -2.75, -45),
