@@ -434,6 +434,9 @@ def render_ret_svg(
     *,
     language: str = "fr",
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
+    inline_glyphs: bool = False,
+    show_footer: bool = False,
+    show_title: bool = True,
 ) -> str:
     ranks, ordered_planets, _info = compute_planet_hierarchy(theme_payload, dom_payload)
     angular_set = _extract_angular_set(dom_payload)
@@ -446,8 +449,9 @@ def render_ret_svg(
     title = "RET et Hiérarchie Planétaire" if language.lower().startswith("fr") else "RET and Planetary Hierarchy"
 
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
+    ]
 
     if show_title:
         parts.append(
@@ -712,18 +716,21 @@ def render_ret_svg(
                 parts.append(_svg_image(href, x_cursor, base_y + 40, 28 * coeff, inline=inline_glyphs))
                 x_cursor += 36
 
-if show_footer:
-    parts.append(
-        _svg_text(
-            width / 2,
-            height - 34,
-            "© 2025 GéoAstro – AstroMap v1.0",
-            size=8,
-            fill="#777777",
-            baseline="middle",
-            family="Segoe UI, Arial, sans-serif",
+    if show_footer:
+        parts.append(
+            _svg_text(
+                width / 2,
+                height - 34,
+                "© 2025 GéoAstro – AstroMap v1.0",
+                size=8,
+                fill="#777777",
+                baseline="middle",
+                family="Segoe UI, Arial, sans-serif",
+            )
         )
-    )
+
+    parts.append("</svg>")
+    return "".join(parts)
     
     parts.append("</svg>")
     return "".join(parts)
