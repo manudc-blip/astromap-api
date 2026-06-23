@@ -216,12 +216,7 @@ def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: 
     except Exception:
         return None
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, inline: bool = True) -> str:
-    if inline:
-        inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
-        if inlined:
-            return inlined
-
+def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
     half = size_px / 2.0
     return (
         f'<image href="{escape(href)}" '
