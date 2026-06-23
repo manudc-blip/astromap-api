@@ -231,8 +231,8 @@ def compute_theme_ecliptic_layout(payload: ThemeRequest, mode: str = Depends(get
 
         layout = build_ecliptic_render_layout(
             data,
-            width=650,
-            height=650,
+            width=1200,
+            height=900,
             language=lang,
             show_title=False,
             show_houses=True,
