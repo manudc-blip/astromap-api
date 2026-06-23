@@ -273,3 +273,34 @@ def compute_theme_domitude_svg(payload: ThemeRequest, mode: str = Depends(get_ac
             status_code=500,
             detail=f"Erreur interne lors de la génération SVG domitude: {exc}",
         ) from exc
+
+@router.post("/domitude-svg-publication")
+def compute_theme_domitude_svg_publication(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> Response:
+    require_trial_einstein(payload, mode)
+    try:
+        data = get_cached_theme_payload(payload)
+
+        lang = "fr"
+        settings_dict = payload.settings.model_dump()
+        if str(settings_dict.get("language", "fr")).lower().startswith("en"):
+            lang = "en"
+
+        svg = render_domitude_svg(
+            data,
+            width=1400,
+            height=900,
+            language=lang,
+            show_title=False,
+            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
+            inline_glyphs=True,
+        )
+
+        return Response(content=svg, media_type="image/svg+xml")
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur interne lors de la génération SVG domitude publication: {exc}",
+        ) from exc
