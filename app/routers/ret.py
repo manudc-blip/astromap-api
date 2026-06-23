@@ -86,8 +86,8 @@ def compute_ret_svg_publication_route(
             inline_glyphs=True,
             show_footer=True,
             show_title=False,
-            width=900,
-            height=650,
+            width=1400,
+            height=900,
         )
 
         return Response(content=svg, media_type="image/svg+xml")
