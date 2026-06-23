@@ -509,6 +509,7 @@ def render_ret_svg(
                     line_center_y,
                     small_planet_px * scale,
                     opacity=GLYPH_NEUTRAL_OPACITY,
+                    inline=inline_glyphs,
                 )
             )
 
@@ -529,7 +530,7 @@ def render_ret_svg(
         href_s = _sign_href(asset_base_url, sign_name) if sign_name else None
         if href_s:
             coeff = PERCEPTION_COEFFS_SIGNS.get(sign_name, 1.0)
-            parts.append(_svg_image(href_s, sign_x, line_center_y, small_sign_px * coeff))
+            parts.append(_svg_image(href_s, sign_x, line_center_y, small_sign_px * coeff, inline=inline_glyphs))
 
     diamond_cx = col_ret_x + 20
     diamond_cy = top + 290
@@ -717,8 +718,5 @@ def render_ret_svg(
             )
         )
 
-    parts.append("</svg>")
-    return "".join(parts)
-    
     parts.append("</svg>")
     return "".join(parts)
