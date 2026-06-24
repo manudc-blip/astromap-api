@@ -90,38 +90,3 @@ def compute_aspects_svg_route(
             status_code=500,
             detail=f"Erreur interne lors de la génération SVG des aspects: {exc}",
         ) from exc
-
-@router.post("/svg-publication")
-def compute_aspects_svg_publication_route(
-    payload: ThemeRequest,
-    mode: str = Depends(get_access_mode),
-) -> Response:
-    try:
-        require_trial_einstein(payload, mode)
-        data = get_cached_aspects_payload(payload)
-
-        lang = "fr"
-        settings_dict = payload.settings.model_dump()
-        if str(settings_dict.get("language", "fr")).lower().startswith("en"):
-            lang = "en"
-
-        svg = compute_aspects_svg(
-            data,
-            width=650,
-            height=650,
-            language=lang,
-            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-            inline_glyphs=True,
-            show_footer=True,
-            show_title=False,
-        )
-
-        return Response(content=svg, media_type="image/svg+xml")
-
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur interne lors de la génération SVG publication des aspects: {exc}",
-        ) from exc
