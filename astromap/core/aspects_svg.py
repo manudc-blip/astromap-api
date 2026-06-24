@@ -263,7 +263,7 @@ def render_aspects_svg(
     if not show_title:
         top_margin = 45
         left_margin = 45
-        right_margin = 20
+        right_margin = 0
         bottom_margin = 90
 
     grid_width = width - left_margin - right_margin
@@ -452,7 +452,7 @@ def render_aspects_svg(
         parts.append(
             _svg_text(
                 width / 2,
-                height - 30,
+                height - 14,
                 "© 2025 GéoAstro – AstroMap v1.0",
                 size=8,
                 fill="#777777",
