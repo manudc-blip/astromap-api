@@ -255,10 +255,16 @@ def render_aspects_svg(
 
     title = "Aspects planétaires" if language == "fr" else "Planetary aspects"
 
-    top_margin = 45
-    left_margin = 45
-    right_margin = 45
-    bottom_margin = 105
+    top_margin = 70
+    left_margin = 240
+    right_margin = 34
+    bottom_margin = 70
+
+    if not show_title:
+        top_margin = 45
+        left_margin = 45
+        right_margin = 45
+        bottom_margin = 105
 
     grid_width = width - left_margin - right_margin
     grid_height = height - top_margin - bottom_margin
