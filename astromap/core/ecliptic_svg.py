@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import math
-import re
 from html import escape
-from pathlib import Path
 from typing import Any
-from urllib.parse import unquote
 
 from .ecliptic_layout import build_ecliptic_layout
 
@@ -146,12 +143,7 @@ def _svg_polyline(points, stroke="#000", width=1, fill="none", dash=None, lineca
     )
 
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, inline: bool = False) -> str:
-    if inline:
-        inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
-        if inlined:
-            return inlined
-
+def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
     half = size_px / 2.0
     return (
         f'<image href="{escape(href)}" '
@@ -160,52 +152,7 @@ def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, i
         f'preserveAspectRatio="xMidYMid meet" />'
     )
 
-GLYPHES_DIR = Path("/app/app/static/Glyphes_SVG")
 
-def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float, filter_attr: str = "") -> str | None:
-    try:
-        href = unquote(href)
-        parts = href.split("/glyphes/")
-        if len(parts) < 2:
-            return None
-
-        rel = parts[-1]
-        path = GLYPHES_DIR / rel
-
-        if not path.exists():
-            return None
-
-        raw = path.read_text(encoding="utf-8")
-
-        viewbox_match = re.search(r'viewBox="([^"]+)"', raw)
-        viewbox = viewbox_match.group(1) if viewbox_match else "0 0 100 100"
-
-        inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
-        inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
-
-        # Nettoyage des métadonnées Inkscape/Sodipodi incompatibles avec l'inlining
-        inner = re.sub(r'<\?xml[^>]*\?>', '', inner, flags=re.S)
-        inner = re.sub(r'<!DOCTYPE[^>]*>', '', inner, flags=re.S)
-        inner = re.sub(r'<metadata[\s\S]*?</metadata>', '', inner, flags=re.I)
-        inner = re.sub(r'<defs[\s\S]*?</defs>', '', inner, flags=re.I)
-        inner = re.sub(r'<sodipodi:namedview[\s\S]*?</sodipodi:namedview>', '', inner, flags=re.I)
-        inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
-        inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
-        inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
-
-        half = size_px / 2.0
-        filter_part = f" {filter_attr}" if filter_attr else ""
-
-        return (
-            f'<svg x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
-            f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
-            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet"{filter_part}>'
-            f'{inner}</svg>'
-        )
-
-    except Exception:
-        return None
-        
 def _svg_image_with_white_outline(
     href: str,
     x_center: float,
@@ -216,8 +163,9 @@ def _svg_image_with_white_outline(
     class_name: str | None = None,
     data_planet: str | None = None,
     title: str | None = None,
-    inline: bool = False,
 ) -> str:
+    half = size_px / 2.0
+
     attrs = []
     if elem_id:
         attrs.append(f'id="{escape(elem_id)}"')
@@ -229,18 +177,6 @@ def _svg_image_with_white_outline(
     attrs_str = (" " + " ".join(attrs)) if attrs else ""
     title_part = f"<title>{escape(title)}</title>" if title else ""
 
-    if inline:
-        inlined = _inline_svg_from_href(
-            href,
-            x_center,
-            y_center,
-            size_px,
-            filter_attr='filter="url(#glyphWhiteOutline)"',
-        )
-        if inlined:
-            return f"<g{attrs_str}>{title_part}{inlined}</g>"
-
-    half = size_px / 2.0
     return (
         f"<g{attrs_str}>"
         f"{title_part}"
@@ -477,7 +413,6 @@ def render_ecliptic_svg(
     asset_base_url: str = "/glyphes",
     center_dx: float | None = None,
     center_dy: float | None = None,
-    inline_glyphs: bool = False,
 ) -> str:
     """
     asset_base_url doit pointer vers le dossier statique qui contient :
@@ -504,7 +439,7 @@ def render_ecliptic_svg(
 
     if not layout.get("ok"):
         return (
-            f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}" height="{height}" '
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
             f'viewBox="0 0 {width} {height}">'
             f'<rect width="100%" height="100%" fill="#FFFFFF" />'
             f'{_svg_text(width/2, height/2, "Layout indisponible", size=18, fill="#666")}'
@@ -525,7 +460,7 @@ def render_ecliptic_svg(
     r_inner = layout["radii"]["inner"]
 
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
         '''
 <defs>
@@ -658,7 +593,7 @@ def render_ecliptic_svg(
     for s in layout["signs"]:
         href = _sign_href(asset_base_url, s["name"])
         if href:
-            parts.append(_svg_image(href, s["x"], s["y"], s["px"], inline=inline_glyphs))
+            parts.append(_svg_image(href, s["x"], s["y"], s["px"]))
         else:
             parts.append(_svg_text(s["x"], s["y"], s["name"], size=max(14, int(s["px"] * 0.55))))
 
@@ -724,7 +659,7 @@ def render_ecliptic_svg(
         href = _axis_href(asset_base_url, label, language)
         g = ax["glyph"]
         if href:
-            parts.append(_svg_image(href, g["x"], g["y"], g["px"], inline=inline_glyphs))
+            parts.append(_svg_image(href, g["x"], g["y"], g["px"]))
         else:
             parts.append(
                 _svg_text(
@@ -770,7 +705,6 @@ def render_ecliptic_svg(
                     class_name="planet natal_planet",
                     data_planet=p["name"],
                     title=p["name"],
-                    inline=inline_glyphs,
                 )
             )
 
@@ -801,19 +735,6 @@ def render_ecliptic_svg(
                     )
                 )
 
-    # Footer export publication
-    parts.append(
-        _svg_text(
-            width / 2,
-            height - 14,
-            "© 2025 GéoAstro – AstroMap v1.0",
-            size=8,
-            fill="#777777",
-            baseline="middle",
-            family="Segoe UI, Arial, sans-serif",
-        )
-    )
-    
     parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
