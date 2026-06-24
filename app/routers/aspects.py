@@ -118,11 +118,3 @@ def compute_aspects_svg_publication_route(
             status_code=500,
             detail=f"Erreur interne lors de la génération SVG publication des aspects: {exc}",
         ) from exc
-    
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur interne lors de la génération SVG des aspects: {exc}",
-        ) from exc
