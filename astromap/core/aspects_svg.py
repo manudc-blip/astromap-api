@@ -255,10 +255,10 @@ def render_aspects_svg(
 
     title = "Aspects planétaires" if language == "fr" else "Planetary aspects"
 
-    top_margin = 70
-    left_margin = 240
-    right_margin = 34
-    bottom_margin = 70
+    top_margin = 45
+    left_margin = 45
+    right_margin = 45
+    bottom_margin = 105
 
     grid_width = width - left_margin - right_margin
     grid_height = height - top_margin - bottom_margin
@@ -446,7 +446,7 @@ def render_aspects_svg(
         parts.append(
             _svg_text(
                 width / 2,
-                height - 14,
+                height - 45,
                 "© 2025 GéoAstro – AstroMap v1.0",
                 size=8,
                 fill="#777777",
