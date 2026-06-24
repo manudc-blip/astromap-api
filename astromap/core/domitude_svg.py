@@ -3,9 +3,7 @@ from __future__ import annotations
 import math
 from html import escape
 from typing import Any
-import re
-from pathlib import Path
-from urllib.parse import unquote
+
 
 ROMANS = ["I", "II", "III", "IV", "V", "VI",
           "VII", "VIII", "IX", "X", "XI", "XII"]
@@ -167,58 +165,7 @@ def _svg_text(
     )
 
 
-GLYPHES_DIR = Path("/app/app/static/Glyphes_SVG")
-
-def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float, filter_attr: str = "") -> str | None:
-    try:
-        href = unquote(href)
-        parts = href.split("/glyphes/")
-        if len(parts) < 2:
-            return None
-
-        rel = parts[-1]
-        path = GLYPHES_DIR / rel
-              
-        if not path.exists():
-            return None
-
-        raw = path.read_text(encoding="utf-8")
-
-        viewbox_match = re.search(r'viewBox="([^"]+)"', raw)
-        viewbox = viewbox_match.group(1) if viewbox_match else "0 0 100 100"
-
-        inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
-        inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
-
-        inner = re.sub(r'<\?xml[^>]*\?>', '', inner, flags=re.S)
-        inner = re.sub(r'<!DOCTYPE[^>]*>', '', inner, flags=re.S)
-        inner = re.sub(r'<metadata[\s\S]*?</metadata>', '', inner, flags=re.I)
-        inner = re.sub(r'<defs[\s\S]*?</defs>', '', inner, flags=re.I)
-        inner = re.sub(r'<sodipodi:namedview[\s\S]*?</sodipodi:namedview>', '', inner, flags=re.I)
-        inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
-        inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
-        inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
-
-        half = size_px / 2.0
-        filter_part = f" {filter_attr}" if filter_attr else ""
-
-        return (
-            f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
-            f'x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
-            f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
-            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet"{filter_part}>'
-            f'{inner}</svg>'
-        )
-
-    except Exception:
-        return None
-
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float, *, inline: bool = False) -> str:
-    if inline:
-        inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
-        if inlined:
-            return inlined
-
+def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
     half = size_px / 2.0
     return (
         f'<image href="{escape(href)}" '
@@ -237,8 +184,9 @@ def _svg_image_with_white_outline(
     class_name: str | None = None,
     data_planet: str | None = None,
     title: str | None = None,
-    inline: bool = False,
 ) -> str:
+    half = size_px / 2.0
+
     attrs = []
     if elem_id:
         attrs.append(f'id="{escape(elem_id)}"')
@@ -250,18 +198,6 @@ def _svg_image_with_white_outline(
     attrs_str = (" " + " ".join(attrs)) if attrs else ""
     title_part = f"<title>{escape(title)}</title>" if title else ""
 
-    if inline:
-        inlined = _inline_svg_from_href(
-            href,
-            x_center,
-            y_center,
-            size_px,
-            filter_attr='filter="url(#glyphWhiteOutline)"',
-        )
-        if inlined:
-            return f"<g{attrs_str}>{title_part}{inlined}</g>"
-
-    half = size_px / 2.0
     return (
         f"<g{attrs_str}>"
         f"{title_part}"
@@ -430,9 +366,7 @@ def render_domitude_svg(
     language: str = "fr",
     show_title: bool = True,
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
-    inline_glyphs: bool = False,
-    show_footer: bool = False,
-    ) -> str:
+) -> str:
     title = "Thème de domitude" if language != "en" else "Domitude chart"
 
     w = width
@@ -488,7 +422,7 @@ def render_domitude_svg(
     }
 
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         '<rect width="100%" height="100%" fill="#FFFFFF" />',
         '''
     <defs>
@@ -590,7 +524,7 @@ def render_domitude_svg(
             tx, ty = _pol_to_xy(cx, cy, r_outer + LABEL_OFFSET_SIGN, a)
             href = _sign_domitude_href(asset_base_url, name)
             if href:
-                parts.append(_svg_image(href, tx, ty, PX_SIGN, inline=inline_glyphs))
+                parts.append(_svg_image(href, tx, ty, PX_SIGN))
 
     # Glyphes des maisons
     for idx, house_num in enumerate([10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]):
@@ -603,7 +537,7 @@ def render_domitude_svg(
 
         href = _house_href(asset_base_url, house_num)
         if href:
-            parts.append(_svg_image(href, tx, ty, PX_HOUSE, inline=inline_glyphs))
+            parts.append(_svg_image(href, tx, ty, PX_HOUSE))
         else:
             roman = ROMANS[(house_num - 1) % 12]
             parts.append(
@@ -683,7 +617,7 @@ def render_domitude_svg(
 
         href = _axis_href(asset_base_url, label, language)
         if href:
-            parts.append(_svg_image(href, gx, gy, PX_AXIS, inline=inline_glyphs))
+            parts.append(_svg_image(href, gx, gy, PX_AXIS))
 
     axis_MC = "MC"
     axis_AS = "AS"
@@ -1042,7 +976,6 @@ def render_domitude_svg(
                     class_name="planet natal_planet domitude_planet",
                     data_planet=name,
                     title=name,
-                    inline=inline_glyphs,
                 )
             )
 
@@ -1056,19 +989,6 @@ def render_domitude_svg(
                 )
             )
 
-    if show_footer:
-        parts.append(
-            _svg_text(
-                w / 2,
-                h - 34,
-                "© 2025 GéoAstro – AstroMap v1.0",
-                size=8,
-                fill="#777777",
-                baseline="middle",
-                family="Segoe UI, Arial, sans-serif",
-            )
-        )
-  
     parts.append("</g>")
     parts.append("</svg>")
     return "".join(parts)
