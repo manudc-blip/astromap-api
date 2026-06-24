@@ -274,24 +274,24 @@ def render_aspects_svg(
     x_right = x0 + (n + 1) * cell
     y_bottom = y0 + (n + 1) * cell
 
-parts: list[str] = [
-    f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
-    '<rect width="100%" height="100%" fill="#FFFFFF" />',
-]
+    parts: list[str] = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<rect width="100%" height="100%" fill="#FFFFFF" />',
+    ]
 
-if show_title:
-    parts.append(
-        _svg_text(
-            width / 2,
-            24,
-            title,
-            size=24,
-            fill=TITLE_COLOR,
-            weight="700",
-            baseline="hanging",
-            family="Segoe UI, Arial, sans-serif",
+    if show_title:
+        parts.append(
+            _svg_text(
+                width / 2,
+                24,
+                title,
+                size=24,
+                fill=TITLE_COLOR,
+                weight="700",
+                baseline="hanging",
+                family="Segoe UI, Arial, sans-serif",
+            )
         )
-    )
 
     # Fond grille
     for k in range(n + 2):
