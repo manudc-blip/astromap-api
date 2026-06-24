@@ -1,5 +1,3 @@
-from app.services.ret_service import compute_ret_svg, render_ret_svg_from_payload
-from app.services.theme_service import compute_theme_payload
 from fastapi import APIRouter, Depends, HTTPException, Response
 
 from app.schemas import ThemeRequest
@@ -59,43 +57,4 @@ def compute_ret_svg_route(
         raise HTTPException(
             status_code=500,
             detail=f"Erreur interne lors de la génération SVG RET/HP: {exc}",
-        ) from exc
-
-@router.post("/svg-publication")
-def compute_ret_svg_publication_route(
-    payload: ThemeRequest,
-    mode: str = Depends(get_access_mode),
-) -> Response:
-    try:
-        require_trial_einstein(payload, mode)
-
-        settings_dict = payload.settings.model_dump()
-
-        data = compute_theme_payload(
-            name=payload.name or "",
-            datetime_local=payload.datetime_local,
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-            tz=payload.tz,
-            settings=settings_dict,
-        )
-
-        svg = render_ret_svg_from_payload(
-            data,
-            settings=settings_dict,
-            inline_glyphs=True,
-            show_footer=True,
-            show_title=False,
-            width=1200,
-            height=780,
-        )
-
-        return Response(content=svg, media_type="image/svg+xml")
-
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur interne lors de la génération SVG RET/HP publication: {exc}",
         ) from exc
