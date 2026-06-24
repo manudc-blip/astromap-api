@@ -1,12 +1,10 @@
+from __future__ import annotations
+
 import re
 from pathlib import Path
 from urllib.parse import unquote
-from __future__ import annotations
-
 from html import escape
 from typing import Any
-
-from .aspects import detect_aspects
 
 TITLE_COLOR = "#1f4fa3"
 
@@ -217,7 +215,12 @@ def _ordered_planet_names(planets: list[dict[str, Any]]) -> list[str]:
 
 
 def render_aspects_svg(
-    ...
+    payload: dict[str, Any],
+    width: int = 1400,
+    height: int = 900,
+    *,
+    language: str = "fr",
+    asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
     inline_glyphs: bool = False,
     show_footer: bool = False,
     show_title: bool = True,
@@ -440,17 +443,17 @@ if show_title:
         parts.append(_svg_text(x0, legend_y + 32, line2, size=11, anchor="start", fill="#444444"))
 
     if show_footer:
-    parts.append(
-        _svg_text(
-            width / 2,
-            height - 14,
-            "© 2025 GéoAstro – AstroMap v1.0",
-            size=8,
-            fill="#777777",
-            baseline="middle",
-            family="Segoe UI, Arial, sans-serif",
+        parts.append(
+            _svg_text(
+                width / 2,
+                height - 14,
+                "© 2025 GéoAstro – AstroMap v1.0",
+                size=8,
+                fill="#777777",
+                baseline="middle",
+                family="Segoe UI, Arial, sans-serif",
+            )
         )
-    )
         
     parts.append("</svg>")
     return "".join(parts)
