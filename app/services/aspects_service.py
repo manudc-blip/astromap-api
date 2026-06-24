@@ -28,9 +28,6 @@ def compute_aspects_svg(
     height: int = 900,
     language: str = "fr",
     asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
-    inline_glyphs: bool = False,
-    show_footer: bool = False,
-    show_title: bool = True,
 ) -> str:
     return render_aspects_svg(
         payload,
@@ -38,7 +35,4 @@ def compute_aspects_svg(
         height=height,
         language=language,
         asset_base_url=asset_base_url,
-        inline_glyphs=inline_glyphs,
-        show_footer=show_footer,
-        show_title=show_title,
     )
