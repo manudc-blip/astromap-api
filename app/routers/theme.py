@@ -61,40 +61,6 @@ def _render_domitude_svg_cached(cache_key: str, lang: str) -> str:
         asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
     )
 
-@router.post("/svg-publication")
-def compute_theme_svg_publication(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> Response:
-    require_trial_einstein(payload, mode)
-    try:
-        data = get_cached_theme_payload(payload)
-
-        lang = "fr"
-        settings_dict = payload.settings.model_dump()
-        if str(settings_dict.get("language", "fr")).lower().startswith("en"):
-            lang = "en"
-
-        svg = render_ecliptic_svg(
-            data,
-            width=650,
-            height=650,
-            language=lang,
-            show_title=False,
-            show_houses=True,
-            show_aspects=True,
-            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-            center_dx=0,
-            center_dy=0,
-            inline_glyphs=False,
-        )
-
-        return Response(content=svg, media_type="image/svg+xml")
-
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur interne lors de la génération SVG publication: {exc}",
-        ) from exc
 
 def get_cached_domitude_svg(payload: ThemeRequest, lang: str) -> str:
     return _render_domitude_svg_cached(_payload_cache_key(payload), lang)
@@ -195,16 +161,13 @@ def compute_theme_svg(payload: ThemeRequest, mode: str = Depends(get_access_mode
 
         svg = render_ecliptic_svg(
             data,
-            width=650,
-            height=650,
+            width=1200,
+            height=900,
             language=lang,
-            show_title=False,
+            show_title=True,
             show_houses=True,
             show_aspects=True,
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-            center_dx=0,
-            center_dy=0,
-            inline_glyphs=True,
         )
 
         return Response(content=svg, media_type="image/svg+xml")
@@ -234,7 +197,7 @@ def compute_theme_ecliptic_layout(payload: ThemeRequest, mode: str = Depends(get
             width=1200,
             height=900,
             language=lang,
-            show_title=False,
+            show_title=True,
             show_houses=True,
             show_aspects=True,
             asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
@@ -272,36 +235,4 @@ def compute_theme_domitude_svg(payload: ThemeRequest, mode: str = Depends(get_ac
         raise HTTPException(
             status_code=500,
             detail=f"Erreur interne lors de la génération SVG domitude: {exc}",
-        ) from exc
-
-@router.post("/domitude-svg-publication")
-def compute_theme_domitude_svg_publication(payload: ThemeRequest, mode: str = Depends(get_access_mode)) -> Response:
-    require_trial_einstein(payload, mode)
-    try:
-        data = get_cached_theme_payload(payload)
-
-        lang = "fr"
-        settings_dict = payload.settings.model_dump()
-        if str(settings_dict.get("language", "fr")).lower().startswith("en"):
-            lang = "en"
-
-        svg = render_domitude_svg(
-            data,
-            width=650,
-            height=650,
-            language=lang,
-            show_title=False,
-            asset_base_url="https://astromap-api-production.up.railway.app/glyphes",
-            inline_glyphs=True,
-            show_footer=True,
-        )
-
-        return Response(content=svg, media_type="image/svg+xml")
-
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur interne lors de la génération SVG domitude publication: {exc}",
         ) from exc
