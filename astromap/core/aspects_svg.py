@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+from urllib.parse import unquote
 from __future__ import annotations
 
 from html import escape
@@ -73,6 +76,47 @@ ASPECT_FILES = {
     "SEX": "Sextile.svg",
 }
 
+GLYPHES_DIR = Path("/app/app/static/Glyphes_SVG")
+
+def _inline_svg_from_href(href: str, x_center: float, y_center: float, size_px: float) -> str | None:
+    try:
+        href = unquote(href)
+        parts = href.split("/glyphes/")
+        if len(parts) < 2:
+            return None
+
+        rel = parts[-1]
+        path = GLYPHES_DIR / rel
+        if not path.exists():
+            return None
+
+        raw = path.read_text(encoding="utf-8")
+
+        viewbox_match = re.search(r'viewBox="([^"]+)"', raw)
+        viewbox = viewbox_match.group(1) if viewbox_match else "0 0 100 100"
+
+        inner = re.sub(r'^.*?<svg[^>]*>', '', raw, flags=re.S)
+        inner = re.sub(r'</svg>\s*$', '', inner, flags=re.S)
+        inner = re.sub(r'<\?xml[^>]*\?>', '', inner, flags=re.S)
+        inner = re.sub(r'<!DOCTYPE[^>]*>', '', inner, flags=re.S)
+        inner = re.sub(r'<metadata[\s\S]*?</metadata>', '', inner, flags=re.I)
+        inner = re.sub(r'<defs[\s\S]*?</defs>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[\s\S]*?</sodipodi:namedview>', '', inner, flags=re.I)
+        inner = re.sub(r'<sodipodi:namedview[^>]*/>', '', inner, flags=re.I)
+        inner = re.sub(r'\s(?:sodipodi|inkscape):[a-zA-Z0-9_-]+="[^"]*"', '', inner)
+        inner = re.sub(r'\sxmlns:(?:sodipodi|inkscape)="[^"]*"', '', inner)
+
+        half = size_px / 2.0
+        return (
+            f'<svg x="{_fmt(x_center - half)}" y="{_fmt(y_center - half)}" '
+            f'width="{_fmt(size_px)}" height="{_fmt(size_px)}" '
+            f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet">'
+            f'{inner}</svg>'
+        )
+    except Exception:
+        return None
+        
+
 def _fmt(v: float) -> str:
     return f"{v:.2f}"
 
@@ -112,7 +156,19 @@ def _svg_rect(x, y, w, h, *, fill="none", stroke="#000", width=1) -> str:
     )
 
 
-def _svg_image(href: str, x_center: float, y_center: float, size_px: float) -> str:
+def _svg_image(
+    href: str,
+    x_center: float,
+    y_center: float,
+    size_px: float,
+    *,
+    inline: bool = False,
+) -> str:
+    if inline:
+        inlined = _inline_svg_from_href(href, x_center, y_center, size_px)
+        if inlined:
+            return inlined
+
     half = size_px / 2.0
     return (
         f'<image href="{escape(href)}" '
@@ -161,12 +217,10 @@ def _ordered_planet_names(planets: list[dict[str, Any]]) -> list[str]:
 
 
 def render_aspects_svg(
-    payload: dict[str, Any],
-    width: int = 1400,
-    height: int = 900,
-    *,
-    language: str = "fr",
-    asset_base_url: str = "https://astromap-api-production.up.railway.app/glyphes",
+    ...
+    inline_glyphs: bool = False,
+    show_footer: bool = False,
+    show_title: bool = True,
 ) -> str:
     planets: list[dict[str, Any]] = payload.get("planets", []) or []
     aspects: list[dict[str, Any]] = payload.get("aspects", []) or []
@@ -217,9 +271,13 @@ def render_aspects_svg(
     x_right = x0 + (n + 1) * cell
     y_bottom = y0 + (n + 1) * cell
 
-    parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
-        '<rect width="100%" height="100%" fill="#FFFFFF" />',
+parts: list[str] = [
+    f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+    '<rect width="100%" height="100%" fill="#FFFFFF" />',
+]
+
+if show_title:
+    parts.append(
         _svg_text(
             width / 2,
             24,
@@ -229,8 +287,8 @@ def render_aspects_svg(
             weight="700",
             baseline="hanging",
             family="Segoe UI, Arial, sans-serif",
-        ),
-    ]
+        )
+    )
 
     # Fond grille
     for k in range(n + 2):
@@ -265,14 +323,14 @@ def render_aspects_svg(
         cy = y0 + cell / 2
 
         if href:
-            parts.append(_svg_image(href, cx, cy, glyph_size))
+            parts.append(_svg_image(href, cx, cy, glyph_size, inline=inline_glyphs))
         else:
             parts.append(_svg_text(cx, cy, name, size=fallback_size, weight="700"))
 
         cx = x0 + cell / 2
         cy = y0 + row * cell + cell / 2
         if href:
-            parts.append(_svg_image(href, cx, cy, glyph_size))
+            parts.append(_svg_image(href, cx, cy, glyph_size, inline=inline_glyphs))
         else:
             parts.append(_svg_text(cx, cy, name, size=fallback_size, weight="700"))
 
@@ -330,7 +388,7 @@ def render_aspects_svg(
             href_a = _aspect_href(asset_base_url, kind)
 
             if href_a:
-                parts.append(_svg_image(href_a, cx, cy - cell * 0.03, cell * 0.44))
+                parts.append(_svg_image(href_a, cx, cy - cell * 0.03, cell * 0.44, inline=inline_glyphs))
             else:
                 parts.append(
                     _svg_text(
@@ -380,6 +438,19 @@ def render_aspects_svg(
         parts.append(_svg_text(x0, legend_y, title_leg, size=12, weight="700", anchor="start", fill="#333333"))
         parts.append(_svg_text(x0, legend_y + 16, line1, size=11, anchor="start", fill="#444444"))
         parts.append(_svg_text(x0, legend_y + 32, line2, size=11, anchor="start", fill="#444444"))
+
+    if show_footer:
+    parts.append(
+        _svg_text(
+            width / 2,
+            height - 14,
+            "© 2025 GéoAstro – AstroMap v1.0",
+            size=8,
+            fill="#777777",
+            baseline="middle",
+            family="Segoe UI, Arial, sans-serif",
+        )
+    )
         
     parts.append("</svg>")
     return "".join(parts)
